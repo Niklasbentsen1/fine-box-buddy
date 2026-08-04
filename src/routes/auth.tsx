@@ -63,6 +63,17 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [signedUp, setSignedUp] = useState(false);
 
+  const passwordRules = useMemo(() => {
+    return [
+      { label: "Mindst 6 tegn", met: password.length >= 6 },
+      { label: "Mindst ét tal", met: /\d/.test(password) },
+      { label: "Mindst ét stort bogstav", met: /[A-ZÆØÅ]/.test(password) },
+      { label: "Mindst ét lille bogstav", met: /[a-zæøå]/.test(password) },
+    ];
+  }, [password]);
+
+  const passwordIsValid = passwordRules.every((r) => r.met);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/hjem", replace: true });
