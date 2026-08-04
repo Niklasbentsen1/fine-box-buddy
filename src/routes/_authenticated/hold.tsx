@@ -16,7 +16,9 @@ import {
   Smartphone,
   Ticket,
   Trash2,
+  UserCheck,
   UserMinus,
+  UserX,
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -24,7 +26,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTeam } from "@/lib/team";
 import { fetchTeamMembers, type MemberRow } from "@/lib/api";
-import { firstName, formatKr, sumAmounts } from "@/lib/format";
+import { firstName, formatDateTime, formatKr, sumAmounts } from "@/lib/format";
 import { Avatar } from "@/components/avatar";
 import { StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
@@ -58,6 +60,12 @@ export const Route = createFileRoute("/_authenticated/hold")({
 type FineRow = { user_id: string; amount: number };
 type PaymentRow = { user_id: string; amount: number; status: string };
 type WithdrawalRow = { amount: number };
+type PendingRow = {
+  user_id: string;
+  display_name: string;
+  avatar_url: string | null;
+  requested_at: string;
+};
 
 function HoldPage() {
   const { user, current, isAdmin, refreshMemberships } = useTeam();
@@ -80,6 +88,16 @@ function HoldPage() {
     queryKey: ["team", teamId, "members"],
     enabled: !!teamId,
     queryFn: () => fetchTeamMembers(teamId!),
+  });
+
+  const { data: pending = [] } = useQuery({
+    queryKey: ["team", teamId, "pending-members"],
+    enabled: !!teamId && isAdmin,
+    queryFn: async (): Promise<PendingRow[]> => {
+      const { data, error } = await supabase.rpc("get_pending_members", { _team_id: teamId! });
+      if (error) throw error;
+      return (data ?? []) as PendingRow[];
+    },
   });
 
   const { data: fines = [] } = useQuery({
@@ -191,6 +209,34 @@ function HoldPage() {
         ? `${firstName(name)} er nu administrator`
         : `${firstName(name)} er ikke administrator længere`,
     );
+    await refresh();
+  };
+
+  const handleApprove = async (userId: string, name: string) => {
+    const { error } = await supabase.rpc("approve_member", {
+      _team_id: teamId,
+      _user_id: userId,
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`${firstName(name)} er godkendt til holdet`);
+    await refresh();
+  };
+
+  const handleReject = async (userId: string, name: string) => {
+    const { error } = await supabase
+      .from("team_members")
+      .delete()
+      .eq("team_id", teamId)
+      .eq("user_id", userId)
+      .eq("status", "pending");
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`Anmodningen fra ${firstName(name)} er afvist`);
     await refresh();
   };
 
@@ -405,6 +451,44 @@ function HoldPage() {
           ))}
         </ul>
       </section>
+
+      {isAdmin && pending.length > 0 && (
+        <section className="rounded-2xl border border-gold/40 bg-card p-5 shadow-card">
+          <h2 className="font-display text-xl font-semibold">
+            Afventer godkendelse ({pending.length})
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Disse spillere har brugt klubkoden og venter på godkendelse af en administrator.
+          </p>
+          <ul className="mt-3 divide-y">
+            {pending.map((p) => (
+              <li key={p.user_id} className="flex items-center gap-3 py-3">
+                <Avatar name={p.display_name} url={p.avatar_url} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{p.display_name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Anmodede {formatDateTime(p.requested_at)}
+                  </p>
+                </div>
+                <Button
+                  variant="pitch"
+                  size="sm"
+                  onClick={() => handleApprove(p.user_id, p.display_name)}
+                >
+                  <UserCheck className="mr-2 h-4 w-4" /> Godkend
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleReject(p.user_id, p.display_name)}
+                >
+                  <UserX className="mr-2 h-4 w-4" /> Afvis
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {isAdmin && (
         <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-destructive/30 bg-card p-4 shadow-card">
