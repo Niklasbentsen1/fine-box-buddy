@@ -1,6 +1,7 @@
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { HandCoins, Ticket, Wallet } from "lucide-react";
+import { ChevronDown, HandCoins, Ticket, UserRound, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +25,7 @@ type FineRow = {
   label: string;
   amount: number;
   created_at: string;
+  created_by: string;
   profiles: { display_name: string } | null;
 };
 
@@ -53,6 +55,8 @@ type FeedItem = {
   amount: number;
   status?: PaymentRow["status"];
   paymentId?: string;
+  fineId?: string;
+  createdBy?: string;
 };
 
 const STATUS_LABEL: Record<PaymentRow["status"], string> = {
@@ -65,6 +69,7 @@ function HistorikPage() {
   const { user, current, isAdmin } = useTeam();
   const queryClient = useQueryClient();
   const teamId = current?.teamId;
+  const [expandedFineId, setExpandedFineId] = useState<string | null>(null);
 
   const { data: fines = [] } = useQuery({
     queryKey: ["team", teamId, "hist-fines"],
@@ -72,12 +77,30 @@ function HistorikPage() {
     queryFn: async (): Promise<FineRow[]> => {
       const { data, error } = await supabase
         .from("fines")
-        .select("id, label, amount, created_at, profiles(display_name)")
+        .select("id, label, amount, created_at, created_by, profiles(display_name)")
         .eq("team_id", teamId!)
         .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;
       return (data ?? []) as unknown as FineRow[];
+    },
+  });
+
+  const creatorIds = useMemo(
+    () => [...new Set(fines.map((f) => f.created_by))].sort(),
+    [fines],
+  );
+
+  const { data: creatorNames = {} } = useQuery({
+    queryKey: ["profiles", "names", creatorIds],
+    enabled: creatorIds.length > 0,
+    queryFn: async (): Promise<Record<string, string>> => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", creatorIds);
+      if (error) throw error;
+      return Object.fromEntries((data ?? []).map((p) => [p.id, p.display_name]));
     },
   });
 
@@ -121,6 +144,8 @@ function HistorikPage() {
       title: `${f.profiles?.display_name ?? "Ukendt"} · ${f.label}`,
       detail: null,
       amount: Number(f.amount),
+      fineId: f.id,
+      createdBy: creatorNames[f.created_by] ?? "Ukendt",
     })),
     ...payments.map((p) => ({
       id: `pay-${p.id}`,
@@ -175,7 +200,17 @@ function HistorikPage() {
           {feed.map((item) => (
             <li
               key={item.id}
-              className="flex items-center gap-3 rounded-2xl border bg-card p-4 shadow-card"
+              className={`flex items-center gap-3 rounded-2xl border bg-card p-4 shadow-card ${
+                item.kind === "fine" ? "cursor-pointer transition-colors hover:bg-muted/40" : ""
+              }`}
+              onClick={
+                item.kind === "fine"
+                  ? () =>
+                      setExpandedFineId((prev) =>
+                        prev === item.fineId ? null : item.fineId!,
+                      )
+                  : undefined
+              }
             >
               <span
                 className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
@@ -205,32 +240,54 @@ function HistorikPage() {
                     <Button
                       size="sm"
                       variant="pitch"
-                      onClick={() => handleReview(item.paymentId!, "approved")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleReview(item.paymentId!, "approved");
+                      }}
                     >
                       Godkend
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => handleReview(item.paymentId!, "rejected")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleReview(item.paymentId!, "rejected");
+                      }}
                     >
                       Afvis
                     </Button>
                   </div>
                 )}
+                {item.kind === "fine" && expandedFineId === item.fineId && (
+                  <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground">
+                    <UserRound className="h-3.5 w-3.5" />
+                    Uddelt af{" "}
+                    <span className="font-semibold text-foreground">{item.createdBy}</span>
+                  </div>
+                )}
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
-                <span
-                  className={`text-sm font-bold ${
-                    item.kind === "fine"
-                      ? "text-gold-foreground"
-                      : item.kind === "payment"
-                        ? "text-pitch"
-                        : "text-primary"
-                  }`}
-                >
-                  {item.kind === "fine" ? "+" : item.kind === "payment" ? "+" : "−"}
-                  {formatKr(item.amount)}
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className={`text-sm font-bold ${
+                      item.kind === "fine"
+                        ? "text-gold-foreground"
+                        : item.kind === "payment"
+                          ? "text-pitch"
+                          : "text-primary"
+                    }`}
+                  >
+                    {item.kind === "fine" ? "+" : item.kind === "payment" ? "+" : "−"}
+                    {formatKr(item.amount)}
+                  </span>
+                  {item.kind === "fine" && (
+                    <ChevronDown
+                      className={`h-4 w-4 text-muted-foreground transition-transform ${
+                        expandedFineId === item.fineId ? "rotate-180" : ""
+                      }`}
+                    />
+                  )}
                 </span>
                 {item.kind === "payment" && item.status && (
                   <Badge
