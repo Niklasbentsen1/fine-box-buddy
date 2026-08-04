@@ -371,8 +371,8 @@ function HjemPage() {
           <div className="space-y-1.5">
             <DialogTitle>Indbetal til bødekassen</DialogTitle>
             <DialogDescription>
-              Registrer din indbetaling (fx MobilePay eller kontanter). En administrator godkender
-              den bagefter.
+              Betal direkte med MobilePay til holdets nummer, eller registrer en indbetaling (fx
+              kontanter). En administrator godkender den bagefter.
             </DialogDescription>
           </div>
           <div className="space-y-4">
@@ -386,13 +386,43 @@ function HjemPage() {
                 placeholder="Fx 100"
               />
             </div>
+            {current.mobilepayNumber ? (
+              <div className="rounded-2xl border border-pitch/30 bg-pitch-soft/50 p-4">
+                <Button
+                  variant="pitch"
+                  className="w-full"
+                  onClick={handlePayMobilepay}
+                  disabled={busy || !payAmount.trim()}
+                >
+                  <Smartphone className="mr-2 h-4 w-4" />
+                  Betal{" "}
+                  {parseAmount(payAmount) > 0 ? `${formatKr(parseAmount(payAmount))} ` : ""}med
+                  MobilePay
+                </Button>
+                <p className="mt-2 text-center text-xs text-muted-foreground">
+                  Du sendes direkte til MobilePay til nummer {current.mobilepayNumber}
+                </p>
+              </div>
+            ) : (
+              <p className="rounded-xl bg-secondary px-3 py-2.5 text-xs text-muted-foreground">
+                Holdet har ikke sat et MobilePay-nummer op endnu —{" "}
+                {isAdmin ? "du kan tilføje det under Hold" : "spørg din administrator"}.
+              </p>
+            )}
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                eller registrer manuelt
+              </span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="pay-note">Note (valgfri)</Label>
               <Input
                 id="pay-note"
                 value={payNote}
                 onChange={(e) => setPayNote(e.target.value)}
-                placeholder="Fx MobilePay til Træner"
+                placeholder="Fx Kontanter til Træner"
               />
             </div>
           </div>
@@ -400,7 +430,7 @@ function HjemPage() {
             <Button variant="outline" onClick={() => setPayOpen(false)}>
               Annuller
             </Button>
-            <Button variant="pitch" onClick={handlePay} disabled={busy || !payAmount.trim()}>
+            <Button variant="navy" onClick={handlePay} disabled={busy || !payAmount.trim()}>
               Registrer indbetaling
             </Button>
           </DialogFooter>
