@@ -144,6 +144,8 @@ function HistorikPage() {
       title: `${f.profiles?.display_name ?? "Ukendt"} · ${f.label}`,
       detail: null,
       amount: Number(f.amount),
+      fineId: f.id,
+      createdBy: creatorNames[f.created_by] ?? "Ukendt",
     })),
     ...payments.map((p) => ({
       id: `pay-${p.id}`,
@@ -198,7 +200,17 @@ function HistorikPage() {
           {feed.map((item) => (
             <li
               key={item.id}
-              className="flex items-center gap-3 rounded-2xl border bg-card p-4 shadow-card"
+              className={`flex items-center gap-3 rounded-2xl border bg-card p-4 shadow-card ${
+                item.kind === "fine" ? "cursor-pointer transition-colors hover:bg-muted/40" : ""
+              }`}
+              onClick={
+                item.kind === "fine"
+                  ? () =>
+                      setExpandedFineId((prev) =>
+                        prev === item.fineId ? null : item.fineId!,
+                      )
+                  : undefined
+              }
             >
               <span
                 className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
