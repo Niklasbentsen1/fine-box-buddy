@@ -11,6 +11,7 @@ import {
   Plus,
   Ticket,
   Trophy,
+  UserRound,
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -18,6 +19,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTeam } from "@/lib/team";
 import { initials } from "@/lib/format";
+import { Avatar } from "@/components/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -185,8 +187,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                  {initials(displayName) || "?"}
+                <button
+                  className="rounded-full transition-opacity hover:opacity-80"
+                  aria-label="Brugermenu"
+                >
+                  <Avatar name={displayName} url={profile?.avatarUrl} size="sm" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -197,6 +202,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate({ to: "/profil" })}>
+                  <UserRound className="mr-2 h-4 w-4" /> Min profil
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" /> Log ud
                 </DropdownMenuItem>
