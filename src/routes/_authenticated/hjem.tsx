@@ -1,7 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CircleAlert, Clock, HandCoins, PiggyBank, Ticket, Wallet } from "lucide-react";
+import {
+  CircleAlert,
+  Clock,
+  HandCoins,
+  PiggyBank,
+  Smartphone,
+  Ticket,
+  Wallet,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -168,6 +176,39 @@ function HjemPage() {
     setPayAmount("");
     setPayNote("");
     await refresh();
+  };
+
+  const handlePayMobilepay = async () => {
+    const amount = parseAmount(payAmount);
+    if (!amount || amount <= 0) {
+      toast.error("Indtast et beløb større end 0");
+      return;
+    }
+    if (!current.mobilepayNumber) {
+      toast.error("Holdet har ikke registreret et MobilePay-nummer");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.from("payments").insert({
+      team_id: teamId,
+      user_id: user.id,
+      amount,
+      note: payNote.trim() || "MobilePay",
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Indbetaling registreret — du sendes videre til MobilePay");
+    setPayOpen(false);
+    setPayAmount("");
+    setPayNote("");
+    await refresh();
+    const deeplink = `mobilepay://send?phone=${current.mobilepayNumber}&amount=${amount
+      .toFixed(2)
+      .replace(".", ",")}`;
+    window.location.href = deeplink;
   };
 
   const handleGiveFine = async () => {
