@@ -240,17 +240,30 @@ function HistorikPage() {
                     <Button
                       size="sm"
                       variant="pitch"
-                      onClick={() => handleReview(item.paymentId!, "approved")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleReview(item.paymentId!, "approved");
+                      }}
                     >
                       Godkend
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => handleReview(item.paymentId!, "rejected")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleReview(item.paymentId!, "rejected");
+                      }}
                     >
                       Afvis
                     </Button>
+                  </div>
+                )}
+                {item.kind === "fine" && expandedFineId === item.fineId && (
+                  <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground">
+                    <UserRound className="h-3.5 w-3.5" />
+                    Uddelt af{" "}
+                    <span className="font-semibold text-foreground">{item.createdBy}</span>
                   </div>
                 )}
               </div>
