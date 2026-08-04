@@ -496,6 +496,14 @@ export type Database = {
       }
       join_club_by_code: { Args: { _code: string }; Returns: string }
       join_team: { Args: { _team_id: string }; Returns: undefined }
+      set_team_member_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["team_role"]
+          _team_id: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       match_status: "open" | "closed"
