@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Bell,
   Check,
   ChevronDown,
   Coins,
@@ -18,7 +20,7 @@ import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useTeam } from "@/lib/team";
-import { initials } from "@/lib/format";
+import { formatDateTime, initials } from "@/lib/format";
 import { Avatar } from "@/components/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +48,108 @@ const NAV_ITEMS = [
   { to: "/historik", label: "Historik", icon: History },
   { to: "/kampe", label: "Kampe", icon: Trophy },
 ] as const;
+
+type NotificationRow = {
+  id: string;
+  title: string;
+  body: string;
+  read_at: string | null;
+  created_at: string;
+};
+
+function NotificationBell() {
+  const { user, current } = useTeam();
+  const queryClient = useQueryClient();
+  const teamId = current?.teamId;
+
+  const { data: notifications = [] } = useQuery({
+    queryKey: ["team", teamId, "notifications", user.id],
+    enabled: !!teamId,
+    refetchInterval: 30000,
+    queryFn: async (): Promise<NotificationRow[]> => {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("id, title, body, read_at, created_at")
+        .eq("team_id", teamId!)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return (data ?? []) as NotificationRow[];
+    },
+  });
+
+  const unreadCount = notifications.filter((n) => !n.read_at).length;
+
+  const markRead = async (notification: NotificationRow) => {
+    if (notification.read_at) return;
+    await supabase
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("id", notification.id);
+    await queryClient.invalidateQueries({
+      queryKey: ["team", teamId, "notifications", user.id],
+    });
+  };
+
+  if (!teamId) return null;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className="relative flex h-10 w-10 items-center justify-center rounded-xl border bg-card transition-colors hover:bg-secondary"
+          aria-label="Notifikationer"
+        >
+          <Bell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-80">
+        <DropdownMenuLabel>Notifikationer</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {notifications.length === 0 ? (
+          <p className="px-2 py-6 text-center text-sm text-muted-foreground">
+            Ingen notifikationer endnu.
+          </p>
+        ) : (
+          notifications.map((n) => (
+            <DropdownMenuItem
+              key={n.id}
+              onClick={() => markRead(n)}
+              className="flex cursor-pointer items-start gap-2.5 py-2.5"
+            >
+              <span
+                className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
+                  n.read_at ? "bg-transparent" : "bg-pitch"
+                }`}
+              />
+              <span className="min-w-0 flex-1">
+                <span
+                  className={`block truncate text-sm ${
+                    n.read_at ? "font-medium" : "font-semibold"
+                  }`}
+                >
+                  {n.title}
+                </span>
+                <span className="block whitespace-pre-line text-xs text-muted-foreground">
+                  {n.body}
+                </span>
+                <span className="mt-0.5 block text-[10px] text-muted-foreground/70">
+                  {formatDateTime(n.created_at)}
+                </span>
+              </span>
+            </DropdownMenuItem>
+          ))
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { memberships, current, profile, user, setCurrentTeamId, refreshMemberships } = useTeam();
@@ -184,6 +288,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
+
+            <NotificationBell />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

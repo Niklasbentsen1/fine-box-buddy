@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarPlus, Medal, Trophy } from "lucide-react";
@@ -6,9 +6,11 @@ import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useTeam } from "@/lib/team";
+import { fetchTeamMembers } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -26,8 +28,16 @@ export const Route = createFileRoute("/_authenticated/kampe")({
       { name: "description", content: "Opret kampe og stem på kampens spiller." },
     ],
   }),
-  component: KampePage,
+  component: KampeWrapper,
 });
+
+function KampeWrapper() {
+  const hasChildMatch = useRouterState({
+    select: (s) => s.matches.some((m) => m.routeId.includes("$matchId")),
+  });
+  if (hasChildMatch) return <Outlet />;
+  return <KampePage />;
+}
 
 type MatchRow = {
   id: string;
@@ -58,6 +68,7 @@ function KampePage() {
   const [closesAt, setClosesAt] = useState(() =>
     toLocalInput(new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)),
   );
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
 
   const { data: matches = [] } = useQuery({
@@ -77,6 +88,7 @@ function KampePage() {
   const { data: voteAgg = [] } = useQuery({
     queryKey: ["team", teamId, "motm-agg"],
     enabled: !!teamId,
+    refetchInterval: 30000,
     queryFn: async (): Promise<VoteAggRow[]> => {
       const { data, error } = await supabase
         .from("motm_votes")
@@ -85,6 +97,12 @@ function KampePage() {
       if (error) throw error;
       return (data ?? []) as unknown as VoteAggRow[];
     },
+  });
+
+  const { data: members = [] } = useQuery({
+    queryKey: ["team", teamId, "members"],
+    enabled: !!teamId && isAdmin,
+    queryFn: () => fetchTeamMembers(teamId!),
   });
 
   if (!current || !teamId) return null;
@@ -102,27 +120,63 @@ function KampePage() {
 
   const maxVotes = leaderboard[0]?.votes ?? 0;
 
+  const openCreate = () => {
+    setSelected(new Set(members.map((m) => m.userId)));
+    setCreateOpen(true);
+  };
+
+  const toggleSelected = (userId: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      return next;
+    });
+  };
+
   const handleCreate = async () => {
     if (!opponent.trim()) {
       toast.error("Skriv modstanderens navn");
       return;
     }
     setBusy(true);
-    const { error } = await supabase.from("matches").insert({
-      team_id: teamId,
-      opponent: opponent.trim(),
-      played_at: new Date(playedAt).toISOString(),
-      voting_closes_at: new Date(closesAt).toISOString(),
-      created_by: user.id,
-    });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
+    const { data: created, error } = await supabase
+      .from("matches")
+      .insert({
+        team_id: teamId,
+        opponent: opponent.trim(),
+        played_at: new Date(playedAt).toISOString(),
+        voting_closes_at: new Date(closesAt).toISOString(),
+        created_by: user.id,
+      })
+      .select("id")
+      .single();
+    if (error || !created) {
+      setBusy(false);
+      toast.error(error?.message ?? "Kunne ikke oprette kampen");
       return;
     }
-    toast.success("Kamp oprettet — tilføj nu spillere til kampen");
+    if (selected.size > 0) {
+      const rows = Array.from(selected).map((userId) => ({
+        match_id: created.id,
+        user_id: userId,
+      }));
+      const { error: playersError } = await supabase.from("match_players").insert(rows);
+      if (playersError) {
+        setBusy(false);
+        toast.error(playersError.message);
+        return;
+      }
+    }
+    setBusy(false);
+    toast.success(
+      selected.size > 0
+        ? "Kamp oprettet — spillerne har fået besked om afstemningen"
+        : "Kamp oprettet — tilføj nu spillere til kampen",
+    );
     setCreateOpen(false);
     setOpponent("");
+    setSelected(new Set());
     await queryClient.invalidateQueries({ queryKey: ["team", teamId] });
   };
 
@@ -136,7 +190,7 @@ function KampePage() {
           </p>
         </div>
         {isAdmin && (
-          <Button onClick={() => setCreateOpen(true)}>
+          <Button onClick={openCreate}>
             <CalendarPlus className="mr-2 h-4 w-4" /> Opret kamp
           </Button>
         )}
@@ -233,7 +287,8 @@ function KampePage() {
           <div className="space-y-1.5">
             <DialogTitle>Opret kamp</DialogTitle>
             <DialogDescription>
-              Når kampen er oprettet, tilføjer du spillere, og de kan stemme på kampens spiller.
+              Vælg modstander, tidspunkter og spillere. De tilføjede spillere får besked om
+              afstemningen og kan stemme på kampens spiller.
             </DialogDescription>
           </div>
           <div className="space-y-4">
@@ -263,6 +318,47 @@ function KampePage() {
                 value={closesAt}
                 onChange={(e) => setClosesAt(e.target.value)}
               />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Spillere til kampen</Label>
+                {members.length > 0 && (
+                  <button
+                    type="button"
+                    className="text-xs font-medium text-pitch hover:underline"
+                    onClick={() =>
+                      setSelected((prev) =>
+                        prev.size === members.length
+                          ? new Set()
+                          : new Set(members.map((m) => m.userId)),
+                      )
+                    }
+                  >
+                    {selected.size === members.length ? "Fravælg alle" : "Vælg alle"}
+                  </button>
+                )}
+              </div>
+              {members.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Henter spillere…</p>
+              ) : (
+                <ul className="max-h-48 space-y-1 overflow-y-auto rounded-xl border p-1">
+                  {members.map((m) => (
+                    <li key={m.userId}>
+                      <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-secondary">
+                        <Checkbox
+                          checked={selected.has(m.userId)}
+                          onCheckedChange={() => toggleSelected(m.userId)}
+                        />
+                        <span className="text-sm font-medium">{m.name}</span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Tilføjede spillere kan stemme og får besked om afstemningens start og
+                sluttidspunkt.
+              </p>
             </div>
           </div>
           <DialogFooter>

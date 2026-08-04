@@ -62,6 +62,7 @@ function MatchDetailPage() {
   const teamId = current?.teamId;
 
   const [addOpen, setAddOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
 
@@ -260,7 +261,7 @@ function MatchDetailPage() {
               <Lock className="mr-2 h-4 w-4" /> Luk afstemning nu
             </Button>
           )}
-          <Button variant="outline" onClick={handleDeleteMatch} className="text-destructive">
+          <Button variant="outline" onClick={() => setDeleteOpen(true)} className="text-destructive">
             <Trash2 className="mr-2 h-4 w-4" /> Slet kamp
           </Button>
         </div>
@@ -398,6 +399,26 @@ function MatchDetailPage() {
             </Button>
             <Button onClick={handleAddPlayers} disabled={busy || selected.size === 0}>
               Tilføj {selected.size > 0 ? `(${selected.size})` : ""}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent>
+          <div className="space-y-1.5">
+            <DialogTitle>Slet kamp?</DialogTitle>
+            <DialogDescription>
+              Kampen mod {match.opponent} slettes permanent sammen med tilføjede spillere og
+              alle afgivne stemmer. Handlingen kan ikke fortrydes.
+            </DialogDescription>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+              Annuller
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteMatch} disabled={busy}>
+              Slet kamp
             </Button>
           </DialogFooter>
         </DialogContent>
