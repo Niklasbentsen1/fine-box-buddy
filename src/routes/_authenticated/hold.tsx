@@ -11,6 +11,8 @@ import {
   Pencil,
   Phone,
   PiggyBank,
+  ShieldMinus,
+  ShieldPlus,
   Smartphone,
   Ticket,
   Trash2,
@@ -171,6 +173,24 @@ function HoldPage() {
       return;
     }
     toast.success(`${firstName(name)} er fjernet fra holdet`);
+    await refresh();
+  };
+
+  const handleSetRole = async (userId: string, name: string, role: "admin" | "member") => {
+    const { error } = await supabase.rpc("set_team_member_role", {
+      _team_id: teamId,
+      _user_id: userId,
+      _role: role,
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(
+      role === "admin"
+        ? `${firstName(name)} er nu administrator`
+        : `${firstName(name)} er ikke administrator længere`,
+    );
     await refresh();
   };
 
@@ -358,6 +378,15 @@ function HoldPage() {
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    {m.role === "admin" ? (
+                      <DropdownMenuItem onClick={() => handleSetRole(m.userId, m.name, "member")}>
+                        <ShieldMinus className="mr-2 h-4 w-4" /> Fjern administrator
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem onClick={() => handleSetRole(m.userId, m.name, "admin")}>
+                        <ShieldPlus className="mr-2 h-4 w-4" /> Gør til administrator
+                      </DropdownMenuItem>
+                    )}
                     {m.owed > 0 && (
                       <DropdownMenuItem onClick={() => handleReminder(m.userId, m.name)}>
                         <BellRing className="mr-2 h-4 w-4" /> Send påmindelse om betaling
