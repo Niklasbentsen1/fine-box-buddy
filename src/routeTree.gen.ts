@@ -10,33 +10,143 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedBoederRouteImport } from './routes/_authenticated/boeder'
+import { Route as AuthenticatedHistorikRouteImport } from './routes/_authenticated/historik'
+import { Route as AuthenticatedHjemRouteImport } from './routes/_authenticated/hjem'
+import { Route as AuthenticatedHoldRouteImport } from './routes/_authenticated/hold'
+import { Route as AuthenticatedKampeRouteImport } from './routes/_authenticated/kampe'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedKampeMatchIdRouteImport } from './routes/_authenticated/kampe.$matchId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedBoederRoute = AuthenticatedBoederRouteImport.update({
+  id: '/boeder',
+  path: '/boeder',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHistorikRoute = AuthenticatedHistorikRouteImport.update({
+  id: '/historik',
+  path: '/historik',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHjemRoute = AuthenticatedHjemRouteImport.update({
+  id: '/hjem',
+  path: '/hjem',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHoldRoute = AuthenticatedHoldRouteImport.update({
+  id: '/hold',
+  path: '/hold',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedKampeRoute = AuthenticatedKampeRouteImport.update({
+  id: '/kampe',
+  path: '/kampe',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedKampeMatchIdRoute =
+  AuthenticatedKampeMatchIdRouteImport.update({
+    id: '/$matchId',
+    path: '/$matchId',
+    getParentRoute: () => AuthenticatedKampeRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/boeder': typeof AuthenticatedBoederRoute
+  '/historik': typeof AuthenticatedHistorikRoute
+  '/hjem': typeof AuthenticatedHjemRoute
+  '/hold': typeof AuthenticatedHoldRoute
+  '/kampe': typeof AuthenticatedKampeRouteWithChildren
+  '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/kampe/$matchId': typeof AuthenticatedKampeMatchIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/boeder': typeof AuthenticatedBoederRoute
+  '/historik': typeof AuthenticatedHistorikRoute
+  '/hjem': typeof AuthenticatedHjemRoute
+  '/hold': typeof AuthenticatedHoldRoute
+  '/kampe': typeof AuthenticatedKampeRouteWithChildren
+  '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/kampe/$matchId': typeof AuthenticatedKampeMatchIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/boeder': typeof AuthenticatedBoederRoute
+  '/_authenticated/historik': typeof AuthenticatedHistorikRoute
+  '/_authenticated/hjem': typeof AuthenticatedHjemRoute
+  '/_authenticated/hold': typeof AuthenticatedHoldRoute
+  '/_authenticated/kampe': typeof AuthenticatedKampeRouteWithChildren
+  '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/kampe/$matchId': typeof AuthenticatedKampeMatchIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/boeder'
+    | '/historik'
+    | '/hjem'
+    | '/hold'
+    | '/kampe'
+    | '/onboarding'
+    | '/kampe/$matchId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/boeder'
+    | '/historik'
+    | '/hjem'
+    | '/hold'
+    | '/kampe'
+    | '/onboarding'
+    | '/kampe/$matchId'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/boeder'
+    | '/_authenticated/historik'
+    | '/_authenticated/hjem'
+    | '/_authenticated/hold'
+    | '/_authenticated/kampe'
+    | '/_authenticated/onboarding'
+    | '/_authenticated/kampe/$matchId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +158,108 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/boeder': {
+      id: '/_authenticated/boeder'
+      path: '/boeder'
+      fullPath: '/boeder'
+      preLoaderRoute: typeof AuthenticatedBoederRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/historik': {
+      id: '/_authenticated/historik'
+      path: '/historik'
+      fullPath: '/historik'
+      preLoaderRoute: typeof AuthenticatedHistorikRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hjem': {
+      id: '/_authenticated/hjem'
+      path: '/hjem'
+      fullPath: '/hjem'
+      preLoaderRoute: typeof AuthenticatedHjemRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hold': {
+      id: '/_authenticated/hold'
+      path: '/hold'
+      fullPath: '/hold'
+      preLoaderRoute: typeof AuthenticatedHoldRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/kampe': {
+      id: '/_authenticated/kampe'
+      path: '/kampe'
+      fullPath: '/kampe'
+      preLoaderRoute: typeof AuthenticatedKampeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/kampe/$matchId': {
+      id: '/_authenticated/kampe/$matchId'
+      path: '/$matchId'
+      fullPath: '/kampe/$matchId'
+      preLoaderRoute: typeof AuthenticatedKampeMatchIdRouteImport
+      parentRoute: typeof AuthenticatedKampeRoute
+    }
   }
 }
 
+interface AuthenticatedKampeRouteChildren {
+  AuthenticatedKampeMatchIdRoute: typeof AuthenticatedKampeMatchIdRoute
+}
+
+const AuthenticatedKampeRouteChildren: AuthenticatedKampeRouteChildren = {
+  AuthenticatedKampeMatchIdRoute: AuthenticatedKampeMatchIdRoute,
+}
+
+const AuthenticatedKampeRouteWithChildren =
+  AuthenticatedKampeRoute._addFileChildren(AuthenticatedKampeRouteChildren)
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedBoederRoute: typeof AuthenticatedBoederRoute
+  AuthenticatedHistorikRoute: typeof AuthenticatedHistorikRoute
+  AuthenticatedHjemRoute: typeof AuthenticatedHjemRoute
+  AuthenticatedHoldRoute: typeof AuthenticatedHoldRoute
+  AuthenticatedKampeRoute: typeof AuthenticatedKampeRouteWithChildren
+  AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedBoederRoute: AuthenticatedBoederRoute,
+  AuthenticatedHistorikRoute: AuthenticatedHistorikRoute,
+  AuthenticatedHjemRoute: AuthenticatedHjemRoute,
+  AuthenticatedHoldRoute: AuthenticatedHoldRoute,
+  AuthenticatedKampeRoute: AuthenticatedKampeRouteWithChildren,
+  AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

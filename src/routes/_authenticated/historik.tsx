@@ -1,0 +1,255 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { HandCoins, Ticket, Wallet } from "lucide-react";
+import { toast } from "sonner";
+
+import { supabase } from "@/integrations/supabase/client";
+import { useTeam } from "@/lib/team";
+import { formatDateTime, formatKr } from "@/lib/format";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+
+export const Route = createFileRoute("/_authenticated/historik")({
+  head: () => ({
+    meta: [
+      { title: "Historik — Bødekassen" },
+      { name: "description", content: "Historik over alle bøder, indbetalinger og udbetalinger." },
+    ],
+  }),
+  component: HistorikPage,
+});
+
+type FineRow = {
+  id: string;
+  label: string;
+  amount: number;
+  created_at: string;
+  profiles: { display_name: string } | null;
+};
+
+type PaymentRow = {
+  id: string;
+  amount: number;
+  status: "pending" | "approved" | "rejected";
+  note: string | null;
+  created_at: string;
+  user_id: string;
+  profiles: { display_name: string } | null;
+};
+
+type WithdrawalRow = {
+  id: string;
+  amount: number;
+  note: string | null;
+  created_at: string;
+};
+
+type FeedItem = {
+  id: string;
+  kind: "fine" | "payment" | "withdrawal";
+  date: string;
+  title: string;
+  detail: string | null;
+  amount: number;
+  status?: PaymentRow["status"];
+  paymentId?: string;
+};
+
+const STATUS_LABEL: Record<PaymentRow["status"], string> = {
+  pending: "Afventer",
+  approved: "Godkendt",
+  rejected: "Afvist",
+};
+
+function HistorikPage() {
+  const { user, current, isAdmin } = useTeam();
+  const queryClient = useQueryClient();
+  const teamId = current?.teamId;
+
+  const { data: fines = [] } = useQuery({
+    queryKey: ["team", teamId, "hist-fines"],
+    enabled: !!teamId,
+    queryFn: async (): Promise<FineRow[]> => {
+      const { data, error } = await supabase
+        .from("fines")
+        .select("id, label, amount, created_at, profiles(display_name)")
+        .eq("team_id", teamId!)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return (data ?? []) as unknown as FineRow[];
+    },
+  });
+
+  const { data: payments = [] } = useQuery({
+    queryKey: ["team", teamId, "hist-payments"],
+    enabled: !!teamId,
+    queryFn: async (): Promise<PaymentRow[]> => {
+      const { data, error } = await supabase
+        .from("payments")
+        .select("id, amount, status, note, created_at, user_id, profiles(display_name)")
+        .eq("team_id", teamId!)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return (data ?? []) as unknown as PaymentRow[];
+    },
+  });
+
+  const { data: withdrawals = [] } = useQuery({
+    queryKey: ["team", teamId, "hist-withdrawals"],
+    enabled: !!teamId,
+    queryFn: async (): Promise<WithdrawalRow[]> => {
+      const { data, error } = await supabase
+        .from("withdrawals")
+        .select("id, amount, note, created_at")
+        .eq("team_id", teamId!)
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return (data ?? []) as WithdrawalRow[];
+    },
+  });
+
+  if (!current || !teamId) return null;
+
+  const feed: FeedItem[] = [
+    ...fines.map((f) => ({
+      id: `fine-${f.id}`,
+      kind: "fine" as const,
+      date: f.created_at,
+      title: `${f.profiles?.display_name ?? "Ukendt"} · ${f.label}`,
+      detail: null,
+      amount: Number(f.amount),
+    })),
+    ...payments.map((p) => ({
+      id: `pay-${p.id}`,
+      kind: "payment" as const,
+      date: p.created_at,
+      title: `${p.profiles?.display_name ?? "Ukendt"} indbetalte`,
+      detail: p.note,
+      amount: Number(p.amount),
+      status: p.status,
+      paymentId: p.id,
+    })),
+    ...withdrawals.map((w) => ({
+      id: `wd-${w.id}`,
+      kind: "withdrawal" as const,
+      date: w.created_at,
+      title: "Udbetaling fra kassen",
+      detail: w.note,
+      amount: Number(w.amount),
+    })),
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const handleReview = async (paymentId: string, status: "approved" | "rejected") => {
+    const { error } = await supabase
+      .from("payments")
+      .update({ status, reviewed_by: user.id, reviewed_at: new Date().toISOString() })
+      .eq("id", paymentId);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(status === "approved" ? "Indbetaling godkendt" : "Indbetaling afvist");
+    await queryClient.invalidateQueries({ queryKey: ["team", teamId] });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-display text-4xl font-semibold">Historik</h1>
+        <p className="mt-1 text-muted-foreground">
+          Alle bøder, indbetalinger og udbetalinger for {current.teamName}
+        </p>
+      </div>
+
+      {feed.length === 0 ? (
+        <div className="rounded-2xl border bg-card p-10 text-center shadow-card">
+          <p className="text-sm text-muted-foreground">
+            Der er endnu ingen aktivitet i bødekassen.
+          </p>
+        </div>
+      ) : (
+        <ul className="space-y-2">
+          {feed.map((item) => (
+            <li
+              key={item.id}
+              className="flex items-center gap-3 rounded-2xl border bg-card p-4 shadow-card"
+            >
+              <span
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                  item.kind === "fine"
+                    ? "bg-gold-soft text-gold-foreground"
+                    : item.kind === "payment"
+                      ? "bg-pitch-soft text-pitch"
+                      : "bg-primary/10 text-primary"
+                }`}
+              >
+                {item.kind === "fine" ? (
+                  <Ticket className="h-5 w-5" />
+                ) : item.kind === "payment" ? (
+                  <HandCoins className="h-5 w-5" />
+                ) : (
+                  <Wallet className="h-5 w-5" />
+                )}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">{item.title}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {formatDateTime(item.date)}
+                  {item.detail ? ` · ${item.detail}` : ""}
+                </p>
+                {isAdmin && item.kind === "payment" && item.status === "pending" && (
+                  <div className="mt-2 flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="pitch"
+                      onClick={() => handleReview(item.paymentId!, "approved")}
+                    >
+                      Godkend
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleReview(item.paymentId!, "rejected")}
+                    >
+                      Afvis
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                <span
+                  className={`text-sm font-bold ${
+                    item.kind === "fine"
+                      ? "text-gold-foreground"
+                      : item.kind === "payment"
+                        ? "text-pitch"
+                        : "text-primary"
+                  }`}
+                >
+                  {item.kind === "fine" ? "+" : item.kind === "payment" ? "+" : "−"}
+                  {formatKr(item.amount)}
+                </span>
+                {item.kind === "payment" && item.status && (
+                  <Badge
+                    variant={
+                      item.status === "approved"
+                        ? "pitch"
+                        : item.status === "rejected"
+                          ? "destructive"
+                          : "muted"
+                    }
+                  >
+                    {STATUS_LABEL[item.status]}
+                  </Badge>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
