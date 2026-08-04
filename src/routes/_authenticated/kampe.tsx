@@ -89,17 +89,16 @@ function KampePage() {
 
   if (!current || !teamId) return null;
 
-  const leaderboard = Object.values(
-    voteAgg.reduce<Record<string, { name: string; votes: number }>>((acc, row) => {
-      const entry = acc[row.voted_for_id] ?? {
-        name: row.profiles?.display_name ?? "Ukendt",
-        votes: 0,
-      };
-      entry.votes += 1;
-      acc[row.voted_for_id] = entry;
-      return acc;
-    }),
-  ).sort((a, b) => b.votes - a.votes);
+  const leaderboardMap = new Map<string, { name: string; votes: number }>();
+  for (const row of voteAgg) {
+    const entry = leaderboardMap.get(row.voted_for_id) ?? {
+      name: row.profiles?.display_name ?? "Ukendt",
+      votes: 0,
+    };
+    entry.votes += 1;
+    leaderboardMap.set(row.voted_for_id, entry);
+  }
+  const leaderboard = Array.from(leaderboardMap.values()).sort((a, b) => b.votes - a.votes);
 
   const maxVotes = leaderboard[0]?.votes ?? 0;
 

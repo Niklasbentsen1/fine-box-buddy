@@ -12,6 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedBoederRouteImport } from './routes/_authenticated/boeder'
+import { Route as AuthenticatedHistorikRouteImport } from './routes/_authenticated/historik'
+import { Route as AuthenticatedHjemRouteImport } from './routes/_authenticated/hjem'
+import { Route as AuthenticatedHoldRouteImport } from './routes/_authenticated/hold'
+import { Route as AuthenticatedKampeRouteImport } from './routes/_authenticated/kampe'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 
 const IndexRoute = IndexRouteImport.update({
@@ -28,6 +33,31 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedBoederRoute = AuthenticatedBoederRouteImport.update({
+  id: '/boeder',
+  path: '/boeder',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHistorikRoute = AuthenticatedHistorikRouteImport.update({
+  id: '/historik',
+  path: '/historik',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHjemRoute = AuthenticatedHjemRouteImport.update({
+  id: '/hjem',
+  path: '/hjem',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHoldRoute = AuthenticatedHoldRouteImport.update({
+  id: '/hold',
+  path: '/hold',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedKampeRoute = AuthenticatedKampeRouteImport.update({
+  id: '/kampe',
+  path: '/kampe',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -37,11 +67,21 @@ const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/boeder': typeof AuthenticatedBoederRoute
+  '/historik': typeof AuthenticatedHistorikRoute
+  '/hjem': typeof AuthenticatedHjemRoute
+  '/hold': typeof AuthenticatedHoldRoute
+  '/kampe': typeof AuthenticatedKampeRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/boeder': typeof AuthenticatedBoederRoute
+  '/historik': typeof AuthenticatedHistorikRoute
+  '/hjem': typeof AuthenticatedHjemRoute
+  '/hold': typeof AuthenticatedHoldRoute
+  '/kampe': typeof AuthenticatedKampeRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
 }
 export interface FileRoutesById {
@@ -49,18 +89,44 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/boeder': typeof AuthenticatedBoederRoute
+  '/_authenticated/historik': typeof AuthenticatedHistorikRoute
+  '/_authenticated/hjem': typeof AuthenticatedHjemRoute
+  '/_authenticated/hold': typeof AuthenticatedHoldRoute
+  '/_authenticated/kampe': typeof AuthenticatedKampeRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/onboarding'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/boeder'
+    | '/historik'
+    | '/hjem'
+    | '/hold'
+    | '/kampe'
+    | '/onboarding'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/onboarding'
+  to:
+    | '/'
+    | '/auth'
+    | '/boeder'
+    | '/historik'
+    | '/hjem'
+    | '/hold'
+    | '/kampe'
+    | '/onboarding'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/boeder'
+    | '/_authenticated/historik'
+    | '/_authenticated/hjem'
+    | '/_authenticated/hold'
+    | '/_authenticated/kampe'
     | '/_authenticated/onboarding'
   fileRoutesById: FileRoutesById
 }
@@ -93,6 +159,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/boeder': {
+      id: '/_authenticated/boeder'
+      path: '/boeder'
+      fullPath: '/boeder'
+      preLoaderRoute: typeof AuthenticatedBoederRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/historik': {
+      id: '/_authenticated/historik'
+      path: '/historik'
+      fullPath: '/historik'
+      preLoaderRoute: typeof AuthenticatedHistorikRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hjem': {
+      id: '/_authenticated/hjem'
+      path: '/hjem'
+      fullPath: '/hjem'
+      preLoaderRoute: typeof AuthenticatedHjemRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hold': {
+      id: '/_authenticated/hold'
+      path: '/hold'
+      fullPath: '/hold'
+      preLoaderRoute: typeof AuthenticatedHoldRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/kampe': {
+      id: '/_authenticated/kampe'
+      path: '/kampe'
+      fullPath: '/kampe'
+      preLoaderRoute: typeof AuthenticatedKampeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/onboarding': {
       id: '/_authenticated/onboarding'
       path: '/onboarding'
@@ -104,10 +205,20 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedBoederRoute: typeof AuthenticatedBoederRoute
+  AuthenticatedHistorikRoute: typeof AuthenticatedHistorikRoute
+  AuthenticatedHjemRoute: typeof AuthenticatedHjemRoute
+  AuthenticatedHoldRoute: typeof AuthenticatedHoldRoute
+  AuthenticatedKampeRoute: typeof AuthenticatedKampeRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedBoederRoute: AuthenticatedBoederRoute,
+  AuthenticatedHistorikRoute: AuthenticatedHistorikRoute,
+  AuthenticatedHjemRoute: AuthenticatedHjemRoute,
+  AuthenticatedHoldRoute: AuthenticatedHoldRoute,
+  AuthenticatedKampeRoute: AuthenticatedKampeRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
 }
 
