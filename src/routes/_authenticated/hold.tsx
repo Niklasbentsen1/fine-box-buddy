@@ -265,6 +265,36 @@ function HoldPage() {
         </Button>
       </section>
 
+      <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card p-4 shadow-card">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            MobilePay-nummer
+          </p>
+          <p className="flex items-center gap-2 font-mono text-xl font-bold tracking-[0.15em]">
+            <Smartphone className="h-5 w-5 text-pitch" />
+            {current.mobilepayNumber ?? "Ikke sat op"}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {current.mobilepayNumber
+              ? "Medlemmer kan betale bøder direkte til dette nummer"
+              : "Medlemmer kan ikke betale via MobilePay, før nummeret er sat op"}
+          </p>
+        </div>
+        {isAdmin && (
+          <Button
+            variant="subtle"
+            size="sm"
+            onClick={() => {
+              setMpNumber(current.mobilepayNumber ?? "");
+              setMpOpen(true);
+            }}
+          >
+            <Pencil className="mr-2 h-4 w-4" />
+            {current.mobilepayNumber ? "Rediger nummer" : "Tilføj nummer"}
+          </Button>
+        )}
+      </section>
+
       <section className="rounded-2xl border bg-card p-5 shadow-card">
         <h2 className="font-display text-xl font-semibold">Spillerliste ({members.length})</h2>
         <ul className="mt-3 divide-y">
@@ -314,6 +344,37 @@ function HoldPage() {
           ))}
         </ul>
       </section>
+
+      <Dialog open={mpOpen} onOpenChange={setMpOpen}>
+        <DialogContent>
+          <div className="space-y-1.5">
+            <DialogTitle>MobilePay-nummer</DialogTitle>
+            <DialogDescription>
+              Det mobilnummer, som medlemmerne betaler deres bøder til via MobilePay. Lad feltet
+              stå tomt for at fjerne nummeret.
+            </DialogDescription>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="mp-number">Mobilnummer (8 cifre)</Label>
+            <Input
+              id="mp-number"
+              inputMode="numeric"
+              maxLength={8}
+              value={mpNumber}
+              onChange={(e) => setMpNumber(e.target.value.replace(/\D/g, ""))}
+              placeholder="Fx 12345678"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMpOpen(false)}>
+              Annuller
+            </Button>
+            <Button variant="pitch" onClick={handleSaveMobilepay} disabled={busy}>
+              Gem nummer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
         <DialogContent>
