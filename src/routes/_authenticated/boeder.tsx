@@ -46,6 +46,8 @@ type FineRow = {
   profiles: { display_name: string } | null;
 };
 
+type SortOption = "newest" | "price-asc" | "price-desc" | "label-asc" | "label-desc";
+
 function BoederPage() {
   const { current, isAdmin } = useTeam();
   const queryClient = useQueryClient();
@@ -55,6 +57,7 @@ function BoederPage() {
   const [label, setLabel] = useState("");
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
 
   const { data: fineTypes = [] } = useQuery({
     queryKey: ["team", teamId, "fine-types"],
@@ -84,6 +87,25 @@ function BoederPage() {
       return (data ?? []) as unknown as FineRow[];
     },
   });
+
+  const sortedFines = useMemo(() => {
+    const list = [...fines];
+    switch (sortBy) {
+      case "price-asc":
+        return list.sort((a, b) => a.amount - b.amount);
+      case "price-desc":
+        return list.sort((a, b) => b.amount - a.amount);
+      case "label-asc":
+        return list.sort((a, b) => a.label.localeCompare(b.label, "da"));
+      case "label-desc":
+        return list.sort((a, b) => b.label.localeCompare(a.label, "da"));
+      case "newest":
+      default:
+        return list.sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
+    }
+  }, [fines, sortBy]);
 
   if (!current || !teamId) return null;
 
