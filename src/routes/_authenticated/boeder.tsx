@@ -206,15 +206,30 @@ function BoederPage() {
       </section>
 
       <section className="rounded-2xl border bg-card p-5 shadow-card">
-        <div className="flex items-center justify-between">
-          <h2 className="font-display text-xl font-semibold">Uddelte bøder</h2>
-          <Ticket className="h-5 w-5 text-muted-foreground" />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <h2 className="font-display text-xl font-semibold">Uddelte bøder</h2>
+            <Ticket className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+            <SelectTrigger className="w-auto min-w-[10rem] gap-2" aria-label="Sortér bøder">
+              <ArrowUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <SelectValue placeholder="Sortér" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Nyeste først</SelectItem>
+              <SelectItem value="price-asc">Pris: lav til høj</SelectItem>
+              <SelectItem value="price-desc">Pris: høj til lav</SelectItem>
+              <SelectItem value="label-asc">Alfabetisk A-Å</SelectItem>
+              <SelectItem value="label-desc">Alfabetisk Å-A</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        {fines.length === 0 ? (
+        {sortedFines.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">Ingen bøder uddelt endnu.</p>
         ) : (
           <ul className="mt-3 divide-y">
-            {fines.map((fine) => (
+            {sortedFines.map((fine) => (
               <li key={fine.id} className="flex items-center gap-3 py-2.5">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">
