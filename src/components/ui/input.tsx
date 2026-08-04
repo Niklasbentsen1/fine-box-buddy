@@ -1,22 +1,57 @@
-import * as React from "react";
+import type * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, ...props }, ref) => {
-    return (
-      <input
-        type={type}
-        className={cn(
-          "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-          className,
-        )}
-        ref={ref}
-        {...props}
-      />
-    );
-  },
-);
-Input.displayName = "Input";
+export function Input({ className, ...props }: React.ComponentProps<"input">) {
+  return (
+    <input
+      className={cn(
+        "h-11 w-full rounded-xl border-2 border-input bg-card px-3.5 text-sm font-medium text-foreground transition-colors outline-none placeholder:text-muted-foreground/70 focus:border-ring",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
-export { Input };
+export function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
+  return (
+    <textarea
+      className={cn(
+        "min-h-20 w-full rounded-xl border-2 border-input bg-card px-3.5 py-2.5 text-sm font-medium text-foreground transition-colors outline-none placeholder:text-muted-foreground/70 focus:border-ring",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function Select({ className, children, ...props }: React.ComponentProps<"select">) {
+  return (
+    <select
+      className={cn(
+        "h-11 w-full cursor-pointer rounded-xl border-2 border-input bg-card px-3 text-sm font-medium text-foreground transition-colors outline-none focus:border-ring",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </select>
+  );
+}
+
+export function Label({ className, ...props }: React.ComponentProps<"label">) {
+  return (
+    <label
+      className={cn(
+        "mb-1.5 block text-xs font-bold tracking-wide text-muted-foreground uppercase",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function Field({ className, ...props }: React.ComponentProps<"div">) {
+  return <div className={cn("mb-4", className)} {...props} />;
+}
