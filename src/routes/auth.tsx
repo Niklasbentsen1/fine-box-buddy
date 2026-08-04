@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, Coins, Mail, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -72,7 +72,7 @@ function AuthPage() {
     ];
   }, [password]);
 
-  const passwordIsValid = passwordRules.every((r) => r.met);
+  const passwordIsValid = passwordRules.every((r: { met: boolean }) => r.met);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
