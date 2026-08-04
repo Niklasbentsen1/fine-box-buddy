@@ -11,12 +11,14 @@ export type Membership = {
   clubName: string;
   inviteCode: string;
   mobilepayNumber: string | null;
+  balanceCarryover: number;
   role: "admin" | "member";
 };
 
 export type Profile = {
   displayName: string;
   avatarUrl: string | null;
+  phone: string | null;
 };
 
 type TeamContextValue = {
@@ -42,6 +44,7 @@ type MembershipRow = {
     name: string;
     club_id: string;
     mobilepay_number: string | null;
+    balance_carryover: number;
     clubs: { id: string; name: string; invite_code: string };
   };
 };
