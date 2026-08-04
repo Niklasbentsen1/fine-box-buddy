@@ -268,17 +268,26 @@ function HistorikPage() {
                 )}
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
-                <span
-                  className={`text-sm font-bold ${
-                    item.kind === "fine"
-                      ? "text-gold-foreground"
-                      : item.kind === "payment"
-                        ? "text-pitch"
-                        : "text-primary"
-                  }`}
-                >
-                  {item.kind === "fine" ? "+" : item.kind === "payment" ? "+" : "−"}
-                  {formatKr(item.amount)}
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className={`text-sm font-bold ${
+                      item.kind === "fine"
+                        ? "text-gold-foreground"
+                        : item.kind === "payment"
+                          ? "text-pitch"
+                          : "text-primary"
+                    }`}
+                  >
+                    {item.kind === "fine" ? "+" : item.kind === "payment" ? "+" : "−"}
+                    {formatKr(item.amount)}
+                  </span>
+                  {item.kind === "fine" && (
+                    <ChevronDown
+                      className={`h-4 w-4 text-muted-foreground transition-transform ${
+                        expandedFineId === item.fineId ? "rotate-180" : ""
+                      }`}
+                    />
+                  )}
                 </span>
                 {item.kind === "payment" && item.status && (
                   <Badge
