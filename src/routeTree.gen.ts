@@ -18,6 +18,7 @@ import { Route as AuthenticatedHjemRouteImport } from './routes/_authenticated/h
 import { Route as AuthenticatedHoldRouteImport } from './routes/_authenticated/hold'
 import { Route as AuthenticatedKampeRouteImport } from './routes/_authenticated/kampe'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
 import { Route as AuthenticatedKampeMatchIdRouteImport } from './routes/_authenticated/kampe.$matchId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -64,6 +65,11 @@ const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProfilRoute = AuthenticatedProfilRouteImport.update({
+  id: '/profil',
+  path: '/profil',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedKampeMatchIdRoute =
   AuthenticatedKampeMatchIdRouteImport.update({
     id: '/$matchId',
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/hold': typeof AuthenticatedHoldRoute
   '/kampe': typeof AuthenticatedKampeRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/profil': typeof AuthenticatedProfilRoute
   '/kampe/$matchId': typeof AuthenticatedKampeMatchIdRoute
 }
 export interface FileRoutesByTo {
@@ -91,6 +98,7 @@ export interface FileRoutesByTo {
   '/hold': typeof AuthenticatedHoldRoute
   '/kampe': typeof AuthenticatedKampeRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/profil': typeof AuthenticatedProfilRoute
   '/kampe/$matchId': typeof AuthenticatedKampeMatchIdRoute
 }
 export interface FileRoutesById {
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   '/_authenticated/hold': typeof AuthenticatedHoldRoute
   '/_authenticated/kampe': typeof AuthenticatedKampeRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/_authenticated/kampe/$matchId': typeof AuthenticatedKampeMatchIdRoute
 }
 export interface FileRouteTypes {
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/hold'
     | '/kampe'
     | '/onboarding'
+    | '/profil'
     | '/kampe/$matchId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/hold'
     | '/kampe'
     | '/onboarding'
+    | '/profil'
     | '/kampe/$matchId'
   id:
     | '__root__'
@@ -140,6 +151,7 @@ export interface FileRouteTypes {
     | '/_authenticated/hold'
     | '/_authenticated/kampe'
     | '/_authenticated/onboarding'
+    | '/_authenticated/profil'
     | '/_authenticated/kampe/$matchId'
   fileRoutesById: FileRoutesById
 }
@@ -214,6 +226,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/profil': {
+      id: '/_authenticated/profil'
+      path: '/profil'
+      fullPath: '/profil'
+      preLoaderRoute: typeof AuthenticatedProfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/kampe/$matchId': {
       id: '/_authenticated/kampe/$matchId'
       path: '/$matchId'
@@ -242,6 +261,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHoldRoute: typeof AuthenticatedHoldRoute
   AuthenticatedKampeRoute: typeof AuthenticatedKampeRouteWithChildren
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -251,6 +271,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHoldRoute: AuthenticatedHoldRoute,
   AuthenticatedKampeRoute: AuthenticatedKampeRouteWithChildren,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedProfilRoute: AuthenticatedProfilRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
