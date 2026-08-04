@@ -159,7 +159,7 @@ function OnboardingPage() {
             </div>
             <Button
               type="submit"
-              variant="secondary"
+              variant="subtle"
               className="mt-6 w-full"
               disabled={busy !== null || code.trim().length < 6}
             >

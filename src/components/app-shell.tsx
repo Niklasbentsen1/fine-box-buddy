@@ -24,7 +24,6 @@ import {
   DialogContent,
   DialogDescription,
   DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
@@ -228,13 +227,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
-          <DialogHeader>
+          <div className="space-y-1.5">
             <DialogTitle>Opret nyt hold</DialogTitle>
             <DialogDescription>
               Opret et nyt hold i {current?.clubName} — fx hvis klubben har hold i flere rækker. Du
               bliver administrator på det nye hold.
             </DialogDescription>
-          </DialogHeader>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="team-name">Holdnavn</Label>
             <Input
@@ -257,12 +256,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <Dialog open={joinOpen} onOpenChange={setJoinOpen}>
         <DialogContent>
-          <DialogHeader>
+          <div className="space-y-1.5">
             <DialogTitle>Tilmeld klub med kode</DialogTitle>
             <DialogDescription>
               Indtast den 6-tegns klubkode, du har fået af din klub.
             </DialogDescription>
-          </DialogHeader>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="club-code">Klubkode</Label>
             <Input
