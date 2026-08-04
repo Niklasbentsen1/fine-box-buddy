@@ -250,8 +250,28 @@ function AuthPage() {
                     minLength={6}
                     required
                   />
+                  {mode === "signup" && (
+                    <ul className="space-y-1.5 pt-1">
+                      {passwordRules.map((rule) => (
+                        <li key={rule.label} className="flex items-center gap-2 text-xs">
+                          {rule.met ? (
+                            <Check className="h-3.5 w-3.5 text-pitch" aria-hidden />
+                          ) : (
+                            <X className="h-3.5 w-3.5 text-destructive" aria-hidden />
+                          )}
+                          <span className={rule.met ? "text-pitch" : "text-muted-foreground"}>
+                            {rule.label}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-                <Button type="submit" className="w-full" disabled={busy}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={busy || (mode === "signup" && !passwordIsValid)}
+                >
                   {busy ? "Vent et øjeblik…" : mode === "login" ? "Log ind" : "Opret bruger"}
                 </Button>
               </form>
