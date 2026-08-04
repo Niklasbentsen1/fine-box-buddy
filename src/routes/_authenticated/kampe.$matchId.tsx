@@ -310,6 +310,9 @@ function MatchDetailPage() {
             Spillere og stemmer ({totalVotes})
           </h2>
         </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Alle stemmer er anonyme — kun det samlede stemmetal vises.
+        </p>
 
         {!isParticipant && !isAdmin && (
           <p className="mt-3 rounded-xl bg-secondary p-3 text-sm text-muted-foreground">

@@ -47,9 +47,10 @@ type MatchRow = {
   status: "open" | "closed";
 };
 
-type VoteAggRow = {
-  voted_for_id: string;
-  profiles: { display_name: string } | null;
+type LeaderboardRow = {
+  user_id: string;
+  display_name: string | null;
+  votes: number;
 };
 
 function toLocalInput(date: Date): string {
@@ -85,17 +86,17 @@ function KampePage() {
     },
   });
 
-  const { data: voteAgg = [] } = useQuery({
+  // Anonym sæsonstilling: kun samlede stemmetal pr. spiller, aldrig hvem der stemte.
+  const { data: leaderboardRows = [] } = useQuery({
     queryKey: ["team", teamId, "motm-agg"],
     enabled: !!teamId,
     refetchInterval: 30000,
-    queryFn: async (): Promise<VoteAggRow[]> => {
-      const { data, error } = await supabase
-        .from("motm_votes")
-        .select("voted_for_id, matches!inner(team_id), profiles!motm_votes_voted_for_id_fkey(display_name)")
-        .eq("matches.team_id", teamId!);
+    queryFn: async (): Promise<LeaderboardRow[]> => {
+      const { data, error } = await supabase.rpc("get_team_motm_leaderboard", {
+        _team_id: teamId!,
+      });
       if (error) throw error;
-      return (data ?? []) as unknown as VoteAggRow[];
+      return (data ?? []) as unknown as LeaderboardRow[];
     },
   });
 
@@ -107,16 +108,10 @@ function KampePage() {
 
   if (!current || !teamId) return null;
 
-  const leaderboardMap = new Map<string, { name: string; votes: number }>();
-  for (const row of voteAgg) {
-    const entry = leaderboardMap.get(row.voted_for_id) ?? {
-      name: row.profiles?.display_name ?? "Ukendt",
-      votes: 0,
-    };
-    entry.votes += 1;
-    leaderboardMap.set(row.voted_for_id, entry);
-  }
-  const leaderboard = Array.from(leaderboardMap.values()).sort((a, b) => b.votes - a.votes);
+  const leaderboard = leaderboardRows.map((row) => ({
+    name: row.display_name ?? "Ukendt",
+    votes: Number(row.votes),
+  }));
 
   const maxVotes = leaderboard[0]?.votes ?? 0;
 
