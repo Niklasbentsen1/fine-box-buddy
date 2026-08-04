@@ -52,7 +52,8 @@ type PlayerRow = {
   profiles: { display_name: string } | null;
 };
 
-type VoteRow = { voter_id: string; voted_for_id: string };
+type MyVoteRow = { voted_for_id: string };
+type CountRow = { user_id: string; votes: number };
 
 function MatchDetailPage() {
   const { matchId } = Route.useParams();
@@ -93,16 +94,30 @@ function MatchDetailPage() {
     },
   });
 
-  const { data: votes = [] } = useQuery({
-    queryKey: ["team", teamId, "match-votes", matchId],
+  // Kun ens egen stemme kan læses (RLS) — alle andre stemmer er anonyme.
+  const { data: myVotes = [] } = useQuery({
+    queryKey: ["team", teamId, "match-my-vote", matchId, user.id],
     enabled: !!teamId,
-    queryFn: async (): Promise<VoteRow[]> => {
+    queryFn: async (): Promise<MyVoteRow[]> => {
       const { data, error } = await supabase
         .from("motm_votes")
-        .select("voter_id, voted_for_id")
+        .select("voted_for_id")
         .eq("match_id", matchId);
       if (error) throw error;
-      return (data ?? []) as VoteRow[];
+      return (data ?? []) as MyVoteRow[];
+    },
+  });
+
+  // Anonyme, aggregerede stemmetal pr. spiller (ingen info om hvem der stemte).
+  const { data: counts = [] } = useQuery({
+    queryKey: ["team", teamId, "match-vote-counts", matchId],
+    enabled: !!teamId,
+    queryFn: async (): Promise<CountRow[]> => {
+      const { data, error } = await supabase.rpc("get_match_vote_counts", {
+        _match_id: matchId,
+      });
+      if (error) throw error;
+      return (data ?? []) as unknown as CountRow[];
     },
   });
 
