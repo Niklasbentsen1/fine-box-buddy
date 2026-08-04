@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Ticket, Trash2 } from "lucide-react";
+import { ArrowUpDown, Plus, Ticket, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/boeder")({
   head: () => ({
@@ -39,6 +46,8 @@ type FineRow = {
   profiles: { display_name: string } | null;
 };
 
+type SortOption = "newest" | "price-asc" | "price-desc" | "label-asc" | "label-desc";
+
 function BoederPage() {
   const { current, isAdmin } = useTeam();
   const queryClient = useQueryClient();
@@ -48,6 +57,7 @@ function BoederPage() {
   const [label, setLabel] = useState("");
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
 
   const { data: fineTypes = [] } = useQuery({
     queryKey: ["team", teamId, "fine-types"],
@@ -77,6 +87,25 @@ function BoederPage() {
       return (data ?? []) as unknown as FineRow[];
     },
   });
+
+  const sortedFines = useMemo(() => {
+    const list = [...fines];
+    switch (sortBy) {
+      case "price-asc":
+        return list.sort((a, b) => a.amount - b.amount);
+      case "price-desc":
+        return list.sort((a, b) => b.amount - a.amount);
+      case "label-asc":
+        return list.sort((a, b) => a.label.localeCompare(b.label, "da"));
+      case "label-desc":
+        return list.sort((a, b) => b.label.localeCompare(a.label, "da"));
+      case "newest":
+      default:
+        return list.sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
+    }
+  }, [fines, sortBy]);
 
   if (!current || !teamId) return null;
 
@@ -177,15 +206,30 @@ function BoederPage() {
       </section>
 
       <section className="rounded-2xl border bg-card p-5 shadow-card">
-        <div className="flex items-center justify-between">
-          <h2 className="font-display text-xl font-semibold">Uddelte bøder</h2>
-          <Ticket className="h-5 w-5 text-muted-foreground" />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <h2 className="font-display text-xl font-semibold">Uddelte bøder</h2>
+            <Ticket className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+            <SelectTrigger className="w-auto min-w-[10rem] gap-2" aria-label="Sortér bøder">
+              <ArrowUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <SelectValue placeholder="Sortér" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Nyeste først</SelectItem>
+              <SelectItem value="price-asc">Pris: lav til høj</SelectItem>
+              <SelectItem value="price-desc">Pris: høj til lav</SelectItem>
+              <SelectItem value="label-asc">Alfabetisk A-Å</SelectItem>
+              <SelectItem value="label-desc">Alfabetisk Å-A</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        {fines.length === 0 ? (
+        {sortedFines.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">Ingen bøder uddelt endnu.</p>
         ) : (
           <ul className="mt-3 divide-y">
-            {fines.map((fine) => (
+            {sortedFines.map((fine) => (
               <li key={fine.id} className="flex items-center gap-3 py-2.5">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">
