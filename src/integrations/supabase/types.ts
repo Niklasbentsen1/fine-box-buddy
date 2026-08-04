@@ -528,6 +528,21 @@ export type Database = {
         Returns: string
       }
       end_season: { Args: { _team_id: string }; Returns: undefined }
+      get_match_vote_counts: {
+        Args: { _match_id: string }
+        Returns: {
+          user_id: string
+          votes: number
+        }[]
+      }
+      get_team_motm_leaderboard: {
+        Args: { _team_id: string }
+        Returns: {
+          display_name: string
+          user_id: string
+          votes: number
+        }[]
+      }
       is_club_member: {
         Args: { _club_id: string; _user_id: string }
         Returns: boolean

@@ -52,7 +52,8 @@ type PlayerRow = {
   profiles: { display_name: string } | null;
 };
 
-type VoteRow = { voter_id: string; voted_for_id: string };
+type MyVoteRow = { voted_for_id: string };
+type CountRow = { user_id: string; votes: number };
 
 function MatchDetailPage() {
   const { matchId } = Route.useParams();
@@ -93,16 +94,30 @@ function MatchDetailPage() {
     },
   });
 
-  const { data: votes = [] } = useQuery({
-    queryKey: ["team", teamId, "match-votes", matchId],
+  // Kun ens egen stemme kan læses (RLS) — alle andre stemmer er anonyme.
+  const { data: myVotes = [] } = useQuery({
+    queryKey: ["team", teamId, "match-my-vote", matchId, user.id],
     enabled: !!teamId,
-    queryFn: async (): Promise<VoteRow[]> => {
+    queryFn: async (): Promise<MyVoteRow[]> => {
       const { data, error } = await supabase
         .from("motm_votes")
-        .select("voter_id, voted_for_id")
+        .select("voted_for_id")
         .eq("match_id", matchId);
       if (error) throw error;
-      return (data ?? []) as VoteRow[];
+      return (data ?? []) as MyVoteRow[];
+    },
+  });
+
+  // Anonyme, aggregerede stemmetal pr. spiller (ingen info om hvem der stemte).
+  const { data: counts = [] } = useQuery({
+    queryKey: ["team", teamId, "match-vote-counts", matchId],
+    enabled: !!teamId,
+    queryFn: async (): Promise<CountRow[]> => {
+      const { data, error } = await supabase.rpc("get_match_vote_counts", {
+        _match_id: matchId,
+      });
+      if (error) throw error;
+      return (data ?? []) as unknown as CountRow[];
     },
   });
 
@@ -138,12 +153,15 @@ function MatchDetailPage() {
 
   const votingOpen = match.status === "open" && new Date(match.voting_closes_at) > new Date();
   const isParticipant = players.some((p) => p.user_id === user.id);
-  const myVote = votes.find((v) => v.voter_id === user.id);
+  const myVote = myVotes[0];
   const canVote = votingOpen && isParticipant && !myVote;
 
   const voteCounts = new Map<string, number>();
-  for (const v of votes) {
-    voteCounts.set(v.voted_for_id, (voteCounts.get(v.voted_for_id) ?? 0) + 1);
+  let totalVotes = 0;
+  for (const c of counts) {
+    const n = Number(c.votes);
+    voteCounts.set(c.user_id, n);
+    totalVotes += n;
   }
   const maxCount = Math.max(0, ...voteCounts.values());
   const leaders = new Set(
@@ -289,9 +307,12 @@ function MatchDetailPage() {
         <div className="flex items-center gap-2">
           <Vote className="h-5 w-5 text-pitch" />
           <h2 className="font-display text-xl font-semibold">
-            Spillere og stemmer ({votes.length})
+            Spillere og stemmer ({totalVotes})
           </h2>
         </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Alle stemmer er anonyme — kun det samlede stemmetal vises.
+        </p>
 
         {!isParticipant && !isAdmin && (
           <p className="mt-3 rounded-xl bg-secondary p-3 text-sm text-muted-foreground">
@@ -329,7 +350,7 @@ function MatchDetailPage() {
                     <p className="flex items-center gap-1.5 truncate text-sm font-semibold">
                       {name}
                       {isSelf && <span className="text-xs font-normal text-muted-foreground">(dig)</span>}
-                      {isLeader && votes.length > 0 && <Crown className="h-4 w-4 text-gold" />}
+                      {isLeader && totalVotes > 0 && <Crown className="h-4 w-4 text-gold" />}
                     </p>
                     <div className="mt-1 flex items-center gap-2">
                       <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary">
