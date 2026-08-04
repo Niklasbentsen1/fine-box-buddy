@@ -430,7 +430,7 @@ function HjemPage() {
             <Button variant="outline" onClick={() => setPayOpen(false)}>
               Annuller
             </Button>
-            <Button variant="navy" onClick={handlePay} disabled={busy || !payAmount.trim()}>
+            <Button variant="primary" onClick={handlePay} disabled={busy || !payAmount.trim()}>
               Registrer indbetaling
             </Button>
           </DialogFooter>
