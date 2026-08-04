@@ -18,6 +18,7 @@ import { Route as AuthenticatedHjemRouteImport } from './routes/_authenticated/h
 import { Route as AuthenticatedHoldRouteImport } from './routes/_authenticated/hold'
 import { Route as AuthenticatedKampeRouteImport } from './routes/_authenticated/kampe'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedKampeMatchIdRouteImport } from './routes/_authenticated/kampe.$matchId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -63,6 +64,12 @@ const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedKampeMatchIdRoute =
+  AuthenticatedKampeMatchIdRouteImport.update({
+    id: '/$matchId',
+    path: '/$matchId',
+    getParentRoute: () => AuthenticatedKampeRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -71,8 +78,9 @@ export interface FileRoutesByFullPath {
   '/historik': typeof AuthenticatedHistorikRoute
   '/hjem': typeof AuthenticatedHjemRoute
   '/hold': typeof AuthenticatedHoldRoute
-  '/kampe': typeof AuthenticatedKampeRoute
+  '/kampe': typeof AuthenticatedKampeRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/kampe/$matchId': typeof AuthenticatedKampeMatchIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -81,8 +89,9 @@ export interface FileRoutesByTo {
   '/historik': typeof AuthenticatedHistorikRoute
   '/hjem': typeof AuthenticatedHjemRoute
   '/hold': typeof AuthenticatedHoldRoute
-  '/kampe': typeof AuthenticatedKampeRoute
+  '/kampe': typeof AuthenticatedKampeRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/kampe/$matchId': typeof AuthenticatedKampeMatchIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -93,8 +102,9 @@ export interface FileRoutesById {
   '/_authenticated/historik': typeof AuthenticatedHistorikRoute
   '/_authenticated/hjem': typeof AuthenticatedHjemRoute
   '/_authenticated/hold': typeof AuthenticatedHoldRoute
-  '/_authenticated/kampe': typeof AuthenticatedKampeRoute
+  '/_authenticated/kampe': typeof AuthenticatedKampeRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/kampe/$matchId': typeof AuthenticatedKampeMatchIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/hold'
     | '/kampe'
     | '/onboarding'
+    | '/kampe/$matchId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/hold'
     | '/kampe'
     | '/onboarding'
+    | '/kampe/$matchId'
   id:
     | '__root__'
     | '/'
@@ -128,6 +140,7 @@ export interface FileRouteTypes {
     | '/_authenticated/hold'
     | '/_authenticated/kampe'
     | '/_authenticated/onboarding'
+    | '/_authenticated/kampe/$matchId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -201,15 +214,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/kampe/$matchId': {
+      id: '/_authenticated/kampe/$matchId'
+      path: '/$matchId'
+      fullPath: '/kampe/$matchId'
+      preLoaderRoute: typeof AuthenticatedKampeMatchIdRouteImport
+      parentRoute: typeof AuthenticatedKampeRoute
+    }
   }
 }
+
+interface AuthenticatedKampeRouteChildren {
+  AuthenticatedKampeMatchIdRoute: typeof AuthenticatedKampeMatchIdRoute
+}
+
+const AuthenticatedKampeRouteChildren: AuthenticatedKampeRouteChildren = {
+  AuthenticatedKampeMatchIdRoute: AuthenticatedKampeMatchIdRoute,
+}
+
+const AuthenticatedKampeRouteWithChildren =
+  AuthenticatedKampeRoute._addFileChildren(AuthenticatedKampeRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBoederRoute: typeof AuthenticatedBoederRoute
   AuthenticatedHistorikRoute: typeof AuthenticatedHistorikRoute
   AuthenticatedHjemRoute: typeof AuthenticatedHjemRoute
   AuthenticatedHoldRoute: typeof AuthenticatedHoldRoute
-  AuthenticatedKampeRoute: typeof AuthenticatedKampeRoute
+  AuthenticatedKampeRoute: typeof AuthenticatedKampeRouteWithChildren
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
 }
 
@@ -218,7 +249,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHistorikRoute: AuthenticatedHistorikRoute,
   AuthenticatedHjemRoute: AuthenticatedHjemRoute,
   AuthenticatedHoldRoute: AuthenticatedHoldRoute,
-  AuthenticatedKampeRoute: AuthenticatedKampeRoute,
+  AuthenticatedKampeRoute: AuthenticatedKampeRouteWithChildren,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
 }
 
@@ -233,3 +264,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
