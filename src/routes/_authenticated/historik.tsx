@@ -55,6 +55,8 @@ type FeedItem = {
   amount: number;
   status?: PaymentRow["status"];
   paymentId?: string;
+  fineId?: string;
+  createdBy?: string;
 };
 
 const STATUS_LABEL: Record<PaymentRow["status"], string> = {
@@ -67,6 +69,7 @@ function HistorikPage() {
   const { user, current, isAdmin } = useTeam();
   const queryClient = useQueryClient();
   const teamId = current?.teamId;
+  const [expandedFineId, setExpandedFineId] = useState<string | null>(null);
 
   const { data: fines = [] } = useQuery({
     queryKey: ["team", teamId, "hist-fines"],
@@ -74,12 +77,30 @@ function HistorikPage() {
     queryFn: async (): Promise<FineRow[]> => {
       const { data, error } = await supabase
         .from("fines")
-        .select("id, label, amount, created_at, profiles(display_name)")
+        .select("id, label, amount, created_at, created_by, profiles(display_name)")
         .eq("team_id", teamId!)
         .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;
       return (data ?? []) as unknown as FineRow[];
+    },
+  });
+
+  const creatorIds = useMemo(
+    () => [...new Set(fines.map((f) => f.created_by))].sort(),
+    [fines],
+  );
+
+  const { data: creatorNames = {} } = useQuery({
+    queryKey: ["profiles", "names", creatorIds],
+    enabled: creatorIds.length > 0,
+    queryFn: async (): Promise<Record<string, string>> => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", creatorIds);
+      if (error) throw error;
+      return Object.fromEntries((data ?? []).map((p) => [p.id, p.display_name]));
     },
   });
 
