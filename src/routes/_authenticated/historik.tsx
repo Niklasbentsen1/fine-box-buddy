@@ -1,6 +1,7 @@
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { HandCoins, Ticket, Wallet } from "lucide-react";
+import { ChevronDown, HandCoins, Ticket, UserRound, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +25,7 @@ type FineRow = {
   label: string;
   amount: number;
   created_at: string;
+  created_by: string;
   profiles: { display_name: string } | null;
 };
 
