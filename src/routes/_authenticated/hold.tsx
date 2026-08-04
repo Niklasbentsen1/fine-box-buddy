@@ -7,7 +7,9 @@ import {
   Copy,
   HandCoins,
   MoreVertical,
+  Pencil,
   PiggyBank,
+  Smartphone,
   Ticket,
   Trash2,
   UserMinus,
@@ -53,13 +55,15 @@ type PaymentRow = { user_id: string; amount: number; status: string };
 type WithdrawalRow = { amount: number };
 
 function HoldPage() {
-  const { user, current, isAdmin } = useTeam();
+  const { user, current, isAdmin, refreshMemberships } = useTeam();
   const queryClient = useQueryClient();
   const teamId = current?.teamId;
 
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawNote, setWithdrawNote] = useState("");
+  const [mpOpen, setMpOpen] = useState(false);
+  const [mpNumber, setMpNumber] = useState("");
   const [busy, setBusy] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
 
@@ -160,6 +164,27 @@ function HoldPage() {
     }
     toast.success(`${firstName(name)} er fjernet fra holdet`);
     await refresh();
+  };
+
+  const handleSaveMobilepay = async () => {
+    const trimmed = mpNumber.trim();
+    if (trimmed && !/^\d{8}$/.test(trimmed)) {
+      toast.error("Nummeret skal være præcis 8 cifre");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase
+      .from("teams")
+      .update({ mobilepay_number: trimmed || null })
+      .eq("id", teamId);
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(trimmed ? "MobilePay-nummer gemt" : "MobilePay-nummer fjernet");
+    setMpOpen(false);
+    await refreshMemberships();
   };
 
   const handleWithdraw = async () => {
