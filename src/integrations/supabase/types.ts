@@ -409,6 +409,7 @@ export type Database = {
           id: string
           joined_at: string
           role: Database["public"]["Enums"]["team_role"]
+          status: Database["public"]["Enums"]["member_status"]
           team_id: string
           user_id: string
         }
@@ -416,6 +417,7 @@ export type Database = {
           id?: string
           joined_at?: string
           role?: Database["public"]["Enums"]["team_role"]
+          status?: Database["public"]["Enums"]["member_status"]
           team_id: string
           user_id: string
         }
@@ -423,6 +425,7 @@ export type Database = {
           id?: string
           joined_at?: string
           role?: Database["public"]["Enums"]["team_role"]
+          status?: Database["public"]["Enums"]["member_status"]
           team_id?: string
           user_id?: string
         }
@@ -518,6 +521,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_member: {
+        Args: { _team_id: string; _user_id: string }
+        Returns: undefined
+      }
       close_expired_votings: { Args: never; Returns: undefined }
       create_club: {
         Args: { _name: string; _team_name: string }
@@ -533,6 +540,15 @@ export type Database = {
         Returns: {
           user_id: string
           votes: number
+        }[]
+      }
+      get_pending_members: {
+        Args: { _team_id: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          requested_at: string
+          user_id: string
         }[]
       }
       get_team_motm_leaderboard: {
@@ -569,6 +585,7 @@ export type Database = {
     }
     Enums: {
       match_status: "open" | "closed"
+      member_status: "pending" | "active"
       payment_status: "pending" | "approved" | "rejected"
       team_role: "admin" | "member"
     }
@@ -699,6 +716,7 @@ export const Constants = {
   public: {
     Enums: {
       match_status: ["open", "closed"],
+      member_status: ["pending", "active"],
       payment_status: ["pending", "approved", "rejected"],
       team_role: ["admin", "member"],
     },

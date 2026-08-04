@@ -54,7 +54,7 @@ function OnboardingPage() {
       toast.error(error.message);
       return;
     }
-    toast.success("Velkommen til klubben!");
+    toast.success("Anmodning sendt — en administrator skal godkende dig, før du får adgang");
     await refreshMemberships();
     navigate({ to: "/hjem" });
   };
@@ -142,8 +142,8 @@ function OnboardingPage() {
             </span>
             <h2 className="font-display text-2xl font-semibold">Tilmeld med klubkode</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Har du fået en klubkode af din træner eller holdkammerat? Indtast den her for at
-              tilslutte dig klubben.
+              Har du fået en klubkode af din træner eller holdkammerat? Indtast den her — en
+              administrator skal godkende din anmodning, før du får adgang.
             </p>
             <div className="mt-5 space-y-2">
               <Label htmlFor="code">Klubkode</Label>

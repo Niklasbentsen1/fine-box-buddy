@@ -13,6 +13,7 @@ export async function fetchTeamMembers(teamId: string): Promise<MemberRow[]> {
     .from("team_members")
     .select("user_id, role, profiles(display_name, avatar_url, phone)")
     .eq("team_id", teamId)
+    .eq("status", "active")
     .order("joined_at", { ascending: true });
   if (error) throw error;
   return (data ?? []).map((row) => ({
