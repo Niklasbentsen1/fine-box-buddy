@@ -197,6 +197,9 @@ function KampePage() {
             <Trophy className="h-5 w-5 text-gold" />
             <h2 className="font-display text-xl font-semibold">Kampens spiller — samlet stilling</h2>
           </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Samlede stemmer fra alle holdets kampe — alle stemmer er anonyme.
+          </p>
           <ul className="mt-4 space-y-3">
             {leaderboard.slice(0, 10).map((entry, index) => (
               <li key={entry.name} className="flex items-center gap-3">
