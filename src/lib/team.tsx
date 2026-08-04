@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { User } from "@supabase/supabase-js";
 
@@ -28,6 +28,7 @@ type TeamContextValue = {
   current: Membership | null;
   isAdmin: boolean;
   isLoading: boolean;
+  pendingCount: number;
   setCurrentTeamId: (teamId: string) => void;
   refreshMemberships: () => Promise<void>;
 };
@@ -56,7 +57,7 @@ export function TeamProvider({ user, children }: { user: User; children: ReactNo
     return window.localStorage.getItem(storageKey(user.id));
   });
 
-  const { data: memberships = [], isLoading } = useQuery({
+  const { data: memberships = [], isLoading: membershipsLoading } = useQuery({
     queryKey: ["memberships", user.id],
     queryFn: async (): Promise<Membership[]> => {
       const { data, error } = await supabase
@@ -65,6 +66,7 @@ export function TeamProvider({ user, children }: { user: User; children: ReactNo
           "team_id, role, teams!inner(id, name, club_id, mobilepay_number, balance_carryover, clubs!inner(id, name, invite_code))",
         )
         .eq("user_id", user.id)
+        .eq("status", "active")
         .order("joined_at", { ascending: true });
       if (error) throw error;
       return ((data ?? []) as unknown as MembershipRow[]).map((row) => ({
@@ -93,10 +95,31 @@ export function TeamProvider({ user, children }: { user: User; children: ReactNo
     },
   });
 
+  const { data: pendingCount = 0, isLoading: pendingLoading } = useQuery({
+    queryKey: ["pending-memberships", user.id],
+    refetchInterval: 30000,
+    queryFn: async (): Promise<number> => {
+      const { count, error } = await supabase
+        .from("team_members")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("status", "pending");
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   const current = useMemo(() => {
     if (memberships.length === 0) return null;
     return memberships.find((m) => m.teamId === selectedTeamId) ?? memberships[0] ?? null;
   }, [memberships, selectedTeamId]);
+
+  const refreshMemberships = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["memberships", user.id] }),
+      queryClient.invalidateQueries({ queryKey: ["pending-memberships", user.id] }),
+    ]);
+  }, [queryClient, user.id]);
 
   const value: TeamContextValue = {
     user,
@@ -104,14 +127,13 @@ export function TeamProvider({ user, children }: { user: User; children: ReactNo
     memberships,
     current,
     isAdmin: current?.role === "admin",
-    isLoading,
+    isLoading: membershipsLoading || pendingLoading,
+    pendingCount,
     setCurrentTeamId: (teamId) => {
       setSelectedTeamId(teamId);
       window.localStorage.setItem(storageKey(user.id), teamId);
     },
-    refreshMemberships: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["memberships", user.id] });
-    },
+    refreshMemberships,
   };
 
   return <TeamContext.Provider value={value}>{children}</TeamContext.Provider>;

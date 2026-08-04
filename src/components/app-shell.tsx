@@ -193,7 +193,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       toast.error(error.message);
       return;
     }
-    toast.success("Du er nu medlem af klubben");
+    toast.success("Anmodning sendt — afventer godkendelse af en administrator i klubben");
     setClubCode("");
     setJoinOpen(false);
     await refreshMemberships();
@@ -202,7 +202,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const copyInviteCode = async () => {
     if (!current) return;
     try {
-      await navigator.clipboard.writeText(current.inviteCode);
+      await navigator.clipboard.writeText(`Tilmeld dig min klub med koden ${current.inviteCode}`);
       setCodeCopied(true);
       setTimeout(() => setCodeCopied(false), 1500);
     } catch {

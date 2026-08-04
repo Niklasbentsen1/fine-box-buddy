@@ -141,7 +141,7 @@ function HoldPage() {
 
   const copyInviteCode = async () => {
     try {
-      await navigator.clipboard.writeText(current.inviteCode);
+      await navigator.clipboard.writeText(`Tilmeld dig min klub med koden ${current.inviteCode}`);
       setCodeCopied(true);
       setTimeout(() => setCodeCopied(false), 1500);
     } catch {
