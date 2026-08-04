@@ -3,11 +3,13 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BellRing,
+  CalendarOff,
   Check,
   Copy,
   HandCoins,
   MoreVertical,
   Pencil,
+  Phone,
   PiggyBank,
   Smartphone,
   Ticket,
@@ -19,8 +21,9 @@ import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useTeam } from "@/lib/team";
-import { fetchTeamMembers } from "@/lib/api";
-import { firstName, formatKr, initials, sumAmounts } from "@/lib/format";
+import { fetchTeamMembers, type MemberRow } from "@/lib/api";
+import { firstName, formatKr, sumAmounts } from "@/lib/format";
+import { Avatar } from "@/components/avatar";
 import { StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -64,6 +67,10 @@ function HoldPage() {
   const [withdrawNote, setWithdrawNote] = useState("");
   const [mpOpen, setMpOpen] = useState(false);
   const [mpNumber, setMpNumber] = useState("");
+  const [seasonOpen, setSeasonOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<
+    (MemberRow & { fines: number; paid: number; owed: number }) | null
+  >(null);
   const [busy, setBusy] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
 
@@ -118,7 +125,8 @@ function HoldPage() {
   const approvedPayments = payments.filter((p) => p.status === "approved");
   const paidTotal = sumAmounts(approvedPayments);
   const withdrawnTotal = sumAmounts(withdrawals);
-  const cashBalance = paidTotal - withdrawnTotal;
+  const carryover = current.balanceCarryover ?? 0;
+  const cashBalance = carryover + paidTotal - withdrawnTotal;
   const outstandingTotal = Math.max(0, finesTotal - paidTotal);
 
   const perMember = members.map((m) => {
@@ -216,6 +224,20 @@ function HoldPage() {
     await refresh();
   };
 
+  const handleEndSeason = async () => {
+    setBusy(true);
+    const { error } = await supabase.rpc("end_season", { _team_id: teamId });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Sæsonen er afsluttet — kassens saldo er overført til den nye sæson");
+    setSeasonOpen(false);
+    await queryClient.invalidateQueries();
+    await refreshMemberships();
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -236,7 +258,14 @@ function HoldPage() {
           value={formatKr(cashBalance)}
           icon={PiggyBank}
           tone="pitch"
-          hint={withdrawnTotal > 0 ? `${formatKr(withdrawnTotal)} udbetalt` : undefined}
+          hint={
+            [
+              carryover !== 0 ? `${formatKr(carryover)} overført fra sidste sæson` : null,
+              withdrawnTotal > 0 ? `${formatKr(withdrawnTotal)} udbetalt` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ") || undefined
+          }
         />
         <StatCard label="Givne bøder" value={formatKr(finesTotal)} icon={Ticket} tone="gold" />
         <StatCard
@@ -299,10 +328,12 @@ function HoldPage() {
         <h2 className="font-display text-xl font-semibold">Spillerliste ({members.length})</h2>
         <ul className="mt-3 divide-y">
           {perMember.map((m) => (
-            <li key={m.userId} className="flex items-center gap-3 py-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                {initials(m.name) || "?"}
-              </span>
+            <li
+              key={m.userId}
+              className="flex cursor-pointer items-center gap-3 py-3 transition-colors hover:bg-muted/40"
+              onClick={() => setSelectedMember(m)}
+            >
+              <Avatar name={m.name} url={m.avatarUrl} />
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-2 truncate text-sm font-semibold">
                   {m.name}
@@ -319,6 +350,7 @@ function HoldPage() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
+                      onClick={(e) => e.stopPropagation()}
                       className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary"
                       aria-label={`Handlinger for ${m.name}`}
                     >
@@ -344,6 +376,23 @@ function HoldPage() {
           ))}
         </ul>
       </section>
+
+      {isAdmin && (
+        <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-destructive/30 bg-card p-4 shadow-card">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Sæson
+            </p>
+            <p className="text-sm font-semibold">Afslut sæsonen og start en ny</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Alle bøder, indbetalinger, kampe og historik nulstilles — kassens saldo overføres.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setSeasonOpen(true)}>
+            <CalendarOff className="mr-2 h-4 w-4" /> Afslut sæson
+          </Button>
+        </section>
+      )}
 
       <Dialog open={mpOpen} onOpenChange={setMpOpen}>
         <DialogContent>
@@ -414,6 +463,79 @@ function HoldPage() {
               <Trash2 className="mr-2 h-4 w-4" /> Registrer udbetaling
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={seasonOpen} onOpenChange={setSeasonOpen}>
+        <DialogContent>
+          <div className="space-y-1.5">
+            <DialogTitle>Afslut sæsonen?</DialogTitle>
+            <DialogDescription>
+              Dette sletter alle sæsonens bøder, indbetalinger, udbetalinger, påmindelser, kampe og
+              afstemninger for {current.teamName}. Kassens saldo ({formatKr(cashBalance)}) overføres
+              som startsaldo til den nye sæson. Bødesatserne bevares. Handlingen kan ikke fortrydes.
+            </DialogDescription>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSeasonOpen(false)}>
+              Annuller
+            </Button>
+            <Button variant="destructive" onClick={handleEndSeason} disabled={busy}>
+              <CalendarOff className="mr-2 h-4 w-4" /> Afslut sæsonen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!selectedMember} onOpenChange={(open) => !open && setSelectedMember(null)}>
+        <DialogContent>
+          {selectedMember && (
+            <div className="flex flex-col items-center gap-3 text-center">
+              <Avatar name={selectedMember.name} url={selectedMember.avatarUrl} size="xl" />
+              <div>
+                <DialogTitle>{selectedMember.name}</DialogTitle>
+                {selectedMember.role === "admin" && (
+                  <Badge variant="navy" className="mt-1.5">
+                    Admin
+                  </Badge>
+                )}
+              </div>
+              <div className="w-full rounded-xl bg-muted/50 px-3 py-2.5 text-sm">
+                {selectedMember.phone ? (
+                  <a
+                    href={`tel:${selectedMember.phone.replace(/\s/g, "")}`}
+                    className="flex items-center justify-center gap-2 font-semibold text-pitch"
+                  >
+                    <Phone className="h-4 w-4" /> {selectedMember.phone}
+                  </a>
+                ) : (
+                  <p className="text-muted-foreground">
+                    {firstName(selectedMember.name)} har ikke tilføjet kontaktoplysninger endnu
+                  </p>
+                )}
+              </div>
+              <div className="grid w-full grid-cols-3 gap-2">
+                <div className="rounded-xl border p-2.5">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Bøder
+                  </p>
+                  <p className="mt-0.5 text-sm font-bold">{formatKr(selectedMember.fines)}</p>
+                </div>
+                <div className="rounded-xl border p-2.5">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Indbetalt
+                  </p>
+                  <p className="mt-0.5 text-sm font-bold">{formatKr(selectedMember.paid)}</p>
+                </div>
+                <div className="rounded-xl border p-2.5">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Skylder
+                  </p>
+                  <p className="mt-0.5 text-sm font-bold">{formatKr(selectedMember.owed)}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

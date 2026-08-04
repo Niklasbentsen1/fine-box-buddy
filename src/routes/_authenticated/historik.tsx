@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, HandCoins, Ticket, UserRound, Wallet } from "lucide-react";
+import { ChevronDown, HandCoins, Ticket, Trash2, UserRound, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -180,6 +180,17 @@ function HistorikPage() {
     await queryClient.invalidateQueries({ queryKey: ["team", teamId] });
   };
 
+  const handleDeleteFine = async (fineId: string) => {
+    const { error } = await supabase.from("fines").delete().eq("id", fineId);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Bøde slettet");
+    setExpandedFineId(null);
+    await queryClient.invalidateQueries({ queryKey: ["team", teamId] });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -260,10 +271,23 @@ function HistorikPage() {
                   </div>
                 )}
                 {item.kind === "fine" && expandedFineId === item.fineId && (
-                  <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground">
-                    <UserRound className="h-3.5 w-3.5" />
-                    Uddelt af{" "}
-                    <span className="font-semibold text-foreground">{item.createdBy}</span>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="flex items-center gap-1.5 rounded-lg bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground">
+                      <UserRound className="h-3.5 w-3.5" />
+                      Uddelt af{" "}
+                      <span className="font-semibold text-foreground">{item.createdBy}</span>
+                    </span>
+                    {isAdmin && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteFine(item.fineId!);
+                        }}
+                        className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Slet bøde
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

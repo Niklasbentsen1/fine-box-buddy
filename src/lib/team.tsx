@@ -11,12 +11,14 @@ export type Membership = {
   clubName: string;
   inviteCode: string;
   mobilepayNumber: string | null;
+  balanceCarryover: number;
   role: "admin" | "member";
 };
 
 export type Profile = {
   displayName: string;
   avatarUrl: string | null;
+  phone: string | null;
 };
 
 type TeamContextValue = {
@@ -42,6 +44,7 @@ type MembershipRow = {
     name: string;
     club_id: string;
     mobilepay_number: string | null;
+    balance_carryover: number;
     clubs: { id: string; name: string; invite_code: string };
   };
 };
@@ -59,7 +62,7 @@ export function TeamProvider({ user, children }: { user: User; children: ReactNo
       const { data, error } = await supabase
         .from("team_members")
         .select(
-          "team_id, role, teams!inner(id, name, club_id, mobilepay_number, clubs!inner(id, name, invite_code))",
+          "team_id, role, teams!inner(id, name, club_id, mobilepay_number, balance_carryover, clubs!inner(id, name, invite_code))",
         )
         .eq("user_id", user.id)
         .order("joined_at", { ascending: true });
@@ -71,6 +74,7 @@ export function TeamProvider({ user, children }: { user: User; children: ReactNo
         clubName: row.teams.clubs.name,
         inviteCode: row.teams.clubs.invite_code,
         mobilepayNumber: row.teams.mobilepay_number,
+        balanceCarryover: Number(row.teams.balance_carryover ?? 0),
         role: row.role,
       }));
     },
@@ -81,11 +85,11 @@ export function TeamProvider({ user, children }: { user: User; children: ReactNo
     queryFn: async (): Promise<Profile | null> => {
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, avatar_url")
+        .select("display_name, avatar_url, phone")
         .eq("id", user.id)
         .maybeSingle();
       if (!data) return null;
-      return { displayName: data.display_name, avatarUrl: data.avatar_url };
+      return { displayName: data.display_name, avatarUrl: data.avatar_url, phone: data.phone };
     },
   });
 

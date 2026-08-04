@@ -302,18 +302,21 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          phone: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           display_name?: string
           id: string
+          phone?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
           display_name?: string
           id?: string
+          phone?: string | null
         }
         Relationships: []
       }
@@ -397,6 +400,7 @@ export type Database = {
       }
       teams: {
         Row: {
+          balance_carryover: number
           club_id: string
           created_at: string
           id: string
@@ -404,6 +408,7 @@ export type Database = {
           name: string
         }
         Insert: {
+          balance_carryover?: number
           club_id: string
           created_at?: string
           id?: string
@@ -411,6 +416,7 @@ export type Database = {
           name: string
         }
         Update: {
+          balance_carryover?: number
           club_id?: string
           created_at?: string
           id?: string
@@ -475,6 +481,7 @@ export type Database = {
         Args: { _club_id: string; _name: string }
         Returns: string
       }
+      end_season: { Args: { _team_id: string }; Returns: undefined }
       is_club_member: {
         Args: { _club_id: string; _user_id: string }
         Returns: boolean

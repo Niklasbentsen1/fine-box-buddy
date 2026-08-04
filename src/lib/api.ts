@@ -5,12 +5,13 @@ export type MemberRow = {
   role: "admin" | "member";
   name: string;
   avatarUrl: string | null;
+  phone: string | null;
 };
 
 export async function fetchTeamMembers(teamId: string): Promise<MemberRow[]> {
   const { data, error } = await supabase
     .from("team_members")
-    .select("user_id, role, profiles(display_name, avatar_url)")
+    .select("user_id, role, profiles(display_name, avatar_url, phone)")
     .eq("team_id", teamId)
     .order("joined_at", { ascending: true });
   if (error) throw error;
@@ -19,6 +20,7 @@ export async function fetchTeamMembers(teamId: string): Promise<MemberRow[]> {
     role: row.role,
     name: row.profiles?.display_name ?? "Ukendt",
     avatarUrl: row.profiles?.avatar_url ?? null,
+    phone: row.profiles?.phone ?? null,
   }));
 }
 
