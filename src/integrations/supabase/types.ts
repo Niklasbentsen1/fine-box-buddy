@@ -565,6 +565,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      shares_team_with: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       match_status: "open" | "closed"
