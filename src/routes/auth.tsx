@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Coins, Mail } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Check, Coins, Mail, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -62,6 +62,17 @@ function AuthPage() {
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
   const [signedUp, setSignedUp] = useState(false);
+
+  const passwordRules = useMemo(() => {
+    return [
+      { label: "Mindst 6 tegn", met: password.length >= 6 },
+      { label: "Mindst ét tal", met: /\d/.test(password) },
+      { label: "Mindst ét stort bogstav", met: /[A-ZÆØÅ]/.test(password) },
+      { label: "Mindst ét lille bogstav", met: /[a-zæøå]/.test(password) },
+    ];
+  }, [password]);
+
+  const passwordIsValid = passwordRules.every((r: { met: boolean }) => r.met);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -239,8 +250,28 @@ function AuthPage() {
                     minLength={6}
                     required
                   />
+                  {mode === "signup" && (
+                    <ul className="space-y-1.5 pt-1">
+                      {passwordRules.map((rule) => (
+                        <li key={rule.label} className="flex items-center gap-2 text-xs">
+                          {rule.met ? (
+                            <Check className="h-3.5 w-3.5 text-pitch" aria-hidden />
+                          ) : (
+                            <X className="h-3.5 w-3.5 text-destructive" aria-hidden />
+                          )}
+                          <span className={rule.met ? "text-pitch" : "text-muted-foreground"}>
+                            {rule.label}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-                <Button type="submit" className="w-full" disabled={busy}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={busy || (mode === "signup" && !passwordIsValid)}
+                >
                   {busy ? "Vent et øjeblik…" : mode === "login" ? "Log ind" : "Opret bruger"}
                 </Button>
               </form>
