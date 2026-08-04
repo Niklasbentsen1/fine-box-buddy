@@ -10,6 +10,7 @@ export type Membership = {
   clubId: string;
   clubName: string;
   inviteCode: string;
+  mobilepayNumber: string | null;
   role: "admin" | "member";
 };
 
@@ -40,6 +41,7 @@ type MembershipRow = {
     id: string;
     name: string;
     club_id: string;
+    mobilepay_number: string | null;
     clubs: { id: string; name: string; invite_code: string };
   };
 };
@@ -56,7 +58,9 @@ export function TeamProvider({ user, children }: { user: User; children: ReactNo
     queryFn: async (): Promise<Membership[]> => {
       const { data, error } = await supabase
         .from("team_members")
-        .select("team_id, role, teams!inner(id, name, club_id, clubs!inner(id, name, invite_code))")
+        .select(
+          "team_id, role, teams!inner(id, name, club_id, mobilepay_number, clubs!inner(id, name, invite_code))",
+        )
         .eq("user_id", user.id)
         .order("joined_at", { ascending: true });
       if (error) throw error;
@@ -66,6 +70,7 @@ export function TeamProvider({ user, children }: { user: User; children: ReactNo
         clubId: row.teams.club_id,
         clubName: row.teams.clubs.name,
         inviteCode: row.teams.clubs.invite_code,
+        mobilepayNumber: row.teams.mobilepay_number,
         role: row.role,
       }));
     },
