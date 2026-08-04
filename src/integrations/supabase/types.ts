@@ -400,18 +400,21 @@ export type Database = {
           club_id: string
           created_at: string
           id: string
+          mobilepay_number: string | null
           name: string
         }
         Insert: {
           club_id: string
           created_at?: string
           id?: string
+          mobilepay_number?: string | null
           name: string
         }
         Update: {
           club_id?: string
           created_at?: string
           id?: string
+          mobilepay_number?: string | null
           name?: string
         }
         Relationships: [
