@@ -534,6 +534,7 @@ export type Database = {
         Args: { _club_id: string; _name: string }
         Returns: string
       }
+      delete_team: { Args: { _team_id: string }; Returns: undefined }
       end_season: { Args: { _team_id: string }; Returns: undefined }
       get_match_vote_counts: {
         Args: { _match_id: string }
