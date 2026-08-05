@@ -2,6 +2,9 @@ workflows:
   ios-capacitor:
     name: iOS Capacitor Build
 
+    integrations:
+      app_store_connect: Codemagic
+
     instance_type: mac_mini_m1
     max_build_duration: 60
 
@@ -47,7 +50,7 @@ workflows:
 
           xcode-project use-profiles
 
-           - name: Build IPA
+      - name: Build IPA
         script: |
           xcode-project build-ipa \
             --project "ios/App/App.xcodeproj" \
