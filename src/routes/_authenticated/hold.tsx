@@ -3,17 +3,12 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BellRing,
-  CalendarOff,
-  Check,
-  Copy,
   HandCoins,
   MoreVertical,
-  Pencil,
   Phone,
   PiggyBank,
   ShieldMinus,
   ShieldPlus,
-  Smartphone,
   Ticket,
   Trash2,
   UserCheck,
@@ -68,22 +63,17 @@ type PendingRow = {
 };
 
 function HoldPage() {
-  const { user, current, isAdmin, refreshMemberships } = useTeam();
+  const { user, current, isAdmin } = useTeam();
   const queryClient = useQueryClient();
   const teamId = current?.teamId;
 
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawNote, setWithdrawNote] = useState("");
-  const [mpOpen, setMpOpen] = useState(false);
-  const [mpNumber, setMpNumber] = useState("");
-  const [seasonOpen, setSeasonOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<
     (MemberRow & { fines: number; paid: number; owed: number }) | null
   >(null);
   const [busy, setBusy] = useState(false);
-  const [codeCopied, setCodeCopied] = useState(false);
 
   const { data: members = [] } = useQuery({
     queryKey: ["team", teamId, "members"],
@@ -158,16 +148,6 @@ function HoldPage() {
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["team", teamId] });
 
-  const copyInviteCode = async () => {
-    try {
-      await navigator.clipboard.writeText(`Tilmeld dig min klub med koden ${current.inviteCode}`);
-      setCodeCopied(true);
-      setTimeout(() => setCodeCopied(false), 1500);
-    } catch {
-      toast.error("Kunne ikke kopiere koden");
-    }
-  };
-
   const handleReminder = async (userId: string, name: string) => {
     const { error } = await supabase.from("reminders").insert({
       team_id: teamId,
@@ -241,27 +221,6 @@ function HoldPage() {
     await refresh();
   };
 
-  const handleSaveMobilepay = async () => {
-    const trimmed = mpNumber.trim();
-    if (trimmed && !/^\d{8}$/.test(trimmed)) {
-      toast.error("Nummeret skal være præcis 8 cifre");
-      return;
-    }
-    setBusy(true);
-    const { error } = await supabase
-      .from("teams")
-      .update({ mobilepay_number: trimmed || null })
-      .eq("id", teamId);
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success(trimmed ? "MobilePay-nummer gemt" : "MobilePay-nummer fjernet");
-    setMpOpen(false);
-    await refreshMemberships();
-  };
-
   const handleWithdraw = async () => {
     const amount = Number(withdrawAmount.replace(",", "."));
     if (!amount || amount <= 0) {
@@ -289,34 +248,6 @@ function HoldPage() {
     setWithdrawAmount("");
     setWithdrawNote("");
     await refresh();
-  };
-
-  const handleEndSeason = async () => {
-    setBusy(true);
-    const { error } = await supabase.rpc("end_season", { _team_id: teamId });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Sæsonen er afsluttet — kassens saldo er overført til den nye sæson");
-    setSeasonOpen(false);
-    await queryClient.invalidateQueries();
-    await refreshMemberships();
-  };
-
-  const handleDeleteTeam = async () => {
-    setBusy(true);
-    const { error } = await supabase.rpc("delete_team", { _team_id: teamId });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success(`Holdet "${current.teamName}" er slettet`);
-    setDeleteOpen(false);
-    await queryClient.invalidateQueries();
-    await refreshMemberships();
   };
 
   return (
@@ -358,53 +289,6 @@ function HoldPage() {
         <StatCard label="Indbetalt" value={formatKr(paidTotal)} icon={HandCoins} tone="navy" />
       </div>
 
-      <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card p-4 shadow-card">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Klubkode
-          </p>
-          <p className="font-mono text-xl font-bold tracking-[0.25em]">{current.inviteCode}</p>
-        </div>
-        <Button variant="subtle" size="sm" onClick={copyInviteCode}>
-          {codeCopied ? (
-            <Check className="mr-2 h-4 w-4 text-pitch" />
-          ) : (
-            <Copy className="mr-2 h-4 w-4" />
-          )}
-          {codeCopied ? "Kopieret" : "Kopiér kode"}
-        </Button>
-      </section>
-
-      <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card p-4 shadow-card">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            MobilePay-nummer
-          </p>
-          <p className="flex items-center gap-2 font-mono text-xl font-bold tracking-[0.15em]">
-            <Smartphone className="h-5 w-5 text-pitch" />
-            {current.mobilepayNumber ?? "Ikke sat op"}
-          </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {current.mobilepayNumber
-              ? "Medlemmer kan betale bøder direkte til dette nummer"
-              : "Medlemmer kan ikke betale via MobilePay, før nummeret er sat op"}
-          </p>
-        </div>
-        {isAdmin && (
-          <Button
-            variant="subtle"
-            size="sm"
-            onClick={() => {
-              setMpNumber(current.mobilepayNumber ?? "");
-              setMpOpen(true);
-            }}
-          >
-            <Pencil className="mr-2 h-4 w-4" />
-            {current.mobilepayNumber ? "Rediger nummer" : "Tilføj nummer"}
-          </Button>
-        )}
-      </section>
-
       <section className="rounded-2xl border bg-card p-5 shadow-card">
         <h2 className="font-display text-xl font-semibold">Spillerliste ({members.length})</h2>
         <ul className="mt-3 divide-y">
@@ -425,7 +309,7 @@ function HoldPage() {
                 </p>
               </div>
               <Badge variant={m.owed > 0 ? "destructive" : "pitch"}>
-                {m.owed > 0 ? `Skylder ${formatKr(m.owed)}` : "Kvit"}
+                {formatKr(m.owed)}
               </Badge>
               {isAdmin && m.userId !== user.id && (
                 <DropdownMenu>
@@ -505,72 +389,6 @@ function HoldPage() {
         </section>
       )}
 
-      {isAdmin && (
-        <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-destructive/30 bg-card p-4 shadow-card">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Sæson
-            </p>
-            <p className="text-sm font-semibold">Afslut sæsonen og start en ny</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Alle bøder, indbetalinger, kampe og historik nulstilles — kassens saldo overføres.
-            </p>
-          </div>
-          <Button variant="outline" size="sm" onClick={() => setSeasonOpen(true)}>
-            <CalendarOff className="mr-2 h-4 w-4" /> Afslut sæson
-          </Button>
-        </section>
-      )}
-
-      {isAdmin && (
-        <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-destructive/30 bg-card p-4 shadow-card">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Slet hold
-            </p>
-            <p className="text-sm font-semibold">Slet {current.teamName} permanent</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Alle holdets bøder, indbetalinger, kampe og medlemmer fjernes. Handlingen kan ikke
-              fortrydes.
-            </p>
-          </div>
-          <Button variant="outline" size="sm" onClick={() => setDeleteOpen(true)}>
-            <Trash2 className="mr-2 h-4 w-4" /> Slet hold
-          </Button>
-        </section>
-      )}
-
-      <Dialog open={mpOpen} onOpenChange={setMpOpen}>
-        <DialogContent>
-          <div className="space-y-1.5">
-            <DialogTitle>MobilePay-nummer</DialogTitle>
-            <DialogDescription>
-              Det mobilnummer, som medlemmerne betaler deres bøder til via MobilePay. Lad feltet
-              stå tomt for at fjerne nummeret.
-            </DialogDescription>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="mp-number">Mobilnummer (8 cifre)</Label>
-            <Input
-              id="mp-number"
-              inputMode="numeric"
-              maxLength={8}
-              value={mpNumber}
-              onChange={(e) => setMpNumber(e.target.value.replace(/\D/g, ""))}
-              placeholder="Fx 12345678"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setMpOpen(false)}>
-              Annuller
-            </Button>
-            <Button variant="pitch" onClick={handleSaveMobilepay} disabled={busy}>
-              Gem nummer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
         <DialogContent>
           <div className="space-y-1.5">
@@ -607,47 +425,6 @@ function HoldPage() {
             </Button>
             <Button onClick={handleWithdraw} disabled={busy || !withdrawAmount.trim()}>
               <Trash2 className="mr-2 h-4 w-4" /> Registrer udbetaling
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={seasonOpen} onOpenChange={setSeasonOpen}>
-        <DialogContent>
-          <div className="space-y-1.5">
-            <DialogTitle>Afslut sæsonen?</DialogTitle>
-            <DialogDescription>
-              Dette sletter alle sæsonens bøder, indbetalinger, udbetalinger, påmindelser, kampe og
-              afstemninger for {current.teamName}. Kassens saldo ({formatKr(cashBalance)}) overføres
-              som startsaldo til den nye sæson. Bødesatserne bevares. Handlingen kan ikke fortrydes.
-            </DialogDescription>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSeasonOpen(false)}>
-              Annuller
-            </Button>
-            <Button variant="destructive" onClick={handleEndSeason} disabled={busy}>
-              <CalendarOff className="mr-2 h-4 w-4" /> Afslut sæsonen
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent>
-          <div className="space-y-1.5">
-            <DialogTitle>Slet {current.teamName}?</DialogTitle>
-            <DialogDescription>
-              Dette sletter holdet permanent inkl. alle dets bøder, bødesatser, indbetalinger,
-              udbetalinger, kampe, afstemninger og medlemskaber. Handlingen kan ikke fortrydes.
-            </DialogDescription>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
-              Annuller
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteTeam} disabled={busy}>
-              <Trash2 className="mr-2 h-4 w-4" /> Slet holdet
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -295,7 +295,6 @@ function HjemPage() {
           value={formatKr(owed)}
           icon={CircleAlert}
           tone={owed > 0 ? "red" : "pitch"}
-          hint={owed > 0 ? "Indbetal for at kvittere" : "Du er helt kvit"}
         />
         <StatCard label="Modtagne bøder" value={formatKr(finesTotal)} icon={Ticket} tone="gold" />
         <StatCard label="Indbetalt" value={formatKr(approvedTotal)} icon={PiggyBank} tone="pitch" />
@@ -406,7 +405,7 @@ function HjemPage() {
             ) : (
               <p className="rounded-xl bg-secondary px-3 py-2.5 text-xs text-muted-foreground">
                 Holdet har ikke sat et MobilePay-nummer op endnu —{" "}
-                {isAdmin ? "du kan tilføje det under Hold" : "spørg din administrator"}.
+                {isAdmin ? "du kan tilføje det under Indstillinger" : "spørg din administrator"}.
               </p>
             )}
             <div className="flex items-center gap-3">
