@@ -1,11 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Camera, Save, Trash2, UserRound } from "lucide-react";
+import { Camera, Check, Palette, Save, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useTeam } from "@/lib/team";
+import { COLOR_THEMES, useColorTheme } from "@/lib/theme";
 import { Avatar } from "@/components/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +58,8 @@ function resizeImage(file: File): Promise<string> {
 function ProfilPage() {
   const { user, profile } = useTeam();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [colorTheme, setColorTheme] = useColorTheme();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
@@ -93,6 +96,7 @@ function ProfilPage() {
     }
     toast.success("Profil gemt");
     await refreshProfile();
+    navigate({ to: "/hjem" });
   };
 
   const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -202,6 +206,44 @@ function ProfilPage() {
         <Button onClick={handleSave} disabled={busy || !name.trim()}>
           <Save className="mr-2 h-4 w-4" /> {busy ? "Gemmer…" : "Gem profil"}
         </Button>
+      </section>
+
+      <section className="space-y-4 rounded-2xl border bg-card p-5 shadow-card">
+        <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
+          <Palette className="h-5 w-5 text-muted-foreground" /> Farvetema
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Vælg appens farver — valget gælder kun på denne enhed.
+        </p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {COLOR_THEMES.map((t) => {
+            const active = colorTheme === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setColorTheme(t.id)}
+                className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${
+                  active
+                    ? "border-pitch bg-pitch-soft/60 ring-2 ring-pitch/40"
+                    : "bg-card hover:bg-secondary"
+                }`}
+              >
+                <span className="flex shrink-0 -space-x-1.5">
+                  {t.swatches.map((color) => (
+                    <span
+                      key={color}
+                      className="h-5 w-5 rounded-full border-2 border-card"
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-sm font-semibold">{t.label}</span>
+                {active && <Check className="h-4 w-4 shrink-0 text-pitch" />}
+              </button>
+            );
+          })}
+        </div>
       </section>
     </div>
   );
