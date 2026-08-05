@@ -187,3 +187,23 @@
     0 2px 6px oklch(0.31 0.06 248.7 / 0.08),
     0 18px 44px -16px oklch(0.31 0.06 248.7 / 0.22);
 }
+
+/* iOS safe-area helpers — keeps content clear of notch, status bar and home
+   indicator when the app runs full-screen under Capacitor (viewport-fit=cover). */
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility py-safe {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility px-safe {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
