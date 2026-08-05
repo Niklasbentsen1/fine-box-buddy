@@ -33,7 +33,7 @@ function Index() {
   }, [navigate]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-background px-safe py-safe">
       <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
         <Coins className="h-8 w-8" />
       </span>

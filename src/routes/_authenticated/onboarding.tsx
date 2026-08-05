@@ -65,8 +65,8 @@ function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background bg-pitch-stripes">
-      <div className="mx-auto flex min-h-screen max-w-3xl flex-col px-4 py-10">
+    <div className="min-h-dvh bg-background bg-pitch-stripes">
+      <div className="mx-auto flex min-h-dvh max-w-3xl flex-col px-safe pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))]">
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">

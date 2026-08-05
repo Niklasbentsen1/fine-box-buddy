@@ -322,9 +322,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 pb-28 pt-6 md:pb-12">{children}</main>
+      <main className="mx-auto max-w-5xl px-safe pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 md:pb-12">
+        {children}
+      </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 pb-safe backdrop-blur md:hidden">
         <div className="mx-auto grid max-w-lg grid-cols-5">
           {NAV_ITEMS.map((item) => (
             <Link

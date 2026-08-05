@@ -133,28 +133,9 @@ function AuthPage() {
   };
 
   return (
-    <div className="grid min-h-screen bg-background lg:grid-cols-2">
-      <div className="relative hidden overflow-hidden bg-primary lg:block">
-        <img
-          src={authIllustration}
-          alt="Illustration af en sportsklubs bødekasse"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent" />
-        <div className="absolute bottom-0 p-10 text-primary-foreground">
-          <p className="font-display text-4xl font-semibold leading-tight">
-            Glemt studiekortet?
-            <br />
-            For sent på banen?
-          </p>
-          <p className="mt-3 max-w-md text-primary-foreground/80">
-            Bødekassen holder styr på bøder, indbetalinger og kampens spiller — så kassen altid er
-            klar til holdets næste tur.
-          </p>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-center px-4 py-10">
+    <div className="grid min-h-dvh bg-background lg:grid-cols-2">
+...
+      <div className="flex items-center justify-center px-safe pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))]">
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
