@@ -522,6 +522,24 @@ function HoldPage() {
         </section>
       )}
 
+      {isAdmin && (
+        <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-destructive/30 bg-card p-4 shadow-card">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Slet hold
+            </p>
+            <p className="text-sm font-semibold">Slet {current.teamName} permanent</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Alle holdets bøder, indbetalinger, kampe og medlemmer fjernes. Handlingen kan ikke
+              fortrydes.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setDeleteOpen(true)}>
+            <Trash2 className="mr-2 h-4 w-4" /> Slet hold
+          </Button>
+        </section>
+      )}
+
       <Dialog open={mpOpen} onOpenChange={setMpOpen}>
         <DialogContent>
           <div className="space-y-1.5">
