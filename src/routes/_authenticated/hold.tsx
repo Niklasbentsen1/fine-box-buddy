@@ -633,6 +633,26 @@ function HoldPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent>
+          <div className="space-y-1.5">
+            <DialogTitle>Slet {current.teamName}?</DialogTitle>
+            <DialogDescription>
+              Dette sletter holdet permanent inkl. alle dets bøder, bødesatser, indbetalinger,
+              udbetalinger, kampe, afstemninger og medlemskaber. Handlingen kan ikke fortrydes.
+            </DialogDescription>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+              Annuller
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteTeam} disabled={busy}>
+              <Trash2 className="mr-2 h-4 w-4" /> Slet holdet
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!selectedMember} onOpenChange={(open) => !open && setSelectedMember(null)}>
         <DialogContent>
           {selectedMember && (
