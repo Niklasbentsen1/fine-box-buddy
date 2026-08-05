@@ -1,95 +1,64 @@
-# Codemagic CI/CD configuration for Bødekassen (iOS Capacitor app)
-# Docs: https://docs.codemagic.io/yaml/yaml-getting-started/
-#
-# Required setup in the Codemagic web UI:
-#   1. Add your App Store Connect API key under Team -> Integrations -> App Store Connect.
-#   2. Link the integration to this app under App settings -> Publish -> App Store Connect.
-#   3. (Optional) Set the BUNDLE_ID environment variable if it differs from app.boedekassen.
-
 workflows:
   ios-capacitor:
     name: iOS Capacitor Build
+
     instance_type: mac_mini_m1
+
     max_build_duration: 60
 
     environment:
-      vars:
-        BUNDLE_ID: app.boedekassen
-        NODE_VERSION: "20"
       xcode: latest
       cocoapods: default
 
+      vars:
+        BUNDLE_ID: app.boedekassen
+
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: app.boedekassen
+
     cache:
       cache_paths:
-        - $CM_BUILD_DIR/node_modules
-        - $HOME/Library/Caches/CocoaPods
-
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: main
-          include: true
-          source: true
-        - pattern: develop
-          include: true
-          source: true
+        - node_modules
+        - ~/Library/Caches/CocoaPods
 
     scripts:
-      - name: Install Node dependencies
+      - name: Install dependencies
         script: |
           npm ci
 
-      - name: Build static web app
+      - name: Build web
         script: |
           npm run build
 
-      - name: Sync Capacitor iOS project
+      - name: Sync Capacitor
         script: |
           npx cap sync ios
 
-      - name: Set up iOS code signing
+      - name: Set up signing
         script: |
           keychain initialize
-          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+
+          app-store-connect fetch-signing-files \
+            "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+
           keychain add-certificates
+
           xcode-project use-profiles
 
-      - name: Archive iOS app
+      - name: CocoaPods
         script: |
-          xcodebuild \
-            -project ios/App/App.xcodeproj \
-            -scheme App \
-            -configuration Release \
-            -allowProvisioningUpdates \
-            -archivePath "$CM_BUILD_DIR/Boedekassen.xcarchive" \
-            archive
+          cd ios/App
+          pod install
 
-      - name: Export IPA
+      - name: Build IPA
         script: |
-          cat > "$CM_BUILD_DIR/exportOptions.plist" <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>app-store</string>
-            <key>stripSwiftSymbols</key>
-            <true/>
-            <key>uploadBitcode</key>
-            <false/>
-            <key>uploadSymbols</key>
-            <true/>
-          </dict>
-          </plist>
-          EOF
-
-          xcodebuild \
-            -exportArchive \
-            -archivePath "$CM_BUILD_DIR/Boedekassen.xcarchive" \
-            -exportOptionsPlist "$CM_BUILD_DIR/exportOptions.plist" \
-            -exportPath "$CM_BUILD_DIR/output"
+          xcode-project build-ipa \
+            --workspace "ios/App/App.xcworkspace" \
+            --scheme "App"
 
     artifacts:
-      - $CM_BUILD_DIR/output/**/*.ipa
-      - $CM_BUILD_DIR/output/**/*.dSYM.zip
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
