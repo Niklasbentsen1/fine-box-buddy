@@ -213,14 +213,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const displayName = profile?.displayName || user.email || "Spiller";
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-5xl items-center gap-3 px-4">
-          <Link to="/hjem" className="flex items-center gap-2.5">
+    <div className="min-h-dvh bg-background">
+      <header className="sticky top-0 z-40 border-b bg-card/95 pt-safe backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-5xl items-center gap-3 px-safe">
+          <Link to="/hjem" className="flex shrink-0 items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <Coins className="h-5 w-5" />
             </span>
-            <span className="font-display text-2xl font-semibold tracking-wide">Bødekassen</span>
+            <span className="hidden font-display text-2xl font-semibold tracking-wide min-[26rem]:inline">
+              Bødekassen
+            </span>
           </Link>
 
           <nav className="ml-6 hidden items-center gap-1 md:flex">
