@@ -61,6 +61,7 @@ workflows:
             -project ios/App/App.xcodeproj \
             -scheme App \
             -configuration Release \
+            -allowProvisioningUpdates \
             -archivePath "$CM_BUILD_DIR/Boedekassen.xcarchive" \
             archive
 
