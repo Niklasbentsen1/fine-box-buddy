@@ -2,11 +2,13 @@ import type * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+// Note: text-base (16px) on mobile prevents iOS from auto-zooming the page
+// when an input receives focus; sm:text-sm restores the compact desktop look.
 export function Input({ className, ...props }: React.ComponentProps<"input">) {
   return (
     <input
       className={cn(
-        "h-11 w-full rounded-xl border-2 border-input bg-card px-3.5 text-sm font-medium text-foreground transition-colors outline-none placeholder:text-muted-foreground/70 focus:border-ring",
+        "h-11 w-full rounded-xl border-2 border-input bg-card px-3.5 text-base font-medium text-foreground transition-colors outline-none placeholder:text-muted-foreground/70 focus:border-ring sm:text-sm",
         className,
       )}
       {...props}
@@ -18,7 +20,7 @@ export function Textarea({ className, ...props }: React.ComponentProps<"textarea
   return (
     <textarea
       className={cn(
-        "min-h-20 w-full rounded-xl border-2 border-input bg-card px-3.5 py-2.5 text-sm font-medium text-foreground transition-colors outline-none placeholder:text-muted-foreground/70 focus:border-ring",
+        "min-h-20 w-full rounded-xl border-2 border-input bg-card px-3.5 py-2.5 text-base font-medium text-foreground transition-colors outline-none placeholder:text-muted-foreground/70 focus:border-ring sm:text-sm",
         className,
       )}
       {...props}
@@ -30,7 +32,7 @@ export function Select({ className, children, ...props }: React.ComponentProps<"
   return (
     <select
       className={cn(
-        "h-11 w-full cursor-pointer rounded-xl border-2 border-input bg-card px-3 text-sm font-medium text-foreground transition-colors outline-none focus:border-ring",
+        "h-11 w-full cursor-pointer rounded-xl border-2 border-input bg-card px-3 text-base font-medium text-foreground transition-colors outline-none focus:border-ring sm:text-sm",
         className,
       )}
       {...props}

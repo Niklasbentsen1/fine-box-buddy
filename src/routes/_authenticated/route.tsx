@@ -33,7 +33,7 @@ function MembershipGate() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-dvh items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-pitch border-t-transparent" />
       </div>
     );
@@ -96,7 +96,7 @@ function PendingApproval() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background bg-pitch-stripes px-4">
+    <div className="flex min-h-dvh items-center justify-center bg-background bg-pitch-stripes px-safe py-safe">
       <div className="w-full max-w-md rounded-2xl border bg-card p-8 text-center shadow-card">
         <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gold-soft text-gold-foreground">
           <Hourglass className="h-6 w-6" />
