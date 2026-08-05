@@ -16,6 +16,7 @@ import { Route as AuthenticatedBoederRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedHistorikRouteImport } from './routes/_authenticated/historik'
 import { Route as AuthenticatedHjemRouteImport } from './routes/_authenticated/hjem'
 import { Route as AuthenticatedHoldRouteImport } from './routes/_authenticated/hold'
+import { Route as AuthenticatedIndstillingerRouteImport } from './routes/_authenticated/indstillinger'
 import { Route as AuthenticatedKampeRouteImport } from './routes/_authenticated/kampe'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
@@ -55,6 +56,12 @@ const AuthenticatedHoldRoute = AuthenticatedHoldRouteImport.update({
   path: '/hold',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedIndstillingerRoute =
+  AuthenticatedIndstillingerRouteImport.update({
+    id: '/indstillinger',
+    path: '/indstillinger',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedKampeRoute = AuthenticatedKampeRouteImport.update({
   id: '/kampe',
   path: '/kampe',
@@ -84,6 +91,7 @@ export interface FileRoutesByFullPath {
   '/historik': typeof AuthenticatedHistorikRoute
   '/hjem': typeof AuthenticatedHjemRoute
   '/hold': typeof AuthenticatedHoldRoute
+  '/indstillinger': typeof AuthenticatedIndstillingerRoute
   '/kampe': typeof AuthenticatedKampeRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/profil': typeof AuthenticatedProfilRoute
@@ -96,6 +104,7 @@ export interface FileRoutesByTo {
   '/historik': typeof AuthenticatedHistorikRoute
   '/hjem': typeof AuthenticatedHjemRoute
   '/hold': typeof AuthenticatedHoldRoute
+  '/indstillinger': typeof AuthenticatedIndstillingerRoute
   '/kampe': typeof AuthenticatedKampeRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/profil': typeof AuthenticatedProfilRoute
@@ -110,6 +119,7 @@ export interface FileRoutesById {
   '/_authenticated/historik': typeof AuthenticatedHistorikRoute
   '/_authenticated/hjem': typeof AuthenticatedHjemRoute
   '/_authenticated/hold': typeof AuthenticatedHoldRoute
+  '/_authenticated/indstillinger': typeof AuthenticatedIndstillingerRoute
   '/_authenticated/kampe': typeof AuthenticatedKampeRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/historik'
     | '/hjem'
     | '/hold'
+    | '/indstillinger'
     | '/kampe'
     | '/onboarding'
     | '/profil'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/historik'
     | '/hjem'
     | '/hold'
+    | '/indstillinger'
     | '/kampe'
     | '/onboarding'
     | '/profil'
@@ -149,6 +161,7 @@ export interface FileRouteTypes {
     | '/_authenticated/historik'
     | '/_authenticated/hjem'
     | '/_authenticated/hold'
+    | '/_authenticated/indstillinger'
     | '/_authenticated/kampe'
     | '/_authenticated/onboarding'
     | '/_authenticated/profil'
@@ -212,6 +225,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHoldRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/indstillinger': {
+      id: '/_authenticated/indstillinger'
+      path: '/indstillinger'
+      fullPath: '/indstillinger'
+      preLoaderRoute: typeof AuthenticatedIndstillingerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/kampe': {
       id: '/_authenticated/kampe'
       path: '/kampe'
@@ -259,6 +279,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHistorikRoute: typeof AuthenticatedHistorikRoute
   AuthenticatedHjemRoute: typeof AuthenticatedHjemRoute
   AuthenticatedHoldRoute: typeof AuthenticatedHoldRoute
+  AuthenticatedIndstillingerRoute: typeof AuthenticatedIndstillingerRoute
   AuthenticatedKampeRoute: typeof AuthenticatedKampeRouteWithChildren
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
@@ -269,6 +290,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHistorikRoute: AuthenticatedHistorikRoute,
   AuthenticatedHjemRoute: AuthenticatedHjemRoute,
   AuthenticatedHoldRoute: AuthenticatedHoldRoute,
+  AuthenticatedIndstillingerRoute: AuthenticatedIndstillingerRoute,
   AuthenticatedKampeRoute: AuthenticatedKampeRouteWithChildren,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,

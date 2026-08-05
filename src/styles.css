@@ -171,9 +171,49 @@
 @utility bg-pitch-stripes {
   background-image: repeating-linear-gradient(
     -45deg,
-    oklch(0.614 0.15 152.3 / 0.07) 0 14px,
+    color-mix(in oklch, var(--pitch) 7%, transparent) 0 14px,
     transparent 14px 28px
   );
+}
+
+/*
+ * Farvetemaer — aktiveres via data-theme på <html> (se src/lib/theme.ts).
+ * "klubhus" er standard (:root) og "nat" bruger .dark-klassen ovenfor.
+ */
+[data-theme="graes"] {
+  --primary: oklch(0.334 0.071 158.4);
+  --primary-foreground: oklch(0.982 0.008 150);
+  --pitch: oklch(0.62 0.155 145.5);
+  --pitch-soft: oklch(0.955 0.025 152);
+  --accent: oklch(0.955 0.025 152);
+  --accent-foreground: oklch(0.5 0.13 152);
+  --ring: oklch(0.62 0.155 145.5);
+  --chart-1: oklch(0.334 0.071 158.4);
+  --chart-2: oklch(0.62 0.155 145.5);
+}
+
+[data-theme="himmel"] {
+  --primary: oklch(0.36 0.09 256);
+  --primary-foreground: oklch(0.982 0.006 250);
+  --pitch: oklch(0.6 0.14 235);
+  --pitch-soft: oklch(0.955 0.02 240);
+  --accent: oklch(0.955 0.02 240);
+  --accent-foreground: oklch(0.5 0.12 245);
+  --ring: oklch(0.6 0.14 235);
+  --chart-1: oklch(0.36 0.09 256);
+  --chart-2: oklch(0.6 0.14 235);
+}
+
+[data-theme="rod"] {
+  --primary: oklch(0.36 0.11 25);
+  --primary-foreground: oklch(0.982 0.006 60);
+  --pitch: oklch(0.56 0.19 27);
+  --pitch-soft: oklch(0.955 0.02 35);
+  --accent: oklch(0.955 0.02 35);
+  --accent-foreground: oklch(0.5 0.15 30);
+  --ring: oklch(0.56 0.19 27);
+  --chart-1: oklch(0.36 0.11 25);
+  --chart-2: oklch(0.56 0.19 27);
 }
 
 @utility shadow-card {
