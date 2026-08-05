@@ -45,7 +45,7 @@ type PaymentSum = { amount: number; status: string };
 type WithdrawalSum = { amount: number };
 
 function IndstillingerPage() {
-  const { user, current, memberships, isAdmin, refreshMemberships, setCurrentTeamId } = useTeam();
+  const { current, memberships, isAdmin, refreshMemberships, setCurrentTeamId } = useTeam();
   const queryClient = useQueryClient();
   const teamId = current?.teamId;
 
