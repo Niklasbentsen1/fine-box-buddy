@@ -5,12 +5,10 @@ import {
   Bell,
   Check,
   ChevronDown,
-  Coins,
-  Copy,
   History,
   Home,
   LogOut,
-  Plus,
+  Settings,
   Ticket,
   Trophy,
   UserRound,
@@ -42,9 +40,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const NAV_ITEMS = [
-  { to: "/hjem", label: "Hjem", icon: Home },
-  { to: "/boeder", label: "Bøder", icon: Ticket },
   { to: "/hold", label: "Hold", icon: Users },
+  { to: "/boeder", label: "Bøder", icon: Ticket },
+  { to: "/hjem", label: "Hjem", icon: Home },
   { to: "/historik", label: "Historik", icon: History },
   { to: "/kampe", label: "Kampe", icon: Trophy },
 ] as const;
@@ -152,36 +150,16 @@ function NotificationBell() {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { memberships, current, profile, user, setCurrentTeamId, refreshMemberships } = useTeam();
+  const { memberships, current, isAdmin, profile, user, setCurrentTeamId, refreshMemberships } =
+    useTeam();
   const navigate = useNavigate();
-  const [createOpen, setCreateOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
-  const [teamName, setTeamName] = useState("");
   const [clubCode, setClubCode] = useState("");
   const [busy, setBusy] = useState(false);
-  const [codeCopied, setCodeCopied] = useState(false);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate({ to: "/auth" });
-  };
-
-  const handleCreateTeam = async () => {
-    if (!current || !teamName.trim()) return;
-    setBusy(true);
-    const { error } = await supabase.rpc("create_team", {
-      _club_id: current.clubId,
-      _name: teamName.trim(),
-    });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success(`Holdet "${teamName.trim()}" er oprettet`);
-    setTeamName("");
-    setCreateOpen(false);
-    await refreshMemberships();
   };
 
   const handleJoinClub = async () => {
@@ -199,17 +177,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     await refreshMemberships();
   };
 
-  const copyInviteCode = async () => {
-    if (!current) return;
-    try {
-      await navigator.clipboard.writeText(`Tilmeld dig min klub med koden ${current.inviteCode}`);
-      setCodeCopied(true);
-      setTimeout(() => setCodeCopied(false), 1500);
-    } catch {
-      toast.error("Kunne ikke kopiere koden");
-    }
-  };
-
   const displayName = profile?.displayName || user.email || "Spiller";
 
   return (
@@ -217,9 +184,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-40 border-b bg-card/95 pt-safe backdrop-blur">
         <div className="mx-auto flex h-16 max-w-5xl items-center gap-3 px-safe">
           <Link to="/hjem" className="flex shrink-0 items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Coins className="h-5 w-5" />
-            </span>
+            <img
+              src="/icons/icon-128.webp"
+              alt="Bødekassen logo"
+              className="h-9 w-9 rounded-xl shadow-sm"
+            />
             <span className="hidden font-display text-2xl font-semibold tracking-wide min-[26rem]:inline">
               Bødekassen
             </span>
@@ -273,19 +242,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </DropdownMenuItem>
                   ))}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setCreateOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" /> Opret nyt hold
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setJoinOpen(true)}>
                     <Users className="mr-2 h-4 w-4" /> Tilmeld klub med kode
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={copyInviteCode}>
-                    {codeCopied ? (
-                      <Check className="mr-2 h-4 w-4 text-pitch" />
-                    ) : (
-                      <Copy className="mr-2 h-4 w-4" />
-                    )}
-                    Klubkode: {current.inviteCode}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -310,6 +268,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {isAdmin && (
+                  <DropdownMenuItem onClick={() => navigate({ to: "/indstillinger" })}>
+                    <Settings className="mr-2 h-4 w-4" /> Indstillinger
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => navigate({ to: "/profil" })}>
                   <UserRound className="mr-2 h-4 w-4" /> Min profil
                 </DropdownMenuItem>
@@ -342,35 +305,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           ))}
         </div>
       </nav>
-
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent>
-          <div className="space-y-1.5">
-            <DialogTitle>Opret nyt hold</DialogTitle>
-            <DialogDescription>
-              Opret et nyt hold i {current?.clubName} — fx hvis klubben har hold i flere rækker. Du
-              bliver administrator på det nye hold.
-            </DialogDescription>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="team-name">Holdnavn</Label>
-            <Input
-              id="team-name"
-              value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
-              placeholder="Fx 2. hold eller Oldboys"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>
-              Annuller
-            </Button>
-            <Button onClick={handleCreateTeam} disabled={busy || !teamName.trim()}>
-              Opret hold
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={joinOpen} onOpenChange={setJoinOpen}>
         <DialogContent>
