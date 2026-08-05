@@ -49,7 +49,7 @@ workflows:
           xcode-project use-profiles
 
 
-      - name: Build IPA
+    - name: Build IPA
   script: |
     xcode-project build-ipa \
       --project "ios/App/App.xcodeproj" \
