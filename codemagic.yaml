@@ -48,10 +48,6 @@ workflows:
 
           xcode-project use-profiles
 
-      - name: CocoaPods
-        script: |
-          cd ios/App
-          pod install
 
       - name: Build IPA
         script: |
