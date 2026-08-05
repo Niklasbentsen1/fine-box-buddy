@@ -78,6 +78,7 @@ function HoldPage() {
   const [mpOpen, setMpOpen] = useState(false);
   const [mpNumber, setMpNumber] = useState("");
   const [seasonOpen, setSeasonOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<
     (MemberRow & { fines: number; paid: number; owed: number }) | null
   >(null);
@@ -300,6 +301,20 @@ function HoldPage() {
     }
     toast.success("Sæsonen er afsluttet — kassens saldo er overført til den nye sæson");
     setSeasonOpen(false);
+    await queryClient.invalidateQueries();
+    await refreshMemberships();
+  };
+
+  const handleDeleteTeam = async () => {
+    setBusy(true);
+    const { error } = await supabase.rpc("delete_team", { _team_id: teamId });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`Holdet "${current.teamName}" er slettet`);
+    setDeleteOpen(false);
     await queryClient.invalidateQueries();
     await refreshMemberships();
   };
