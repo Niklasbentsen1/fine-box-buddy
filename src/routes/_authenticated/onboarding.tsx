@@ -97,10 +97,10 @@ function OnboardingPage() {
             <span className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-gold-soft text-gold-foreground">
               <Users className="h-6 w-6" />
             </span>
-            <h2 className="font-display text-2xl font-semibold">Opret en klub</h2>
+            <h2 className="font-display text-2xl font-semibold">Start en ny klub</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Start en ny bødekasse til din klub. Du bliver administrator og får en klubkode, du kan
-              dele med holdet.
+              Start en ny bødekasse til din klub. Du bliver automatisk administrator og får en
+              klubkode, du kan dele med holdet.
             </p>
             <div className="mt-5 space-y-4">
               <div className="space-y-2">
@@ -129,7 +129,7 @@ function OnboardingPage() {
               className="mt-6 w-full"
               disabled={busy !== null || !clubName.trim() || !teamName.trim()}
             >
-              {busy === "create" ? "Opretter…" : "Opret klub"}
+              {busy === "create" ? "Opretter…" : "Start klubben"}
             </Button>
           </form>
 

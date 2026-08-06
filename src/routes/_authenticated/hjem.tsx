@@ -5,9 +5,13 @@ import {
   CircleAlert,
   Clock,
   HandCoins,
+  KeyRound,
+  Link2,
   PiggyBank,
+  Share2,
   Smartphone,
   Ticket,
+  UserPlus,
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -64,6 +68,25 @@ function parseAmount(value: string): number {
   return Number(value.replace(",", "."));
 }
 
+const APP_DOWNLOAD_URL = "https://fine-box-buddy.lovable.app";
+
+async function shareOrCopy(text: string, successMessage: string) {
+  if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+    try {
+      await navigator.share({ text });
+    } catch {
+      // Brugeren annullerede delingen
+    }
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    toast.success(successMessage);
+  } catch {
+    toast.error("Kunne ikke kopiere beskeden");
+  }
+}
+
 function HjemPage() {
   const { user, current, isAdmin, profile } = useTeam();
   const queryClient = useQueryClient();
@@ -78,6 +101,7 @@ function HjemPage() {
   const [fineLabel, setFineLabel] = useState("");
   const [fineAmount, setFineAmount] = useState("");
   const [busy, setBusy] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const { data: myFines = [] } = useQuery({
     queryKey: ["team", teamId, "my-fines", user.id],

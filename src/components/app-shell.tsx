@@ -268,11 +268,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {isAdmin && (
-                  <DropdownMenuItem onClick={() => navigate({ to: "/indstillinger" })}>
-                    <Settings className="mr-2 h-4 w-4" /> Indstillinger
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem onClick={() => navigate({ to: "/indstillinger" })}>
+                  <Settings className="mr-2 h-4 w-4" /> Indstillinger
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate({ to: "/profil" })}>
                   <UserRound className="mr-2 h-4 w-4" /> Min profil
                 </DropdownMenuItem>
