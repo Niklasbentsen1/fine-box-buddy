@@ -5,9 +5,13 @@ import {
   CircleAlert,
   Clock,
   HandCoins,
+  KeyRound,
+  Link2,
   PiggyBank,
+  Share2,
   Smartphone,
   Ticket,
+  UserPlus,
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -64,6 +68,25 @@ function parseAmount(value: string): number {
   return Number(value.replace(",", "."));
 }
 
+const APP_DOWNLOAD_URL = "https://fine-box-buddy.lovable.app";
+
+async function shareOrCopy(text: string, successMessage: string) {
+  if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+    try {
+      await navigator.share({ text });
+    } catch {
+      // Brugeren annullerede delingen
+    }
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    toast.success(successMessage);
+  } catch {
+    toast.error("Kunne ikke kopiere beskeden");
+  }
+}
+
 function HjemPage() {
   const { user, current, isAdmin, profile } = useTeam();
   const queryClient = useQueryClient();
@@ -78,6 +101,7 @@ function HjemPage() {
   const [fineLabel, setFineLabel] = useState("");
   const [fineAmount, setFineAmount] = useState("");
   const [busy, setBusy] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const { data: myFines = [] } = useQuery({
     queryKey: ["team", teamId, "my-fines", user.id],
@@ -266,6 +290,10 @@ function HjemPage() {
     await refresh();
   };
 
+  const inviteLinkMessage = `Hej! Vi bruger appen Bødekassen til at holde styr på bødekassen i ${current.clubName}.\n\nDownload appen her: ${APP_DOWNLOAD_URL}\n\nNår du har oprettet dig, får du en klubkode af mig, så du kan tilmelde dig klubben.`;
+
+  const inviteCodeMessage = `Tilmeld dig min klub "${current.clubName}" i appen Bødekassen med koden ${current.inviteCode}.\n\nSådan gør du:\n1. Download Bødekassen: ${APP_DOWNLOAD_URL}\n2. Opret dig som bruger\n3. Vælg "Tilmeld med klubkode" og indtast koden ${current.inviteCode}\n4. Afvent godkendelse fra en administrator\n\nGlæder mig til at se dig på holdet!`;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -284,6 +312,11 @@ function HjemPage() {
           {isAdmin && (
             <Button variant="gold" onClick={() => setFineOpen(true)}>
               <Ticket className="mr-2 h-4 w-4" /> Uddel bøde
+            </Button>
+          )}
+          {isAdmin && (
+            <Button variant="outline" onClick={() => setInviteOpen(true)}>
+              <UserPlus className="mr-2 h-4 w-4" /> Inviter til klub
             </Button>
           )}
         </div>
@@ -508,6 +541,52 @@ function HjemPage() {
               Giv bøde
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+        <DialogContent>
+          <div className="space-y-1.5">
+            <DialogTitle>Inviter til {current.clubName}</DialogTitle>
+            <DialogDescription>
+              Del et downloadlink til appen, eller send en færdig besked med klubkode og
+              vejledning til nye spillere.
+            </DialogDescription>
+          </div>
+          <div className="space-y-4">
+            <div className="space-y-2.5 rounded-2xl border p-4">
+              <p className="flex items-center gap-2 text-sm font-semibold">
+                <Link2 className="h-4 w-4 text-pitch" /> Inviter via link
+              </p>
+              <p className="whitespace-pre-line rounded-xl bg-secondary px-3 py-2.5 text-xs text-muted-foreground">
+                {inviteLinkMessage}
+              </p>
+              <Button
+                variant="pitch"
+                className="w-full"
+                onClick={() =>
+                  void shareOrCopy(inviteLinkMessage, "Link kopieret — del det med dine spillere")
+                }
+              >
+                <Share2 className="mr-2 h-4 w-4" /> Del link
+              </Button>
+            </div>
+            <div className="space-y-2.5 rounded-2xl border p-4">
+              <p className="flex items-center gap-2 text-sm font-semibold">
+                <KeyRound className="h-4 w-4 text-gold-foreground" /> Inviter via kode
+              </p>
+              <p className="whitespace-pre-line rounded-xl bg-secondary px-3 py-2.5 text-xs text-muted-foreground">
+                {inviteCodeMessage}
+              </p>
+              <Button
+                variant="gold"
+                className="w-full"
+                onClick={() => void shareOrCopy(inviteCodeMessage, "Invitationsbesked kopieret")}
+              >
+                <Share2 className="mr-2 h-4 w-4" /> Del besked
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

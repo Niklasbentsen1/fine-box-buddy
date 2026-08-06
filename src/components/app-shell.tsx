@@ -150,8 +150,7 @@ function NotificationBell() {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { memberships, current, isAdmin, profile, user, setCurrentTeamId, refreshMemberships } =
-    useTeam();
+  const { memberships, current, profile, user, setCurrentTeamId, refreshMemberships } = useTeam();
   const navigate = useNavigate();
   const [joinOpen, setJoinOpen] = useState(false);
   const [clubCode, setClubCode] = useState("");
@@ -268,11 +267,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {isAdmin && (
-                  <DropdownMenuItem onClick={() => navigate({ to: "/indstillinger" })}>
-                    <Settings className="mr-2 h-4 w-4" /> Indstillinger
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem onClick={() => navigate({ to: "/indstillinger" })}>
+                  <Settings className="mr-2 h-4 w-4" /> Indstillinger
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate({ to: "/profil" })}>
                   <UserRound className="mr-2 h-4 w-4" /> Min profil
                 </DropdownMenuItem>
