@@ -290,6 +290,10 @@ function HjemPage() {
     await refresh();
   };
 
+  const inviteLinkMessage = `Hej! Vi bruger appen Bødekassen til at holde styr på bødekassen i ${current.clubName}.\n\nDownload appen her: ${APP_DOWNLOAD_URL}\n\nNår du har oprettet dig, får du en klubkode af mig, så du kan tilmelde dig klubben.`;
+
+  const inviteCodeMessage = `Tilmeld dig min klub "${current.clubName}" i appen Bødekassen med koden ${current.inviteCode}.\n\nSådan gør du:\n1. Download Bødekassen: ${APP_DOWNLOAD_URL}\n2. Opret dig som bruger\n3. Vælg "Tilmeld med klubkode" og indtast koden ${current.inviteCode}\n4. Afvent godkendelse fra en administrator\n\nGlæder mig til at se dig på holdet!`;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -308,6 +312,11 @@ function HjemPage() {
           {isAdmin && (
             <Button variant="gold" onClick={() => setFineOpen(true)}>
               <Ticket className="mr-2 h-4 w-4" /> Uddel bøde
+            </Button>
+          )}
+          {isAdmin && (
+            <Button variant="outline" onClick={() => setInviteOpen(true)}>
+              <UserPlus className="mr-2 h-4 w-4" /> Inviter til klub
             </Button>
           )}
         </div>
