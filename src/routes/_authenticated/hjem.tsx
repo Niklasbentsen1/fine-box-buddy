@@ -543,6 +543,52 @@ function HjemPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+        <DialogContent>
+          <div className="space-y-1.5">
+            <DialogTitle>Inviter til {current.clubName}</DialogTitle>
+            <DialogDescription>
+              Del et downloadlink til appen, eller send en færdig besked med klubkode og
+              vejledning til nye spillere.
+            </DialogDescription>
+          </div>
+          <div className="space-y-4">
+            <div className="space-y-2.5 rounded-2xl border p-4">
+              <p className="flex items-center gap-2 text-sm font-semibold">
+                <Link2 className="h-4 w-4 text-pitch" /> Inviter via link
+              </p>
+              <p className="whitespace-pre-line rounded-xl bg-secondary px-3 py-2.5 text-xs text-muted-foreground">
+                {inviteLinkMessage}
+              </p>
+              <Button
+                variant="pitch"
+                className="w-full"
+                onClick={() =>
+                  void shareOrCopy(inviteLinkMessage, "Link kopieret — del det med dine spillere")
+                }
+              >
+                <Share2 className="mr-2 h-4 w-4" /> Del link
+              </Button>
+            </div>
+            <div className="space-y-2.5 rounded-2xl border p-4">
+              <p className="flex items-center gap-2 text-sm font-semibold">
+                <KeyRound className="h-4 w-4 text-gold-foreground" /> Inviter via kode
+              </p>
+              <p className="whitespace-pre-line rounded-xl bg-secondary px-3 py-2.5 text-xs text-muted-foreground">
+                {inviteCodeMessage}
+              </p>
+              <Button
+                variant="gold"
+                className="w-full"
+                onClick={() => void shareOrCopy(inviteCodeMessage, "Invitationsbesked kopieret")}
+              >
+                <Share2 className="mr-2 h-4 w-4" /> Del besked
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
