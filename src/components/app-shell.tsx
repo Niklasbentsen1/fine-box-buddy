@@ -150,8 +150,7 @@ function NotificationBell() {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { memberships, current, isAdmin, profile, user, setCurrentTeamId, refreshMemberships } =
-    useTeam();
+  const { memberships, current, profile, user, setCurrentTeamId, refreshMemberships } = useTeam();
   const navigate = useNavigate();
   const [joinOpen, setJoinOpen] = useState(false);
   const [clubCode, setClubCode] = useState("");
