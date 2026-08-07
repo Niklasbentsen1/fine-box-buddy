@@ -177,6 +177,9 @@ function HoldPage() {
     return a.name.localeCompare(b.name, "da");
   });
 
+  // Bødesatser vises alfabetisk, når der gives bøde fra spillerens kort
+  const sortedFineTypes = [...fineTypes].sort((a, b) => a.label.localeCompare(b.label, "da"));
+
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["team", teamId] });
 
   const handleReminder = async (userId: string, name: string) => {
@@ -400,21 +403,39 @@ function HoldPage() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     {m.role === "admin" ? (
-                      <DropdownMenuItem onClick={() => handleSetRole(m.userId, m.name, "member")}>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSetRole(m.userId, m.name, "member");
+                        }}
+                      >
                         <ShieldMinus className="mr-2 h-4 w-4" /> Fjern administrator
                       </DropdownMenuItem>
                     ) : (
-                      <DropdownMenuItem onClick={() => handleSetRole(m.userId, m.name, "admin")}>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSetRole(m.userId, m.name, "admin");
+                        }}
+                      >
                         <ShieldPlus className="mr-2 h-4 w-4" /> Gør til administrator
                       </DropdownMenuItem>
                     )}
                     {m.owed > 0 && (
-                      <DropdownMenuItem onClick={() => handleReminder(m.userId, m.name)}>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleReminder(m.userId, m.name);
+                        }}
+                      >
                         <BellRing className="mr-2 h-4 w-4" /> Send påmindelse om betaling
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuItem
-                      onClick={() => handleRemove(m.userId, m.name)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemove(m.userId, m.name);
+                      }}
                       className="text-destructive"
                     >
                       <UserMinus className="mr-2 h-4 w-4" /> Fjern fra holdet
@@ -558,14 +579,14 @@ function HoldPage() {
                   <p className="text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Giv en bøde
                   </p>
-                  {fineTypes.length > 0 ? (
+                  {sortedFineTypes.length > 0 ? (
                     <>
                       <Select value={fineTypePick} onValueChange={setFineTypePick}>
                         <SelectTrigger>
                           <SelectValue placeholder="Vælg bøde" />
                         </SelectTrigger>
                         <SelectContent>
-                          {fineTypes.map((t) => (
+                          {sortedFineTypes.map((t) => (
                             <SelectItem key={t.id} value={t.id}>
                               {t.label} · {formatKr(Number(t.amount))}
                             </SelectItem>
