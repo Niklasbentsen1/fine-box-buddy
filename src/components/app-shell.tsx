@@ -93,15 +93,27 @@ function NotificationBell() {
 
   const unreadCount = notifications.filter((n) => !n.read_at).length;
 
-  const markRead = async (notification: NotificationRow) => {
-    if (notification.read_at) return;
-    await supabase
-      .from("notifications")
-      .update({ read_at: new Date().toISOString() })
-      .eq("id", notification.id);
-    await queryClient.invalidateQueries({
-      queryKey: ["team", teamId, "notifications", user.id],
-    });
+  const openNotification = async (notification: NotificationRow) => {
+    if (!notification.read_at) {
+      await supabase
+        .from("notifications")
+        .update({ read_at: new Date().toISOString() })
+        .eq("id", notification.id);
+      await queryClient.invalidateQueries({
+        queryKey: ["team", teamId, "notifications", user.id],
+      });
+    }
+    const target = notification.link ?? inferNotificationLink(notification.title);
+    if (!target) return;
+    if (target.startsWith("/kampe/")) {
+      navigate({ to: "/kampe/$matchId", params: { matchId: target.slice("/kampe/".length) } });
+    } else if (target === "/hold") {
+      navigate({ to: "/hold" });
+    } else if (target === "/kampe") {
+      navigate({ to: "/kampe" });
+    } else {
+      navigate({ to: "/hjem" });
+    }
   };
 
   if (!teamId) return null;
@@ -132,7 +144,7 @@ function NotificationBell() {
           notifications.map((n) => (
             <DropdownMenuItem
               key={n.id}
-              onClick={() => markRead(n)}
+              onClick={() => openNotification(n)}
               className="flex cursor-pointer items-start gap-2.5 py-2.5"
             >
               <span
@@ -336,7 +348,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 pb-safe backdrop-blur md:hidden">
-        <div className="mx-auto grid max-w-lg grid-cols-5">
+        <div className="mx-auto grid max-w-lg grid-cols-6">
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.to}
