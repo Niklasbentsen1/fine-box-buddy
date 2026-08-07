@@ -4,11 +4,15 @@ import { Check, Coins, Mail, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import authIllustration from "@/assets/auth-illustration.jpg";
+
+const REMEMBERED_EMAIL_KEY = "boedekassen:remembered-email";
+const KEEP_LOGGED_IN_KEY = "boedekassen:keep-logged-in";
+const SESSION_ALIVE_KEY = "boedekassen:session-alive";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -23,43 +27,14 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-function AppleIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
-      <path d="M17.05 20.28c-.98.95-2.05.86-3.08.41-1.09-.47-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.41C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.08ZM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25Z" />
-    </svg>
-  );
-}
-
-function GoogleIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden>
-      <path
-        fill="#4285F4"
-        d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82Z"
-      />
-      <path
-        fill="#34A853"
-        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24Z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M5.27 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.98-3.09Z"
-      />
-      <path
-        fill="#EA4335"
-        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.98 3.09C6.22 6.86 8.87 4.75 12 4.75Z"
-      />
-    </svg>
-  );
-}
-
 function AuthPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
+  const [stayLoggedIn, setStayLoggedIn] = useState(true);
   const [busy, setBusy] = useState(false);
   const [signedUp, setSignedUp] = useState(false);
 
@@ -75,22 +50,19 @@ function AuthPage() {
   const passwordIsValid = passwordRules.every((r: { met: boolean }) => r.met);
 
   useEffect(() => {
+    const remembered = window.localStorage.getItem(REMEMBERED_EMAIL_KEY);
+    if (remembered) setEmail(remembered);
+  }, []);
+
+  useEffect(() => {
+    const mustSignOut =
+      window.localStorage.getItem(KEEP_LOGGED_IN_KEY) === "0" &&
+      !window.sessionStorage.getItem(SESSION_ALIVE_KEY);
+    if (mustSignOut) return;
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/hjem", replace: true });
     });
   }, [navigate]);
-
-  const handleOAuth = async (provider: "google" | "apple") => {
-    const result = await lovable.auth.signInWithOAuth(provider, {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      toast.error(result.error.message);
-      return;
-    }
-    if (result.redirected) return;
-    navigate({ to: "/hjem" });
-  };
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,13 +100,35 @@ function AuthPage() {
         );
         return;
       }
+      if (rememberMe) {
+        window.localStorage.setItem(REMEMBERED_EMAIL_KEY, email.trim());
+      } else {
+        window.localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+      }
+      window.localStorage.setItem(KEEP_LOGGED_IN_KEY, stayLoggedIn ? "1" : "0");
       navigate({ to: "/hjem" });
     }
   };
 
   return (
     <div className="grid min-h-dvh bg-background lg:grid-cols-2">
-...
+      <div className="relative hidden overflow-hidden bg-primary lg:block">
+        <img
+          src={authIllustration}
+          alt="Sparegris med mønter — Bødekassen"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/30 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 p-10 text-primary-foreground">
+          <p className="font-display text-4xl font-semibold leading-tight">
+            Hele klubbens bødekasse — samlet ét sted
+          </p>
+          <p className="mt-3 max-w-md text-sm text-primary-foreground/85">
+            Uddel bøder, følg indbetalinger, send påmindelser og kår kampens spiller — for alle
+            dine hold og klubber.
+          </p>
+        </div>
+      </div>
       <div className="flex items-center justify-center px-safe pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))]">
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center gap-3">
@@ -179,24 +173,7 @@ function AuthPage() {
                   : "Opret dig som bruger, og tilmeld dig din klub med en klubkode."}
               </p>
 
-              <div className="mt-5 grid grid-cols-2 gap-3">
-                <Button variant="outline" onClick={() => handleOAuth("google")} className="w-full">
-                  <GoogleIcon className="mr-2 h-4 w-4" /> Google
-                </Button>
-                <Button variant="outline" onClick={() => handleOAuth("apple")} className="w-full">
-                  <AppleIcon className="mr-2 h-4 w-4" /> Apple
-                </Button>
-              </div>
-
-              <div className="my-5 flex items-center gap-3">
-                <div className="h-px flex-1 bg-border" />
-                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  eller med e-mail
-                </span>
-                <div className="h-px flex-1 bg-border" />
-              </div>
-
-              <form onSubmit={handleEmail} className="space-y-4">
+              <form onSubmit={handleEmail} className="mt-5 space-y-4">
                 {mode === "signup" && (
                   <div className="space-y-2">
                     <Label htmlFor="name">Navn</Label>
@@ -248,6 +225,32 @@ function AuthPage() {
                     </ul>
                   )}
                 </div>
+                {mode === "login" && (
+                  <div className="space-y-2.5">
+                    <label
+                      htmlFor="remember-me"
+                      className="flex cursor-pointer items-center gap-2.5 text-sm"
+                    >
+                      <Checkbox
+                        id="remember-me"
+                        checked={rememberMe}
+                        onCheckedChange={(v) => setRememberMe(v === true)}
+                      />
+                      Husk mig
+                    </label>
+                    <label
+                      htmlFor="stay-logged-in"
+                      className="flex cursor-pointer items-center gap-2.5 text-sm"
+                    >
+                      <Checkbox
+                        id="stay-logged-in"
+                        checked={stayLoggedIn}
+                        onCheckedChange={(v) => setStayLoggedIn(v === true)}
+                      />
+                      Forbliv logget ind
+                    </label>
+                  </div>
+                )}
                 <Button
                   type="submit"
                   className="w-full"

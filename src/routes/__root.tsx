@@ -14,6 +14,9 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 
+const KEEP_LOGGED_IN_KEY = "boedekassen:keep-logged-in";
+const SESSION_ALIVE_KEY = "boedekassen:session-alive";
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background px-safe py-safe">
@@ -133,6 +136,18 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+
+  // Fravælges "Forbliv logget ind" ved login, logges brugeren ud ved næste kolde start.
+  useEffect(() => {
+    if (
+      window.localStorage.getItem(KEEP_LOGGED_IN_KEY) === "0" &&
+      !window.sessionStorage.getItem(SESSION_ALIVE_KEY)
+    ) {
+      window.localStorage.removeItem(KEEP_LOGGED_IN_KEY);
+      void supabase.auth.signOut();
+    }
+    window.sessionStorage.setItem(SESSION_ALIVE_KEY, "1");
+  }, []);
 
   useEffect(() => {
     const {

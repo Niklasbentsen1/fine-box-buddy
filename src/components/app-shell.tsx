@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -17,7 +17,8 @@ import {
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
-import { useTeam } from "@/lib/team";
+import { useTeam, type Membership } from "@/lib/team";
+import { initNotificationPush } from "@/lib/push";
 import { formatDateTime, initials } from "@/lib/format";
 import { Avatar } from "@/components/avatar";
 import { Button } from "@/components/ui/button";
@@ -156,6 +157,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [clubCode, setClubCode] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const clubs = useMemo(() => {
+    const grouped = new Map<string, { clubId: string; clubName: string; teams: Membership[] }>();
+    for (const m of memberships) {
+      const existing = grouped.get(m.clubId);
+      if (existing) existing.teams.push(m);
+      else grouped.set(m.clubId, { clubId: m.clubId, clubName: m.clubName, teams: [m] });
+    }
+    return [...grouped.values()];
+  }, [memberships]);
+
+  // Nye notifikationer vises også som push-notifikation på telefonen (iOS/Android).
+  useEffect(() => initNotificationPush(user.id), [user.id]);
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate({ to: "/auth" });
@@ -211,34 +225,56 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {current && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 rounded-xl border bg-card px-3 py-2 text-left transition-colors hover:bg-secondary">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-pitch text-[11px] font-bold text-pitch-foreground">
+                  <button className="flex items-center gap-2 rounded-xl border bg-card px-3 py-1.5 text-left transition-colors hover:bg-secondary">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-pitch text-[11px] font-bold text-pitch-foreground">
                       {initials(current.teamName)}
                     </span>
-                    <span className="max-w-28 truncate text-sm font-semibold sm:max-w-40">
-                      {current.teamName}
+                    <span className="min-w-0">
+                      <span className="block max-w-28 truncate text-sm font-semibold leading-tight sm:max-w-40">
+                        {current.teamName}
+                      </span>
+                      <span className="block max-w-28 truncate text-[10px] leading-tight text-muted-foreground sm:max-w-40">
+                        {current.clubName}
+                      </span>
                     </span>
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-64">
                   <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                    {current.clubName} · dine hold
+                    Dine klubber og hold
                   </DropdownMenuLabel>
-                  {memberships.map((m) => (
-                    <DropdownMenuItem
-                      key={m.teamId}
-                      onClick={() => setCurrentTeamId(m.teamId)}
-                      className="flex items-center justify-between gap-2"
-                    >
-                      <span className="truncate">
-                        {m.teamName}
-                        <span className="ml-1.5 text-xs text-muted-foreground">
-                          {m.role === "admin" ? "Admin" : "Medlem"}
+                  {clubs.map((club, index) => (
+                    <div key={club.clubId}>
+                      {index > 0 && <DropdownMenuSeparator />}
+                      <DropdownMenuLabel className="flex items-center justify-between gap-2">
+                        <span className="truncate text-xs font-semibold uppercase tracking-wide">
+                          {club.clubName}
                         </span>
-                      </span>
-                      {m.teamId === current.teamId && <Check className="h-4 w-4 text-pitch" />}
-                    </DropdownMenuItem>
+                        {club.clubId === current.clubId && (
+                          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-pitch">
+                            Aktiv
+                          </span>
+                        )}
+                      </DropdownMenuLabel>
+                      {club.teams.map((m) => (
+                        <DropdownMenuItem
+                          key={m.teamId}
+                          onClick={() => setCurrentTeamId(m.teamId)}
+                          className="flex items-center justify-between gap-2 pl-5"
+                        >
+                          <span className="truncate">
+                            {m.teamName}
+                            <span className="ml-1.5 text-xs text-muted-foreground">
+                              {m.role === "admin" ? "Admin" : "Medlem"}
+                            </span>
+                          </span>
+                          {m.teamId === current.teamId && (
+                            <Check className="h-4 w-4 shrink-0 text-pitch" />
+                          )}
+                        </DropdownMenuItem>
+                      ))}
+                    </div>
                   ))}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setJoinOpen(true)}>
