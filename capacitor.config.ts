@@ -6,6 +6,12 @@ const config: CapacitorConfig = {
   appId: "app.boedekassen",
   appName: "Bødekassen",
   webDir: "dist",
+  plugins: {
+    LocalNotifications: {
+      smallIcon: "ic_launcher",
+      iconColor: "#12324F",
+    },
+  },
 };
 
 export default config;

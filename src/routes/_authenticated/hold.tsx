@@ -41,6 +41,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/hold")({
   head: () => ({
@@ -54,6 +61,7 @@ export const Route = createFileRoute("/_authenticated/hold")({
 
 type FineRow = { user_id: string; amount: number };
 type PaymentRow = { user_id: string; amount: number; status: string };
+type FineTypeRow = { id: string; label: string; amount: number };
 type WithdrawalRow = { amount: number };
 type PendingRow = {
   user_id: string;
@@ -74,6 +82,9 @@ function HoldPage() {
     (MemberRow & { fines: number; paid: number; owed: number }) | null
   >(null);
   const [busy, setBusy] = useState(false);
+  const [memberSort, setMemberSort] = useState<"name" | "owed-desc" | "owed-asc">("name");
+  const [fineTypePick, setFineTypePick] = useState("");
+  const [givingFine, setGivingFine] = useState(false);
 
   const { data: members = [] } = useQuery({
     queryKey: ["team", teamId, "members"],
@@ -130,6 +141,20 @@ function HoldPage() {
     },
   });
 
+  const { data: fineTypes = [] } = useQuery({
+    queryKey: ["team", teamId, "fine-types"],
+    enabled: !!teamId && isAdmin,
+    queryFn: async (): Promise<FineTypeRow[]> => {
+      const { data, error } = await supabase
+        .from("fine_types")
+        .select("id, label, amount")
+        .eq("team_id", teamId!)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as FineTypeRow[];
+    },
+  });
+
   if (!current || !teamId) return null;
 
   const finesTotal = sumAmounts(fines);
@@ -146,6 +171,12 @@ function HoldPage() {
     return { ...m, fines: memberFines, paid: memberPaid, owed: Math.max(0, memberFines - memberPaid) };
   });
 
+  const sortedMembers = [...perMember].sort((a, b) => {
+    if (memberSort === "owed-desc") return b.owed - a.owed || a.name.localeCompare(b.name, "da");
+    if (memberSort === "owed-asc") return a.owed - b.owed || a.name.localeCompare(b.name, "da");
+    return a.name.localeCompare(b.name, "da");
+  });
+
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["team", teamId] });
 
   const handleReminder = async (userId: string, name: string) => {
@@ -159,6 +190,33 @@ function HoldPage() {
       return;
     }
     toast.success(`Påmindelse sendt til ${firstName(name)}`);
+  };
+
+  const handleGiveFineToSelected = async () => {
+    if (!selectedMember) return;
+    const preset = fineTypes.find((t) => t.id === fineTypePick);
+    if (!preset) {
+      toast.error("Vælg en bøde");
+      return;
+    }
+    setGivingFine(true);
+    const { error } = await supabase.from("fines").insert({
+      team_id: teamId,
+      user_id: selectedMember.userId,
+      fine_type_id: preset.id,
+      label: preset.label,
+      amount: Number(preset.amount),
+      created_by: user.id,
+    });
+    setGivingFine(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`Bøde givet til ${firstName(selectedMember.name)}`);
+    setFineTypePick("");
+    setSelectedMember(null);
+    await refresh();
   };
 
   const handleRemove = async (userId: string, name: string) => {
@@ -290,13 +348,31 @@ function HoldPage() {
       </div>
 
       <section className="rounded-2xl border bg-card p-5 shadow-card">
-        <h2 className="font-display text-xl font-semibold">Spillerliste ({members.length})</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-xl font-semibold">Spillerliste ({members.length})</h2>
+          <Select
+            value={memberSort}
+            onValueChange={(v) => setMemberSort(v as "name" | "owed-desc" | "owed-asc")}
+          >
+            <SelectTrigger className="h-9 w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name">Navn (A-Å)</SelectItem>
+              <SelectItem value="owed-desc">Skylder mest først</SelectItem>
+              <SelectItem value="owed-asc">Skylder mindst først</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <ul className="mt-3 divide-y">
-          {perMember.map((m) => (
+          {sortedMembers.map((m) => (
             <li
               key={m.userId}
               className="flex cursor-pointer items-center gap-3 py-3 transition-colors hover:bg-muted/40"
-              onClick={() => setSelectedMember(m)}
+              onClick={() => {
+                setSelectedMember(m);
+                setFineTypePick("");
+              }}
             >
               <Avatar name={m.name} url={m.avatarUrl} />
               <div className="min-w-0 flex-1">
@@ -477,6 +553,45 @@ function HoldPage() {
                   <p className="mt-0.5 text-sm font-bold">{formatKr(selectedMember.owed)}</p>
                 </div>
               </div>
+              {isAdmin && (
+                <div className="w-full space-y-2.5 border-t pt-4">
+                  <p className="text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Giv en bøde
+                  </p>
+                  {fineTypes.length > 0 ? (
+                    <>
+                      <Select value={fineTypePick} onValueChange={setFineTypePick}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Vælg bøde" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {fineTypes.map((t) => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {t.label} · {formatKr(Number(t.amount))}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="gold"
+                        className="w-full"
+                        onClick={handleGiveFineToSelected}
+                        disabled={givingFine || !fineTypePick}
+                      >
+                        <Ticket className="mr-2 h-4 w-4" />
+                        {givingFine
+                          ? "Giver bøde…"
+                          : `Giv bøde til ${firstName(selectedMember.name)}`}
+                      </Button>
+                    </>
+                  ) : (
+                    <p className="text-left text-xs text-muted-foreground">
+                      Der er ingen bødesatser endnu — opret dem under Bøder, så kan du give dem
+                      direkte herfra.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
