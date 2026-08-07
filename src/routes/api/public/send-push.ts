@@ -25,7 +25,7 @@ function base64url(input: string | ArrayBuffer): string {
   } else {
     const bytes = new Uint8Array(input);
     let s = "";
-    for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+    for (const byte of bytes) s += String.fromCharCode(byte);
     b64 = btoa(s);
   }
   return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -73,7 +73,7 @@ export const Route = createFileRoute("/api/public/send-push")({
           return new Response("invalid json", { status: 400 });
         }
 
-        const record = (payload.record ?? payload) as {
+        const record = (payload["record"] ?? payload) as {
           user_id?: string;
           title?: string;
           body?: string;
