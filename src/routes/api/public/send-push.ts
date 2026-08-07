@@ -61,8 +61,16 @@ export const Route = createFileRoute("/api/public/send-push")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const hookSecret = process.env["PUSH_HOOK_SECRET"];
-        if (!hookSecret || request.headers.get("x-hook-secret") !== hookSecret) {
+        // Den delte hemmelighed ligger i databasen (kun tilgængelig for
+        // service-rolle og databasens egen trigger), så både preview og
+        // den publicerede app bruger samme nøgle.
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: configRow } = await supabaseAdmin
+          .from("push_config")
+          .select("value")
+          .eq("key", "hook_secret")
+          .maybeSingle();
+        if (!configRow || request.headers.get("x-hook-secret") !== configRow.value) {
           return new Response("unauthorized", { status: 401 });
         }
 
@@ -88,7 +96,6 @@ export const Route = createFileRoute("/api/public/send-push")({
           return Response.json({ ok: true, sent: 0, reason: "apns_not_configured" });
         }
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: tokens, error } = await supabaseAdmin
           .from("device_tokens")
           .select("id, token")
