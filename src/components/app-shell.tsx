@@ -3,6 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Bell,
+  Building2,
   Check,
   ChevronDown,
   History,
@@ -46,6 +47,7 @@ const NAV_ITEMS = [
   { to: "/hjem", label: "Hjem", icon: Home },
   { to: "/historik", label: "Historik", icon: History },
   { to: "/kampe", label: "Kampe", icon: Trophy },
+  { to: "/klubber", label: "Klubber", icon: Building2 },
 ] as const;
 
 type NotificationRow = {
@@ -54,11 +56,22 @@ type NotificationRow = {
   body: string;
   read_at: string | null;
   created_at: string;
+  link: string | null;
 };
+
+// Gamle notifikationer uden link ledes ud fra titlen til den rette side.
+function inferNotificationLink(title: string): string | null {
+  if (title.startsWith("Du er tilføjet til kamp")) return "/kampe";
+  if (title.startsWith("Afstemning afsluttet")) return "/kampe";
+  if (title.startsWith("Ny anmodning")) return "/hold";
+  if (title.startsWith("Du er godkendt")) return "/hjem";
+  return null;
+}
 
 function NotificationBell() {
   const { user, current } = useTeam();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const teamId = current?.teamId;
 
   const { data: notifications = [] } = useQuery({
@@ -68,7 +81,7 @@ function NotificationBell() {
     queryFn: async (): Promise<NotificationRow[]> => {
       const { data, error } = await supabase
         .from("notifications")
-        .select("id, title, body, read_at, created_at")
+        .select("id, title, body, read_at, created_at, link")
         .eq("team_id", teamId!)
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
