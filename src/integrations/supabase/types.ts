@@ -250,6 +250,7 @@ export type Database = {
           body: string
           created_at: string
           id: string
+          link: string | null
           read_at: string | null
           team_id: string
           title: string
@@ -259,6 +260,7 @@ export type Database = {
           body: string
           created_at?: string
           id?: string
+          link?: string | null
           read_at?: string | null
           team_id: string
           title: string
@@ -268,6 +270,7 @@ export type Database = {
           body?: string
           created_at?: string
           id?: string
+          link?: string | null
           read_at?: string | null
           team_id?: string
           title?: string
@@ -536,6 +539,14 @@ export type Database = {
       }
       delete_team: { Args: { _team_id: string }; Returns: undefined }
       end_season: { Args: { _team_id: string }; Returns: undefined }
+      get_all_clubs: {
+        Args: never
+        Returns: {
+          id: string
+          member_count: number
+          name: string
+        }[]
+      }
       get_match_vote_counts: {
         Args: { _match_id: string }
         Returns: {

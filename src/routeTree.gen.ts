@@ -18,6 +18,7 @@ import { Route as AuthenticatedHjemRouteImport } from './routes/_authenticated/h
 import { Route as AuthenticatedHoldRouteImport } from './routes/_authenticated/hold'
 import { Route as AuthenticatedIndstillingerRouteImport } from './routes/_authenticated/indstillinger'
 import { Route as AuthenticatedKampeRouteImport } from './routes/_authenticated/kampe'
+import { Route as AuthenticatedKlubberRouteImport } from './routes/_authenticated/klubber'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
 import { Route as AuthenticatedKampeMatchIdRouteImport } from './routes/_authenticated/kampe.$matchId'
@@ -67,6 +68,11 @@ const AuthenticatedKampeRoute = AuthenticatedKampeRouteImport.update({
   path: '/kampe',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedKlubberRoute = AuthenticatedKlubberRouteImport.update({
+  id: '/klubber',
+  path: '/klubber',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/hold': typeof AuthenticatedHoldRoute
   '/indstillinger': typeof AuthenticatedIndstillingerRoute
   '/kampe': typeof AuthenticatedKampeRouteWithChildren
+  '/klubber': typeof AuthenticatedKlubberRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/kampe/$matchId': typeof AuthenticatedKampeMatchIdRoute
@@ -106,6 +113,7 @@ export interface FileRoutesByTo {
   '/hold': typeof AuthenticatedHoldRoute
   '/indstillinger': typeof AuthenticatedIndstillingerRoute
   '/kampe': typeof AuthenticatedKampeRouteWithChildren
+  '/klubber': typeof AuthenticatedKlubberRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/kampe/$matchId': typeof AuthenticatedKampeMatchIdRoute
@@ -121,6 +129,7 @@ export interface FileRoutesById {
   '/_authenticated/hold': typeof AuthenticatedHoldRoute
   '/_authenticated/indstillinger': typeof AuthenticatedIndstillingerRoute
   '/_authenticated/kampe': typeof AuthenticatedKampeRouteWithChildren
+  '/_authenticated/klubber': typeof AuthenticatedKlubberRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/_authenticated/kampe/$matchId': typeof AuthenticatedKampeMatchIdRoute
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/hold'
     | '/indstillinger'
     | '/kampe'
+    | '/klubber'
     | '/onboarding'
     | '/profil'
     | '/kampe/$matchId'
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/hold'
     | '/indstillinger'
     | '/kampe'
+    | '/klubber'
     | '/onboarding'
     | '/profil'
     | '/kampe/$matchId'
@@ -163,6 +174,7 @@ export interface FileRouteTypes {
     | '/_authenticated/hold'
     | '/_authenticated/indstillinger'
     | '/_authenticated/kampe'
+    | '/_authenticated/klubber'
     | '/_authenticated/onboarding'
     | '/_authenticated/profil'
     | '/_authenticated/kampe/$matchId'
@@ -239,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedKampeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/klubber': {
+      id: '/_authenticated/klubber'
+      path: '/klubber'
+      fullPath: '/klubber'
+      preLoaderRoute: typeof AuthenticatedKlubberRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/onboarding': {
       id: '/_authenticated/onboarding'
       path: '/onboarding'
@@ -281,6 +300,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHoldRoute: typeof AuthenticatedHoldRoute
   AuthenticatedIndstillingerRoute: typeof AuthenticatedIndstillingerRoute
   AuthenticatedKampeRoute: typeof AuthenticatedKampeRouteWithChildren
+  AuthenticatedKlubberRoute: typeof AuthenticatedKlubberRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
 }
@@ -292,6 +312,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHoldRoute: AuthenticatedHoldRoute,
   AuthenticatedIndstillingerRoute: AuthenticatedIndstillingerRoute,
   AuthenticatedKampeRoute: AuthenticatedKampeRouteWithChildren,
+  AuthenticatedKlubberRoute: AuthenticatedKlubberRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,
 }
