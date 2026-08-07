@@ -305,21 +305,22 @@ function HjemPage() {
             {current.clubName} · {current.teamName}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="pitch" onClick={() => setPayOpen(true)}>
-            <HandCoins className="mr-2 h-4 w-4" /> Indbetal
+        {isAdmin && (
+          <Button variant="outline" onClick={() => setInviteOpen(true)}>
+            <UserPlus className="mr-2 h-4 w-4" /> Inviter til klub
           </Button>
-          {isAdmin && (
-            <Button variant="gold" onClick={() => setFineOpen(true)}>
-              <Ticket className="mr-2 h-4 w-4" /> Uddel bøde
-            </Button>
-          )}
-          {isAdmin && (
-            <Button variant="outline" onClick={() => setInviteOpen(true)}>
-              <UserPlus className="mr-2 h-4 w-4" /> Inviter til klub
-            </Button>
-          )}
-        </div>
+        )}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Button variant="pitch" onClick={() => setPayOpen(true)}>
+          <HandCoins className="mr-2 h-4 w-4" /> Indbetal
+        </Button>
+        {isAdmin && (
+          <Button variant="gold" onClick={() => setFineOpen(true)}>
+            <Ticket className="mr-2 h-4 w-4" /> Uddel bøde
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
