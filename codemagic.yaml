@@ -52,9 +52,25 @@ workflows:
 
       - name: Build IPA
         script: |
+          set +e
           xcode-project build-ipa \
             --project "ios/App/App.xcodeproj" \
             --scheme "App"
+          BUILD_STATUS=$?
+
+          if [ "$BUILD_STATUS" -ne 0 ]; then
+            echo ""
+            echo "========== DETALJERET XCODE-FEJL =========="
+            for LOG_FILE in /tmp/xcodebuild_logs/*.log; do
+              if [ -f "$LOG_FILE" ]; then
+                echo "--- $LOG_FILE ---"
+                cat "$LOG_FILE"
+              fi
+            done
+            echo "========== SLUT PÅ XCODE-FEJL ============="
+          fi
+
+          exit "$BUILD_STATUS"
 
     artifacts:
       - build/ios/ipa/*.ipa
