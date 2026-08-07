@@ -21,7 +21,6 @@ import { Route as AuthenticatedKampeRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
 import { Route as AuthenticatedKampeMatchIdRouteImport } from './routes/_authenticated/kampe.$matchId'
-import { Route as ApiPublicSendPushRouteImport } from './routes/api/public/send-push'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -84,11 +83,6 @@ const AuthenticatedKampeMatchIdRoute =
     path: '/$matchId',
     getParentRoute: () => AuthenticatedKampeRoute,
   } as any)
-const ApiPublicSendPushRoute = ApiPublicSendPushRouteImport.update({
-  id: '/api/public/send-push',
-  path: '/api/public/send-push',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -102,7 +96,6 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/kampe/$matchId': typeof AuthenticatedKampeMatchIdRoute
-  '/api/public/send-push': typeof ApiPublicSendPushRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -116,7 +109,6 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/kampe/$matchId': typeof AuthenticatedKampeMatchIdRoute
-  '/api/public/send-push': typeof ApiPublicSendPushRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -132,7 +124,6 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/_authenticated/kampe/$matchId': typeof AuthenticatedKampeMatchIdRoute
-  '/api/public/send-push': typeof ApiPublicSendPushRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -148,7 +139,6 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/profil'
     | '/kampe/$matchId'
-    | '/api/public/send-push'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -162,7 +152,6 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/profil'
     | '/kampe/$matchId'
-    | '/api/public/send-push'
   id:
     | '__root__'
     | '/'
@@ -177,14 +166,12 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/profil'
     | '/_authenticated/kampe/$matchId'
-    | '/api/public/send-push'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
-  ApiPublicSendPushRoute: typeof ApiPublicSendPushRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -273,13 +260,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedKampeMatchIdRouteImport
       parentRoute: typeof AuthenticatedKampeRoute
     }
-    '/api/public/send-push': {
-      id: '/api/public/send-push'
-      path: '/api/public/send-push'
-      fullPath: '/api/public/send-push'
-      preLoaderRoute: typeof ApiPublicSendPushRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -323,7 +303,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
-  ApiPublicSendPushRoute: ApiPublicSendPushRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
