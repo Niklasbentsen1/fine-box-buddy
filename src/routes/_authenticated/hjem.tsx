@@ -312,12 +312,12 @@ function HjemPage() {
         )}
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <Button variant="pitch" onClick={() => setPayOpen(true)}>
+      <div className={`grid gap-2 ${isAdmin ? "grid-cols-2" : "grid-cols-1"}`}>
+        <Button variant="pitch" className="w-full" onClick={() => setPayOpen(true)}>
           <HandCoins className="mr-2 h-4 w-4" /> Indbetal
         </Button>
         {isAdmin && (
-          <Button variant="gold" onClick={() => setFineOpen(true)}>
+          <Button variant="gold" className="w-full" onClick={() => setFineOpen(true)}>
             <Ticket className="mr-2 h-4 w-4" /> Uddel bøde
           </Button>
         )}

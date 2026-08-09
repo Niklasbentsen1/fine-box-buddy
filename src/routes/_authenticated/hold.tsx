@@ -383,13 +383,18 @@ function HoldPage() {
                   {m.name}
                   {m.role === "admin" && <Badge variant="navy">Admin</Badge>}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  Bøder: {formatKr(m.fines)} · Indbetalt: {formatKr(m.paid)}
+                <p className="truncate text-xs text-muted-foreground">
+                  Bøder {formatKr(m.fines)} · Indbetalt {formatKr(m.paid)}
                 </p>
               </div>
-              <Badge variant={m.owed > 0 ? "destructive" : "pitch"}>
-                {formatKr(m.owed)}
-              </Badge>
+              <div className="w-24 shrink-0 text-right tabular-nums sm:w-28">
+                <Badge
+                  variant={m.owed > 0 ? "destructive" : "pitch"}
+                  className="justify-center tabular-nums"
+                >
+                  {formatKr(m.owed)}
+                </Badge>
+              </div>
               {isAdmin && m.userId !== user.id && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

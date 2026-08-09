@@ -47,7 +47,6 @@ const NAV_ITEMS = [
   { to: "/hjem", label: "Hjem", icon: Home },
   { to: "/historik", label: "Historik", icon: History },
   { to: "/kampe", label: "Kampe", icon: Trophy },
-  { to: "/klubber", label: "Klubber", icon: Building2 },
 ] as const;
 
 type NotificationRow = {
@@ -328,6 +327,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate({ to: "/klubber" })}>
+                  <Building2 className="mr-2 h-4 w-4" /> Klubber
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate({ to: "/indstillinger" })}>
                   <Settings className="mr-2 h-4 w-4" /> Indstillinger
                 </DropdownMenuItem>
@@ -348,7 +350,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 pb-safe backdrop-blur md:hidden">
-        <div className="mx-auto grid max-w-lg grid-cols-6">
+        <div className="mx-auto grid max-w-lg grid-cols-5">
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.to}
