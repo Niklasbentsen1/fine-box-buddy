@@ -38,6 +38,42 @@ export type Database = {
         }
         Relationships: []
       }
+      device_tokens: {
+        Row: {
+          created_at: string
+          disabled_at: string | null
+          environment: string
+          id: string
+          last_seen_at: string
+          platform: string
+          token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          disabled_at?: string | null
+          environment?: string
+          id?: string
+          last_seen_at?: string
+          platform?: string
+          token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          disabled_at?: string | null
+          environment?: string
+          id?: string
+          last_seen_at?: string
+          platform?: string
+          token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       fine_types: {
         Row: {
           amount: number
@@ -245,15 +281,59 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          fine_received: boolean
+          membership_approved: boolean
+          motm_opened: boolean
+          motm_result: boolean
+          payment_approved: boolean
+          payment_rejected: boolean
+          payment_reminder: boolean
+          push_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fine_received?: boolean
+          membership_approved?: boolean
+          motm_opened?: boolean
+          motm_result?: boolean
+          payment_approved?: boolean
+          payment_rejected?: boolean
+          payment_reminder?: boolean
+          push_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fine_received?: boolean
+          membership_approved?: boolean
+          motm_opened?: boolean
+          motm_result?: boolean
+          payment_approved?: boolean
+          payment_rejected?: boolean
+          payment_reminder?: boolean
+          push_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string
           created_at: string
           id: string
           link: string | null
+          pushed_at: string | null
           read_at: string | null
           team_id: string
           title: string
+          type: string | null
           user_id: string
         }
         Insert: {
@@ -261,9 +341,11 @@ export type Database = {
           created_at?: string
           id?: string
           link?: string | null
+          pushed_at?: string | null
           read_at?: string | null
           team_id: string
           title: string
+          type?: string | null
           user_id: string
         }
         Update: {
@@ -271,9 +353,11 @@ export type Database = {
           created_at?: string
           id?: string
           link?: string | null
+          pushed_at?: string | null
           read_at?: string | null
           team_id?: string
           title?: string
+          type?: string | null
           user_id?: string
         }
         Relationships: [
@@ -538,6 +622,7 @@ export type Database = {
         Returns: string
       }
       delete_team: { Args: { _team_id: string }; Returns: undefined }
+      dispatch_push_notifications: { Args: never; Returns: undefined }
       end_season: { Args: { _team_id: string }; Returns: undefined }
       get_all_clubs: {
         Args: never

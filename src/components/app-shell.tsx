@@ -192,7 +192,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [memberships]);
 
   // Nye notifikationer vises også som push-notifikation på telefonen (iOS/Android).
-  useEffect(() => initNotificationPush(user.id), [user.id]);
+  useEffect(
+    () =>
+      initNotificationPush(user.id, (link) => {
+        navigate({ to: link });
+      }),
+    [user.id, navigate],
+  );
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
