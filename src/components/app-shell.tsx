@@ -327,6 +327,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate({ to: "/klubber" })}>
+                  <Building2 className="mr-2 h-4 w-4" /> Klubber
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate({ to: "/indstillinger" })}>
                   <Settings className="mr-2 h-4 w-4" /> Indstillinger
                 </DropdownMenuItem>
