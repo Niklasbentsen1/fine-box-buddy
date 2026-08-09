@@ -47,7 +47,6 @@ const NAV_ITEMS = [
   { to: "/hjem", label: "Hjem", icon: Home },
   { to: "/historik", label: "Historik", icon: History },
   { to: "/kampe", label: "Kampe", icon: Trophy },
-  { to: "/klubber", label: "Klubber", icon: Building2 },
 ] as const;
 
 type NotificationRow = {
