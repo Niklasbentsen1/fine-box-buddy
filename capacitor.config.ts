@@ -9,9 +9,8 @@ const config: CapacitorConfig = {
   appName: "Bødekassen",
   webDir: "dist",
   plugins: {
-    LocalNotifications: {
-      smallIcon: "ic_launcher",
-      iconColor: "#12324F",
+    PushNotifications: {
+      presentationOptions: ["badge", "sound", "alert"],
     },
   },
 };
