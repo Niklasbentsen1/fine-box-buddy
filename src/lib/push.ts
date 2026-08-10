@@ -1,7 +1,5 @@
 import { Capacitor } from "@capacitor/core";
-import { LocalNotifications } from "@capacitor/local-notifications";
 import { PushNotifications } from "@capacitor/push-notifications";
-import type { RealtimeChannel } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -30,7 +28,7 @@ export async function getPushPermission(): Promise<PushPermission> {
 async function ensureAndroidChannel() {
   if (Capacitor.getPlatform() !== "android") return;
   try {
-    await LocalNotifications.createChannel({
+    await PushNotifications.createChannel({
       id: ANDROID_CHANNEL_ID,
       name: "Bødekassen",
       description: "Notifikationer fra dine hold i Bødekassen",
@@ -113,7 +111,6 @@ export function hasAskedForPushPermission(): boolean {
 export function initNotificationPush(userId: string, onOpenLink?: (link: string) => void) {
   if (!Capacitor.isNativePlatform()) return () => undefined;
 
-  let channel: RealtimeChannel | null = null;
   let cancelled = false;
 
   const setup = async () => {
@@ -144,41 +141,7 @@ export function initNotificationPush(userId: string, onOpenLink?: (link: string)
         return;
       }
 
-      // --- Fallback: appen er åben, men enheden er ikke registreret til push ---
-      const localPermission = await LocalNotifications.requestPermissions();
-      if (localPermission.display !== "granted" || cancelled) return;
-
-      const realtimeChannel = supabase
-        .channel(`push-notifications:${userId}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "notifications",
-            filter: `user_id=eq.${userId}`,
-          },
-          (payload) => {
-            const row = payload.new as { title?: string; body?: string };
-            void LocalNotifications.schedule({
-              notifications: [
-                {
-                  id: Date.now() % 2_000_000_000,
-                  title: row.title ?? "Bødekassen",
-                  body: row.body ?? "",
-                  channelId: ANDROID_CHANNEL_ID,
-                },
-              ],
-            });
-          },
-        )
-        .subscribe();
-
-      if (cancelled) {
-        void supabase.removeChannel(realtimeChannel);
-      } else {
-        channel = realtimeChannel;
-      }
+      // Uden tilladelse kan vi ikke sende push — appen virker stadig uden.
     } catch {
       // Notifikationer er ikke tilgængelige — appen virker stadig uden.
     }
@@ -188,6 +151,5 @@ export function initNotificationPush(userId: string, onOpenLink?: (link: string)
 
   return () => {
     cancelled = true;
-    if (channel) void supabase.removeChannel(channel);
   };
 }
