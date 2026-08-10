@@ -64,7 +64,7 @@ workflows:
         script: |
           set +e
           xcode-project build-ipa \
-            --workspace "$CM_BUILD_DIR/ios/App/App.xcworkspace" \
+            --project "$CM_BUILD_DIR/ios/App/App.xcodeproj" \
             --scheme "App"
           BUILD_STATUS=$?
 
