@@ -50,8 +50,8 @@ workflows:
           # Push Notifications blev aktiveret efter profilen "Club Fine Keeper Distribution"
           # blev oprettet, så den mangler aps-environment og skal regenereres.
           app-store-connect list-profiles \
-            --bundle-id-identifier "$BUNDLE_ID" \
-            --profile-type IOS_APP_STORE \
+            --bundle-id "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
             --json > /tmp/existing-profiles.json || echo "[]" > /tmp/existing-profiles.json
 
           PROFILE_IDS=$(python3 - <<'PY'
