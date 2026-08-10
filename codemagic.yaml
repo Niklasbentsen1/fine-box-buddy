@@ -40,12 +40,22 @@ workflows:
       - name: Set up signing
         script: |
           set -e
+
+          if [ -z "${CERTIFICATE_PRIVATE_KEY:-}" ]; then
+            echo "FEJL: Codemagic-secret CERTIFICATE_PRIVATE_KEY mangler."
+            echo "Tilføj den private RSA-nøgle, som hører til Apple Distribution-certifikatet, som en krypteret environment variable."
+            exit 1
+          fi
+
           keychain initialize
 
           # Undgå at genbruge lokalt cachede profiler uden aps-environment.
           rm -rf ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision || true
 
-          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --certificate-key @env:CERTIFICATE_PRIVATE_KEY \
+            --create
 
           keychain add-certificates
 
