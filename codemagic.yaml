@@ -56,11 +56,15 @@ workflows:
 
 
 
+      - name: Use profiles
+        script: |
+          xcode-project use-profiles
+
       - name: Build IPA
         script: |
           set +e
           xcode-project build-ipa \
-            --project "ios/App/App.xcodeproj" \
+            --workspace "$CM_BUILD_DIR/ios/App.xcworkspace" \
             --scheme "App"
           BUILD_STATUS=$?
 
