@@ -21,8 +21,14 @@ workflows:
 
     cache:
       cache_paths:
-        - node_modules
         - ~/Library/Caches/CocoaPods
+
+    scripts:
+      - name: Clean caches
+        script: |
+          rm -rf ~/Library/Developer/Xcode/DerivedData
+          rm -rf ~/Library/Caches/org.swift.swiftpm
+          rm -rf ~/Library/Caches/com.apple.dt.Xcode
 
     scripts:
       - name: Install dependencies
