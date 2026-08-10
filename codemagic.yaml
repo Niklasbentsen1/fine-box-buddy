@@ -70,7 +70,7 @@ workflows:
           done
 
           # Bekræft at App ID'et har Push Notifications aktiveret.
-          app-store-connect bundle-ids list --bundle-id-identifier "$BUNDLE_ID" --json || true
+          app-store-connect bundle-ids list --bundle-id "$BUNDLE_ID" --json || true
 
           # Opret en frisk profil, der nu inkluderer aps-environment.
           app-store-connect fetch-signing-files \
