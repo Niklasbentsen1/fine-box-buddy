@@ -116,8 +116,14 @@ export const Route = createFileRoute("/api/public/send-push")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const dispatchSecret = process.env["PUSH_DISPATCH_SECRET"];
-        if (!dispatchSecret || request.headers.get("x-push-secret") !== dispatchSecret) {
+        // Accepterer både den manuelt gemte hemmelighed og cron-dispatcherens
+        // hemmelighed (som også ligger i databasens vault).
+        const allowedSecrets = [
+          process.env["PUSH_DISPATCH_SECRET"],
+          process.env["PUSH_CRON_SECRET"],
+        ].filter((s): s is string => Boolean(s));
+        const provided = request.headers.get("x-push-secret");
+        if (!provided || !allowedSecrets.includes(provided)) {
           return new Response(JSON.stringify({ error: "Unauthorized" }), {
             status: 401,
             headers: { "Content-Type": "application/json" },
