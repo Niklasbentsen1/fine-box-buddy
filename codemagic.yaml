@@ -30,7 +30,6 @@ workflows:
           rm -rf ~/Library/Caches/org.swift.swiftpm
           rm -rf ~/Library/Caches/com.apple.dt.Xcode
 
-    scripts:
       - name: Install dependencies
         script: |
           npm ci
