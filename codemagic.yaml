@@ -39,8 +39,40 @@ workflows:
 
       - name: Set up signing
         script: |
+          set -e
           keychain initialize
 
+          # Fjern lokalt cachede profiler, så gamle profiler uden
+          # aps-environment ikke bliver genbrugt.
+          rm -rf ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision || true
+
+          # Slet eksisterende App Store-profiler for bundle ID'et i App Store Connect.
+          # Push Notifications blev aktiveret efter profilen "Club Fine Keeper Distribution"
+          # blev oprettet, så den mangler aps-environment og skal regenereres.
+          app-store-connect list-profiles \
+            --bundle-id-identifier "$BUNDLE_ID" \
+            --profile-type IOS_APP_STORE \
+            --json > /tmp/existing-profiles.json || echo "[]" > /tmp/existing-profiles.json
+
+          PROFILE_IDS=$(python3 - <<'PY'
+          import json
+          try:
+              data = json.load(open("/tmp/existing-profiles.json"))
+          except Exception:
+              data = []
+          print(" ".join(p.get("id", "") for p in data if p.get("id")))
+          PY
+          )
+
+          for PROFILE_ID in $PROFILE_IDS; do
+            echo "Sletter forældet provisioning profile $PROFILE_ID"
+            app-store-connect profiles delete "$PROFILE_ID" --force || true
+          done
+
+          # Bekræft at App ID'et har Push Notifications aktiveret.
+          app-store-connect bundle-ids list --bundle-id-identifier "$BUNDLE_ID" --json || true
+
+          # Opret en frisk profil, der nu inkluderer aps-environment.
           app-store-connect fetch-signing-files \
             "$BUNDLE_ID" \
             --type IOS_APP_STORE \
@@ -49,6 +81,26 @@ workflows:
           keychain add-certificates
 
           xcode-project use-profiles
+
+      - name: Verify aps-environment in provisioning profile
+        script: |
+          set -e
+          FOUND=0
+          for PROFILE in ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision; do
+            [ -f "$PROFILE" ] || continue
+            PLIST=$(security cms -D -i "$PROFILE" 2>/dev/null || true)
+            echo "$PLIST" | grep -q "app.boedekassen" || continue
+            if echo "$PLIST" | grep -q "aps-environment"; then
+              echo "OK: profilen indeholder aps-environment"
+              echo "$PLIST" | grep -A1 "aps-environment"
+              FOUND=1
+            fi
+          done
+          if [ "$FOUND" -ne 1 ]; then
+            echo "FEJL: ingen provisioning profile med aps-environment for app.boedekassen"
+            exit 1
+          fi
+
 
       - name: Build IPA
         script: |
