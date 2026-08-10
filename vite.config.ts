@@ -3,39 +3,29 @@
 //   - TanStack devtools (dev-only, first), tanstackStart, viteReact, tailwindcss, tsConfigPaths,
 //     VITE_* env injection, @ path alias, React/TanStack dedupe, error logger plugins,
 //     and sandbox detection (port/host/strictPort).
-//
-// Two build modes:
-//
-//   `npm run build:mobile`  (Capacitor — used by codemagic.yaml)
-//       MOBILE_BUILD=1 -> no server at all (nitro: false) and TanStack Start SPA mode: the
-//       shell is prerendered to dist/index.html and every route is resolved client-side.
-//       dist/ is exactly what Capacitor bundles into the iOS/Android apps (webDir: "dist").
-//       dist-server/ is a throwaway scratch bundle used only to prerender the shell.
-//
-//   `npm run build`         (web deployment on Lovable hosting)
-//       Standard server build, so the API routes under src/routes/api/** are real, reachable
-//       HTTPS endpoints — the APNs push sender is one of them and is called by the database
-//       dispatcher. The native apps never use this output.
+// This project builds as a STATIC SPA (no SSR / no Nitro server) so the output can be
+// packaged with Capacitor for iOS and Android:
+//   - nitro: false            -> no server bundle / deploy adapter
+//   - spa.enabled             -> TanStack Start SPA mode; the app shell is prerendered to
+//                                a plain index.html and all routing happens client-side
+//   - spa.prerender.outputPath-> writes the shell as dist/index.html
+// Output layout after `npm run build`:
+//   dist/         -> the static site (index.html + hashed assets). Point Capacitor's webDir here.
+//   dist-server/  -> throwaway SSR scratch bundle used only to prerender the shell at build time.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
-const isMobileBuild = process.env["MOBILE_BUILD"] === "1";
-
-export default defineConfig(
-  isMobileBuild
-    ? {
-        nitro: false,
-        tanstackStart: {
-          spa: {
-            enabled: true,
-            prerender: { outputPath: "/index" },
-          },
-        },
-        vite: {
-          environments: {
-            client: { build: { outDir: "dist" } },
-            ssr: { build: { outDir: "dist-server" } },
-          },
-        },
-      }
-    : {},
-);
+export default defineConfig({
+  nitro: false,
+  tanstackStart: {
+    spa: {
+      enabled: true,
+      prerender: { outputPath: "/index" },
+    },
+  },
+  vite: {
+    environments: {
+      client: { build: { outDir: "dist" } },
+      ssr: { build: { outDir: "dist-server" } },
+    },
+  },
+});

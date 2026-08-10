@@ -31,40 +31,30 @@ workflows:
 
       - name: Build web
         script: |
-          npm run build:mobile
+          npm run build
 
       - name: Sync Capacitor
         script: |
           npx cap sync ios
 
-      - name: Verify aps-environment in provisioning profile
+      - name: Set up signing
         script: |
-          set +e
-          FOUND=0
-          for PROFILE in ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision; do
-            [ -f "$PROFILE" ] || continue
-            PLIST=$(security cms -D -i "$PROFILE" 2>/dev/null || true)
-            echo "$PLIST" | grep -q "app.boedekassen" || continue
-            if echo "$PLIST" | grep -q "aps-environment"; then
-              echo "OK: profilen indeholder aps-environment"
-              FOUND=1
-            fi
-          done
-          if [ "$FOUND" -ne 1 ]; then
-            echo "ADVARSEL: fandt ingen profil med aps-environment (fortsætter)"
-          fi
+          keychain initialize
 
+          app-store-connect fetch-signing-files \
+            "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
 
+          keychain add-certificates
 
-      - name: Use profiles
-        script: |
           xcode-project use-profiles
 
       - name: Build IPA
         script: |
           set +e
           xcode-project build-ipa \
-            --project "$CM_BUILD_DIR/ios/App/App.xcodeproj" \
+            --project "ios/App/App.xcodeproj" \
             --scheme "App"
           BUILD_STATUS=$?
 

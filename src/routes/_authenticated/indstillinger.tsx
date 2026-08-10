@@ -17,7 +17,6 @@ import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useTeam, type Membership } from "@/lib/team";
-import { NotificationSettings } from "@/components/notification-settings";
 import { formatKr, sumAmounts } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,7 +48,7 @@ type PaymentSum = { amount: number; status: string };
 type WithdrawalSum = { amount: number };
 
 function IndstillingerPage() {
-  const { user, current, memberships, isAdmin, refreshMemberships, setCurrentTeamId } = useTeam();
+  const { current, memberships, isAdmin, refreshMemberships, setCurrentTeamId } = useTeam();
   const queryClient = useQueryClient();
   const teamId = current?.teamId;
 
@@ -278,10 +277,6 @@ function IndstillingerPage() {
           ))}
         </ul>
       </section>
-
-      <NotificationSettings userId={user.id} />
-
-
 
       {isAdmin && (
         <>
