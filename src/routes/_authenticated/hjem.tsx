@@ -393,76 +393,155 @@ function HjemPage() {
         )}
       </section>
 
-      <Dialog open={payOpen} onOpenChange={setPayOpen}>
+      <Dialog open={payOpen} onOpenChange={(open) => (open ? setPayOpen(true) : closePayDialog())}>
         <DialogContent>
-          <div className="space-y-1.5">
-            <DialogTitle>Indbetal til bødekassen</DialogTitle>
-            <DialogDescription>
-              Betal direkte med MobilePay til holdets nummer, eller registrer en indbetaling (fx
-              kontanter). En administrator godkender den bagefter.
-            </DialogDescription>
-          </div>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="pay-amount">Beløb (kr.)</Label>
-              <Input
-                id="pay-amount"
-                inputMode="decimal"
-                value={payAmount}
-                onChange={(e) => setPayAmount(e.target.value)}
-                placeholder="Fx 100"
-              />
-            </div>
-            {current.mobilepayNumber ? (
-              <div className="rounded-2xl border border-pitch/30 bg-pitch-soft/50 p-4">
+          {payStep === "form" ? (
+            <>
+              <div className="space-y-1.5">
+                <DialogTitle>Indbetal til bødekassen</DialogTitle>
+                <DialogDescription>
+                  Vælg beløb og betalingsmåde, og registrer din betaling. En administrator
+                  godkender den bagefter.
+                </DialogDescription>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="pay-amount">Beløb (kr.)</Label>
+                  <Input
+                    id="pay-amount"
+                    inputMode="decimal"
+                    value={payAmount}
+                    onChange={(e) => setPayAmount(e.target.value)}
+                    placeholder="Fx 100"
+                  />
+                  {owed > 0 && (
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-pitch underline-offset-2 hover:underline"
+                      onClick={() => setPayAmount(String(owed))}
+                    >
+                      Indsæt hele mit skyldige beløb ({formatKr(owed)})
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Betal via</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(
+                      [
+                        { key: "mobilepay" as const, label: "MobilePay", icon: Smartphone },
+                        { key: "cash" as const, label: "Kontant", icon: HandCoins },
+                      ]
+                    ).map(({ key, label, icon: Icon }) => {
+                      const active = payMethod === key;
+                      const disabled = key === "mobilepay" && !current.mobilepayNumber;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => setPayMethod(key)}
+                          className={`flex items-center gap-2 rounded-xl border px-3 py-3 text-sm font-semibold transition-colors disabled:opacity-50 ${
+                            active
+                              ? "border-pitch bg-pitch-soft/60"
+                              : "bg-background hover:bg-muted/40"
+                          }`}
+                        >
+                          <Icon className="h-4 w-4 text-pitch" />
+                          <span className="flex-1 text-left uppercase tracking-wide">{label}</span>
+                          {active && <Check className="h-4 w-4 text-pitch" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {!current.mobilepayNumber && (
+                    <p className="rounded-xl bg-secondary px-3 py-2.5 text-xs text-muted-foreground">
+                      Holdet har ikke sat et MobilePay-nummer op endnu —{" "}
+                      {isAdmin
+                        ? "du kan tilføje det under Indstillinger"
+                        : "spørg din administrator"}
+                      .
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="pay-note">Note (valgfri)</Label>
+                  <Input
+                    id="pay-note"
+                    value={payNote}
+                    onChange={(e) => setPayNote(e.target.value)}
+                    placeholder="Fx Kontanter til træner"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={closePayDialog}>
+                  Annuller
+                </Button>
                 <Button
                   variant="pitch"
-                  className="w-full"
-                  onClick={handlePayMobilepay}
+                  onClick={handleRegisterPayment}
                   disabled={busy || !payAmount.trim()}
                 >
-                  <Smartphone className="mr-2 h-4 w-4" />
-                  Betal{" "}
-                  {parseAmount(payAmount) > 0 ? `${formatKr(parseAmount(payAmount))} ` : ""}med
-                  MobilePay
+                  Registrer betaling
                 </Button>
-                <p className="mt-2 text-center text-xs text-muted-foreground">
-                  Du sendes direkte til MobilePay til nummer {current.mobilepayNumber}
+              </DialogFooter>
+            </>
+          ) : (
+            <>
+              <div className="space-y-1.5">
+                <DialogTitle>Betaling registreret</DialogTitle>
+                <DialogDescription>
+                  {formatKr(registeredAmount)} er sendt til godkendelse hos en administrator.
+                </DialogDescription>
+              </div>
+              <div className="space-y-4">
+                {payMethod === "mobilepay" && current.mobilepayNumber ? (
+                  <div className="rounded-2xl border border-pitch/30 bg-pitch-soft/50 p-4 text-center">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Overfør via MobilePay til
+                    </p>
+                    <button
+                      type="button"
+                      onClick={copyMobilepayNumber}
+                      className="mt-1 inline-flex items-center gap-2 font-mono text-2xl font-bold tracking-[0.15em]"
+                    >
+                      {current.mobilepayNumber}
+                      {numberCopied ? (
+                        <Check className="h-5 w-5 text-pitch" />
+                      ) : (
+                        <Copy className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </button>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {numberCopied ? "Nummeret er kopieret" : "Tryk for at kopiere nummeret"}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border bg-secondary p-4 text-center">
+                    <p className="text-sm font-semibold">Aflever {formatKr(registeredAmount)}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Giv beløbet kontant til en administrator i {current.teamName}.
+                    </p>
+                  </div>
+                )}
+                <p className="rounded-xl bg-secondary px-3 py-2.5 text-xs text-muted-foreground">
+                  Du skal selv gennemføre overførslen. Administratoren får besked om din
+                  registrering og godkender den, når beløbet er modtaget.
                 </p>
               </div>
-            ) : (
-              <p className="rounded-xl bg-secondary px-3 py-2.5 text-xs text-muted-foreground">
-                Holdet har ikke sat et MobilePay-nummer op endnu —{" "}
-                {isAdmin ? "du kan tilføje det under Indstillinger" : "spørg din administrator"}.
-              </p>
-            )}
-            <div className="flex items-center gap-3">
-              <div className="h-px flex-1 bg-border" />
-              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                eller registrer manuelt
-              </span>
-              <div className="h-px flex-1 bg-border" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="pay-note">Note (valgfri)</Label>
-              <Input
-                id="pay-note"
-                value={payNote}
-                onChange={(e) => setPayNote(e.target.value)}
-                placeholder="Fx Kontanter til Træner"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPayOpen(false)}>
-              Annuller
-            </Button>
-            <Button variant="primary" onClick={handlePay} disabled={busy || !payAmount.trim()}>
-              Registrer indbetaling
-            </Button>
-          </DialogFooter>
+              <DialogFooter>
+                <Button variant="pitch" onClick={closePayDialog}>
+                  OK
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
+
 
       <Dialog open={fineOpen} onOpenChange={setFineOpen}>
         <DialogContent>
