@@ -86,6 +86,7 @@ function HoldPage() {
   const [memberSort, setMemberSort] = useState<"name" | "owed-desc" | "owed-asc">("name");
   const [fineTypePick, setFineTypePick] = useState("");
   const [givingFine, setGivingFine] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
 
   const { data: members = [] } = useQuery({
     queryKey: ["team", teamId, "members"],
@@ -636,6 +637,8 @@ function HoldPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {confirmDialog}
     </div>
   );
 }

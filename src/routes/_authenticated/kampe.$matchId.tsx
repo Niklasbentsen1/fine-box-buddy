@@ -452,6 +452,8 @@ function MatchDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {confirmDialog}
     </div>
   );
 }

@@ -67,6 +67,7 @@ function ProfilPage() {
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
   const [avatarBusy, setAvatarBusy] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
 
   useEffect(() => {
     if (profile) {
@@ -252,6 +253,8 @@ function ProfilPage() {
           })}
         </div>
       </section>
+
+      {confirmDialog}
     </div>
   );
 }
