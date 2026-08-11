@@ -93,8 +93,13 @@ function HjemPage() {
   const teamId = current?.teamId;
 
   const [payOpen, setPayOpen] = useState(false);
+  const [payStep, setPayStep] = useState<"form" | "done">("form");
+  const [payMethod, setPayMethod] = useState<"mobilepay" | "cash">("mobilepay");
+  const [registeredAmount, setRegisteredAmount] = useState(0);
+  const [numberCopied, setNumberCopied] = useState(false);
   const [payAmount, setPayAmount] = useState("");
   const [payNote, setPayNote] = useState("");
+
   const [fineOpen, setFineOpen] = useState(false);
   const [fineMember, setFineMember] = useState("");
   const [fineTypeId, setFineTypeId] = useState("custom");
