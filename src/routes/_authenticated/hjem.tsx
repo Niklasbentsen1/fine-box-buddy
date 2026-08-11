@@ -177,38 +177,13 @@ function HjemPage() {
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["team", teamId] });
 
-  const handlePay = async () => {
+  const handleRegisterPayment = async () => {
     const amount = parseAmount(payAmount);
     if (!amount || amount <= 0) {
       toast.error("Indtast et beløb større end 0");
       return;
     }
-    setBusy(true);
-    const { error } = await supabase.from("payments").insert({
-      team_id: teamId,
-      user_id: user.id,
-      amount,
-      note: payNote.trim() || null,
-    });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Indbetaling registreret — den afventer godkendelse");
-    setPayOpen(false);
-    setPayAmount("");
-    setPayNote("");
-    await refresh();
-  };
-
-  const handlePayMobilepay = async () => {
-    const amount = parseAmount(payAmount);
-    if (!amount || amount <= 0) {
-      toast.error("Indtast et beløb større end 0");
-      return;
-    }
-    if (!current.mobilepayNumber) {
+    if (payMethod === "mobilepay" && !current.mobilepayNumber) {
       toast.error("Holdet har ikke registreret et MobilePay-nummer");
       return;
     }
@@ -217,23 +192,37 @@ function HjemPage() {
       team_id: teamId,
       user_id: user.id,
       amount,
-      note: payNote.trim() || "MobilePay",
+      note: payNote.trim() || (payMethod === "mobilepay" ? "MobilePay" : "Kontant"),
     });
     setBusy(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Indbetaling registreret — du sendes videre til MobilePay");
+    setRegisteredAmount(amount);
+    setPayStep("done");
+    await refresh();
+  };
+
+  const closePayDialog = () => {
     setPayOpen(false);
+    setPayStep("form");
     setPayAmount("");
     setPayNote("");
-    await refresh();
-    const deeplink = `mobilepay://send?phone=${current.mobilepayNumber}&amount=${amount
-      .toFixed(2)
-      .replace(".", ",")}`;
-    window.location.href = deeplink;
+    setNumberCopied(false);
   };
+
+  const copyMobilepayNumber = async () => {
+    if (!current.mobilepayNumber) return;
+    try {
+      await navigator.clipboard.writeText(current.mobilepayNumber);
+      setNumberCopied(true);
+      setTimeout(() => setNumberCopied(false), 1500);
+    } catch {
+      toast.error("Kunne ikke kopiere nummeret");
+    }
+  };
+
 
   const handleGiveFine = async () => {
     if (!fineMember) {
