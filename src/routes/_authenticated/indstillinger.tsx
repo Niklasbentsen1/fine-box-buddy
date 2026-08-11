@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Building2,
   CalendarOff,
   Check,
+  ChevronRight,
   Copy,
   KeyRound,
   Pencil,
@@ -18,6 +19,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTeam, type Membership } from "@/lib/team";
 import { formatKr, sumAmounts } from "@/lib/format";
+import { useConfirm } from "@/components/confirm-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +39,7 @@ export const Route = createFileRoute("/_authenticated/indstillinger")({
       {
         name: "description",
         content:
-          "Dine klubber, oprettelse af ny klub samt administration af hold, MobilePay-nummer, klubkode og sæson.",
+          "Vælg klub og hold, og administrer MobilePay-nummer, klubkode og sæson for dit hold.",
       },
     ],
   }),
@@ -47,18 +49,19 @@ export const Route = createFileRoute("/_authenticated/indstillinger")({
 type PaymentSum = { amount: number; status: string };
 type WithdrawalSum = { amount: number };
 
+type ClubGroup = { clubId: string; clubName: string; inviteCode: string; teams: Membership[] };
+
 function IndstillingerPage() {
   const { current, memberships, isAdmin, refreshMemberships, setCurrentTeamId } = useTeam();
   const queryClient = useQueryClient();
+  const { confirm, confirmDialog } = useConfirm();
   const teamId = current?.teamId;
 
   const [busy, setBusy] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
+  const [selectedClubId, setSelectedClubId] = useState<string | null>(current?.clubId ?? null);
   const [createOpen, setCreateOpen] = useState(false);
   const [teamName, setTeamName] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState<{ teamId: string; teamName: string } | null>(
-    null,
-  );
   const [mpOpen, setMpOpen] = useState(false);
   const [mpNumber, setMpNumber] = useState("");
   const [seasonOpen, setSeasonOpen] = useState(false);
@@ -95,15 +98,27 @@ function IndstillingerPage() {
   });
 
   const clubs = useMemo(() => {
-    const map = new Map<string, { clubId: string; clubName: string; teams: Membership[] }>();
+    const map = new Map<string, ClubGroup>();
     for (const m of memberships) {
       const entry =
-        map.get(m.clubId) ?? { clubId: m.clubId, clubName: m.clubName, teams: [] as Membership[] };
+        map.get(m.clubId) ??
+        ({ clubId: m.clubId, clubName: m.clubName, inviteCode: m.inviteCode, teams: [] } as ClubGroup);
       entry.teams.push(m);
       map.set(m.clubId, entry);
     }
     return [...map.values()];
   }, [memberships]);
+
+  useEffect(() => {
+    if (!selectedClubId || !clubs.some((c) => c.clubId === selectedClubId)) {
+      setSelectedClubId(current?.clubId ?? clubs[0]?.clubId ?? null);
+    }
+  }, [clubs, current?.clubId, selectedClubId]);
+
+  const selectedClub = clubs.find((c) => c.clubId === selectedClubId) ?? null;
+  const isClubAdmin = !!selectedClub?.teams.some((t) => t.role === "admin");
+  const activeTeamInClub =
+    selectedClub && current && current.clubId === selectedClub.clubId ? current : null;
 
   if (!current || !teamId) return null;
 
@@ -112,8 +127,11 @@ function IndstillingerPage() {
   const cashBalance = carryover + paidTotal - sumAmounts(withdrawals);
 
   const copyInviteCode = async () => {
+    if (!selectedClub) return;
     try {
-      await navigator.clipboard.writeText(`Tilmeld dig min klub med koden ${current.inviteCode}`);
+      await navigator.clipboard.writeText(
+        `Tilmeld dig min klub med koden ${selectedClub.inviteCode}`,
+      );
       setCodeCopied(true);
       setTimeout(() => setCodeCopied(false), 1500);
     } catch {
@@ -162,10 +180,10 @@ function IndstillingerPage() {
   };
 
   const handleCreateTeam = async () => {
-    if (!teamName.trim()) return;
+    if (!teamName.trim() || !selectedClub) return;
     setBusy(true);
     const { error } = await supabase.rpc("create_team", {
-      _club_id: current.clubId,
+      _club_id: selectedClub.clubId,
       _name: teamName.trim(),
     });
     setBusy(false);
@@ -179,21 +197,24 @@ function IndstillingerPage() {
     await refreshMemberships();
   };
 
-  const handleDeleteTeam = async () => {
-    if (!deleteTarget) return;
+  const handleDeleteTeam = async (target: Membership) => {
+    const ok = await confirm({
+      title: `Slet ${target.teamName}?`,
+      description:
+        "Dette sletter holdet permanent inkl. alle dets bøder, bødesatser, indbetalinger, udbetalinger, kampe, afstemninger og medlemskaber. Handlingen kan ikke fortrydes.",
+      confirmLabel: "Slet holdet",
+    });
+    if (!ok) return;
     setBusy(true);
-    const { error } = await supabase.rpc("delete_team", { _team_id: deleteTarget.teamId });
+    const { error } = await supabase.rpc("delete_team", { _team_id: target.teamId });
     setBusy(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success(`Holdet "${deleteTarget.teamName}" er slettet`);
-    const wasCurrent = deleteTarget.teamId === teamId;
-    setDeleteTarget(null);
+    toast.success(`Holdet "${target.teamName}" er slettet`);
     await queryClient.invalidateQueries();
     await refreshMemberships();
-    if (!wasCurrent) setCurrentTeamId(teamId);
   };
 
   const handleSaveMobilepay = async () => {
@@ -236,9 +257,7 @@ function IndstillingerPage() {
       <div>
         <h1 className="font-display text-4xl font-semibold">Indstillinger</h1>
         <p className="mt-1 text-muted-foreground">
-          {isAdmin
-            ? `Dine klubber samt administration af ${current.clubName}.`
-            : "Dine klubber — start en ny klub eller tilmeld dig med en klubkode."}
+          Vælg først en klub — derefter kan du vælge og administrere klubbens hold.
         </p>
       </div>
 
@@ -256,54 +275,115 @@ function IndstillingerPage() {
             </Button>
           </div>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Du kan være medlem af flere klubber. Skift mellem dine hold i menuen øverst.
-        </p>
-        <ul className="mt-3 divide-y">
-          {clubs.map((club) => (
-            <li key={club.clubId} className="py-3">
-              <p className="flex items-center gap-2 text-sm font-semibold">
-                {club.clubName}
-                {club.clubId === current.clubId && <Badge variant="pitch">Aktiv</Badge>}
-              </p>
-              <ul className="mt-1 space-y-0.5">
-                {club.teams.map((t) => (
-                  <li key={t.teamId} className="text-xs text-muted-foreground">
-                    {t.teamName} · {t.role === "admin" ? "Du er administrator" : "Du er medlem"}
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
+        <ul className="mt-3 space-y-2">
+          {clubs.map((club) => {
+            const active = club.clubId === selectedClubId;
+            return (
+              <li key={club.clubId}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedClubId(club.clubId)}
+                  className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${
+                    active ? "border-pitch bg-pitch-soft/50" : "bg-background hover:bg-muted/40"
+                  }`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="flex items-center gap-2 truncate text-sm font-semibold">
+                      {club.clubName}
+                      {club.clubId === current.clubId && <Badge variant="pitch">Aktiv</Badge>}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {club.teams.length} {club.teams.length === 1 ? "hold" : "hold"} ·{" "}
+                      {club.teams.some((t) => t.role === "admin")
+                        ? "Du er administrator"
+                        : "Du er medlem"}
+                    </p>
+                  </div>
+                  <ChevronRight
+                    className={`h-4 w-4 shrink-0 ${active ? "text-pitch" : "text-muted-foreground"}`}
+                  />
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </section>
 
-      {isAdmin && (
+      {selectedClub && (
+        <section className="rounded-2xl border bg-card p-5 shadow-card">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
+              <Users className="h-5 w-5 text-muted-foreground" /> Hold i {selectedClub.clubName}
+            </h2>
+            {isClubAdmin && (
+              <Button variant="pitch" size="sm" onClick={() => setCreateOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" /> Opret nyt hold
+              </Button>
+            )}
+          </div>
+          <ul className="mt-3 divide-y">
+            {selectedClub.teams.map((m) => (
+              <li key={m.teamId} className="flex items-center gap-3 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-2 truncate text-sm font-semibold">
+                    {m.teamName}
+                    {m.teamId === teamId && <Badge variant="pitch">Aktivt</Badge>}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {m.role === "admin" ? "Du er administrator" : "Du er medlem"}
+                  </p>
+                </div>
+                {m.teamId !== teamId && (
+                  <Button variant="subtle" size="sm" onClick={() => setCurrentTeamId(m.teamId)}>
+                    Vælg
+                  </Button>
+                )}
+                {m.role === "admin" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-destructive"
+                    onClick={() => handleDeleteTeam(m)}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" /> Slet
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {selectedClub && isClubAdmin && (
+        <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card p-4 shadow-card">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Klubkode til {selectedClub.clubName}
+            </p>
+            <p className="font-mono text-xl font-bold tracking-[0.25em]">
+              {selectedClub.inviteCode}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Del koden med nye spillere — de skal godkendes af en administrator.
+            </p>
+          </div>
+          <Button variant="subtle" size="sm" onClick={copyInviteCode}>
+            {codeCopied ? (
+              <Check className="mr-2 h-4 w-4 text-pitch" />
+            ) : (
+              <Copy className="mr-2 h-4 w-4" />
+            )}
+            {codeCopied ? "Kopieret" : "Kopiér kode"}
+          </Button>
+        </section>
+      )}
+
+      {activeTeamInClub && isAdmin && (
         <>
           <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card p-4 shadow-card">
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Klubkode
-              </p>
-              <p className="font-mono text-xl font-bold tracking-[0.25em]">{current.inviteCode}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Del koden med nye spillere — de skal godkendes af en administrator.
-              </p>
-            </div>
-            <Button variant="subtle" size="sm" onClick={copyInviteCode}>
-              {codeCopied ? (
-                <Check className="mr-2 h-4 w-4 text-pitch" />
-              ) : (
-                <Copy className="mr-2 h-4 w-4" />
-              )}
-              {codeCopied ? "Kopieret" : "Kopiér kode"}
-            </Button>
-          </section>
-
-          <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card p-4 shadow-card">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                MobilePay-nummer
+                MobilePay-nummer · {activeTeamInClub.teamName}
               </p>
               <p className="flex items-center gap-2 font-mono text-xl font-bold tracking-[0.15em]">
                 <Smartphone className="h-5 w-5 text-pitch" />
@@ -311,7 +391,7 @@ function IndstillingerPage() {
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 {current.mobilepayNumber
-                  ? "Medlemmer kan betale bøder direkte til dette nummer"
+                  ? "Medlemmer kan overføre deres bøder til dette nummer"
                   : "Medlemmer kan ikke betale via MobilePay, før nummeret er sat op"}
               </p>
             </div>
@@ -328,46 +408,10 @@ function IndstillingerPage() {
             </Button>
           </section>
 
-          <section className="rounded-2xl border bg-card p-5 shadow-card">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
-                <Users className="h-5 w-5 text-muted-foreground" /> Hold i {current.clubName}
-              </h2>
-              <Button variant="pitch" size="sm" onClick={() => setCreateOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" /> Opret nyt hold
-              </Button>
-            </div>
-            <ul className="mt-3 divide-y">
-              {memberships.map((m) => (
-                <li key={m.teamId} className="flex items-center gap-3 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="flex items-center gap-2 truncate text-sm font-semibold">
-                      {m.teamName}
-                      {m.teamId === teamId && <Badge variant="pitch">Aktivt</Badge>}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {m.role === "admin" ? "Du er administrator" : "Du er medlem"}
-                    </p>
-                  </div>
-                  {m.role === "admin" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-destructive"
-                      onClick={() => setDeleteTarget({ teamId: m.teamId, teamName: m.teamName })}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" /> Slet
-                    </Button>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </section>
-
           <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-destructive/30 bg-card p-4 shadow-card">
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Sæson
+                Sæson · {activeTeamInClub.teamName}
               </p>
               <p className="text-sm font-semibold">Afslut sæsonen og start en ny</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
@@ -461,8 +505,8 @@ function IndstillingerPage() {
           <div className="space-y-1.5">
             <DialogTitle>Opret nyt hold</DialogTitle>
             <DialogDescription>
-              Opret et nyt hold i {current.clubName} — fx hvis klubben har hold i flere rækker. Du
-              bliver administrator på det nye hold.
+              Opret et nyt hold i {selectedClub?.clubName} — fx hvis klubben har hold i flere
+              rækker. Du bliver administrator på det nye hold.
             </DialogDescription>
           </div>
           <div className="space-y-2">
@@ -485,32 +529,12 @@ function IndstillingerPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <DialogContent>
-          <div className="space-y-1.5">
-            <DialogTitle>Slet {deleteTarget?.teamName}?</DialogTitle>
-            <DialogDescription>
-              Dette sletter holdet permanent inkl. alle dets bøder, bødesatser, indbetalinger,
-              udbetalinger, kampe, afstemninger og medlemskaber. Handlingen kan ikke fortrydes.
-            </DialogDescription>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-              Annuller
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteTeam} disabled={busy}>
-              <Trash2 className="mr-2 h-4 w-4" /> Slet holdet
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       <Dialog open={mpOpen} onOpenChange={setMpOpen}>
         <DialogContent>
           <div className="space-y-1.5">
             <DialogTitle>MobilePay-nummer</DialogTitle>
             <DialogDescription>
-              Det mobilnummer, som medlemmerne betaler deres bøder til via MobilePay. Lad feltet
+              Det mobilnummer, som medlemmerne overfører deres bøder til via MobilePay. Lad feltet
               stå tomt for at fjerne nummeret.
             </DialogDescription>
           </div>
@@ -556,6 +580,8 @@ function IndstillingerPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {confirmDialog}
     </div>
   );
 }

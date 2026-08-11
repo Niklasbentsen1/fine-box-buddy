@@ -5,6 +5,7 @@ import { ChevronDown, HandCoins, Ticket, Trash2, UserRound, Wallet } from "lucid
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
+import { useConfirm } from "@/components/confirm-dialog";
 import { useTeam } from "@/lib/team";
 import { formatDateTime, formatKr } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
@@ -70,6 +71,7 @@ function HistorikPage() {
   const queryClient = useQueryClient();
   const teamId = current?.teamId;
   const [expandedFineId, setExpandedFineId] = useState<string | null>(null);
+  const { confirm, confirmDialog } = useConfirm();
 
   const { data: fines = [] } = useQuery({
     queryKey: ["team", teamId, "hist-fines"],
@@ -180,7 +182,13 @@ function HistorikPage() {
     await queryClient.invalidateQueries({ queryKey: ["team", teamId] });
   };
 
-  const handleDeleteFine = async (fineId: string) => {
+  const handleDeleteFine = async (fineId: string, title: string) => {
+    const ok = await confirm({
+      title: "Slet bøden?",
+      description: `"${title}" fjernes permanent fra holdets regnskab.`,
+      confirmLabel: "Slet bøde",
+    });
+    if (!ok) return;
     const { error } = await supabase.from("fines").delete().eq("id", fineId);
     if (error) {
       toast.error(error.message);
@@ -281,7 +289,7 @@ function HistorikPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteFine(item.fineId!);
+                          handleDeleteFine(item.fineId!, item.title);
                         }}
                         className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10"
                       >
@@ -331,6 +339,8 @@ function HistorikPage() {
           ))}
         </ul>
       )}
+
+      {confirmDialog}
     </div>
   );
 }

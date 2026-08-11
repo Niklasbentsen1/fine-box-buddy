@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useTeam } from "@/lib/team";
+import { useConfirm } from "@/components/confirm-dialog";
 import { formatDate, formatKr } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -58,6 +59,7 @@ function BoederPage() {
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const { confirm, confirmDialog } = useConfirm();
 
   const { data: fineTypes = [] } = useQuery({
     queryKey: ["team", teamId, "fine-types"],
@@ -133,7 +135,13 @@ function BoederPage() {
     await refresh();
   };
 
-  const handleDeleteType = async (id: string) => {
+  const handleDeleteType = async (id: string, typeLabel: string) => {
+    const ok = await confirm({
+      title: `Slet bødesatsen "${typeLabel}"?`,
+      description: "Bødesatsen fjernes fra holdet. Allerede uddelte bøder påvirkes ikke.",
+      confirmLabel: "Slet bødesats",
+    });
+    if (!ok) return;
     const { error } = await supabase.from("fine_types").delete().eq("id", id);
     if (error) {
       toast.error(error.message);
@@ -143,7 +151,13 @@ function BoederPage() {
     await refresh();
   };
 
-  const handleDeleteFine = async (id: string) => {
+  const handleDeleteFine = async (id: string, fineLabel: string) => {
+    const ok = await confirm({
+      title: `Slet bøden "${fineLabel}"?`,
+      description: "Bøden fjernes permanent fra holdets regnskab.",
+      confirmLabel: "Slet bøde",
+    });
+    if (!ok) return;
     const { error } = await supabase.from("fines").delete().eq("id", id);
     if (error) {
       toast.error(error.message);
@@ -191,7 +205,7 @@ function BoederPage() {
                   <Badge variant="gold">{formatKr(Number(type.amount))}</Badge>
                   {isAdmin && (
                     <button
-                      onClick={() => handleDeleteType(type.id)}
+                      onClick={() => handleDeleteType(type.id, type.label)}
                       className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                       aria-label={`Slet ${type.label}`}
                     >
@@ -240,7 +254,7 @@ function BoederPage() {
                 <Badge variant="navy">{formatKr(Number(fine.amount))}</Badge>
                 {isAdmin && (
                   <button
-                    onClick={() => handleDeleteFine(fine.id)}
+                    onClick={() => handleDeleteFine(fine.id, fine.label)}
                     className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                     aria-label="Slet bøde"
                   >
@@ -292,6 +306,8 @@ function BoederPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {confirmDialog}
     </div>
   );
 }

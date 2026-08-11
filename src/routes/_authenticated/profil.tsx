@@ -5,6 +5,7 @@ import { Camera, Check, Palette, Save, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
+import { useConfirm } from "@/components/confirm-dialog";
 import { useTeam } from "@/lib/team";
 import { COLOR_THEMES, useColorTheme } from "@/lib/theme";
 import { Avatar } from "@/components/avatar";
@@ -66,6 +67,7 @@ function ProfilPage() {
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
   const [avatarBusy, setAvatarBusy] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
 
   useEffect(() => {
     if (profile) {
@@ -125,6 +127,12 @@ function ProfilPage() {
   };
 
   const handleRemoveAvatar = async () => {
+    const ok = await confirm({
+      title: "Fjern profilbillede?",
+      description: "Dit profilbillede slettes, og du vises igen med dine initialer.",
+      confirmLabel: "Fjern billede",
+    });
+    if (!ok) return;
     setAvatarBusy(true);
     const { error } = await supabase.from("profiles").update({ avatar_url: null }).eq("id", user.id);
     setAvatarBusy(false);
@@ -245,6 +253,8 @@ function ProfilPage() {
           })}
         </div>
       </section>
+
+      {confirmDialog}
     </div>
   );
 }

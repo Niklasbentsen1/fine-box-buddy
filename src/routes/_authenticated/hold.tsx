@@ -19,6 +19,7 @@ import {
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
+import { useConfirm } from "@/components/confirm-dialog";
 import { useTeam } from "@/lib/team";
 import { fetchTeamMembers, type MemberRow } from "@/lib/api";
 import { firstName, formatDateTime, formatKr, sumAmounts } from "@/lib/format";
@@ -85,6 +86,7 @@ function HoldPage() {
   const [memberSort, setMemberSort] = useState<"name" | "owed-desc" | "owed-asc">("name");
   const [fineTypePick, setFineTypePick] = useState("");
   const [givingFine, setGivingFine] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
 
   const { data: members = [] } = useQuery({
     queryKey: ["team", teamId, "members"],
@@ -223,6 +225,13 @@ function HoldPage() {
   };
 
   const handleRemove = async (userId: string, name: string) => {
+    const ok = await confirm({
+      title: `Fjern ${firstName(name)} fra holdet?`,
+      description:
+        "Medlemmet mister adgang til holdets bødekasse. Bøder og indbetalinger bevares i historikken.",
+      confirmLabel: "Fjern fra holdet",
+    });
+    if (!ok) return;
     const { error } = await supabase
       .from("team_members")
       .delete()
@@ -268,6 +277,12 @@ function HoldPage() {
   };
 
   const handleReject = async (userId: string, name: string) => {
+    const ok = await confirm({
+      title: `Afvis anmodningen fra ${firstName(name)}?`,
+      description: "Anmodningen slettes, og spilleren får ikke adgang til holdet.",
+      confirmLabel: "Afvis anmodning",
+    });
+    if (!ok) return;
     const { error } = await supabase
       .from("team_members")
       .delete()
@@ -622,6 +637,8 @@ function HoldPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {confirmDialog}
     </div>
   );
 }
