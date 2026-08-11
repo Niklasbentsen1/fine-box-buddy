@@ -71,6 +71,7 @@ function HistorikPage() {
   const queryClient = useQueryClient();
   const teamId = current?.teamId;
   const [expandedFineId, setExpandedFineId] = useState<string | null>(null);
+  const { confirm, confirmDialog } = useConfirm();
 
   const { data: fines = [] } = useQuery({
     queryKey: ["team", teamId, "hist-fines"],
@@ -338,6 +339,8 @@ function HistorikPage() {
           ))}
         </ul>
       )}
+
+      {confirmDialog}
     </div>
   );
 }

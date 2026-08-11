@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
+import { useConfirm } from "@/components/confirm-dialog";
 import { useTeam } from "@/lib/team";
 import { fetchTeamMembers } from "@/lib/api";
 import { formatDateTime, initials } from "@/lib/format";
@@ -64,6 +65,7 @@ function MatchDetailPage() {
 
   const [addOpen, setAddOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
 
@@ -202,7 +204,13 @@ function MatchDetailPage() {
     await refresh();
   };
 
-  const handleRemovePlayer = async (playerId: string) => {
+  const handleRemovePlayer = async (playerId: string, name: string) => {
+    const ok = await confirm({
+      title: `Fjern ${name} fra kampen?`,
+      description: "Spilleren fjernes fra kampen og kan ikke længere stemme eller modtage stemmer.",
+      confirmLabel: "Fjern spiller",
+    });
+    if (!ok) return;
     const { error } = await supabase.from("match_players").delete().eq("id", playerId);
     if (error) {
       toast.error(error.message);
@@ -373,7 +381,7 @@ function MatchDetailPage() {
                   )}
                   {isAdmin && (
                     <button
-                      onClick={() => handleRemovePlayer(player.id)}
+                      onClick={() => handleRemovePlayer(player.id, name)}
                       className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                       aria-label={`Fjern ${name} fra kampen`}
                     >
