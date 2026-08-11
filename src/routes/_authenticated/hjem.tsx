@@ -5,7 +5,10 @@ import {
   CircleAlert,
   Clock,
   HandCoins,
+  Check,
+  Copy,
   KeyRound,
+
   Link2,
   PiggyBank,
   Share2,
