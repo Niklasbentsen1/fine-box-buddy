@@ -14,7 +14,6 @@ workflows:
 
       vars:
         BUNDLE_ID: app.boedekassen
-        APP_STORE_APP_ID: 6753489152
 
       ios_signing:
         distribution_type: app_store
@@ -33,17 +32,21 @@ workflows:
 
       - name: Set build number from App Store Connect
         script: |
-          LATEST=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APP_ID" 2>/dev/null || true)
-          if [ -z "$LATEST" ]; then
-            LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APP_ID" 2>/dev/null || true)
+          set -e
+          APP_ID=$(app-store-connect list-apps --bundle-id-identifier "$BUNDLE_ID" --json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d[0]['id'] if d else '')")
+          LATEST=""
+          if [ -n "$APP_ID" ]; then
+            LATEST=$(app-store-connect get-latest-app-store-build-number "$APP_ID" 2>/dev/null || true)
+            if [ -z "$LATEST" ]; then
+              LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_ID" 2>/dev/null || true)
+            fi
           fi
           if [ -z "$LATEST" ]; then
-            LATEST=$(($BUILD_NUMBER))
+            LATEST=$(cd ios/App && agvtool what-version -terse)
           fi
           NEW_BUILD_NUMBER=$(($LATEST + 1))
           echo "Bruger build number: $NEW_BUILD_NUMBER"
-          cd ios/App
-          agvtool new-version -all "$NEW_BUILD_NUMBER"
+          cd ios/App && agvtool new-version -all "$NEW_BUILD_NUMBER"
 
       - name: Install dependencies
         script: |
