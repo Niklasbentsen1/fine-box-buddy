@@ -14,6 +14,7 @@ workflows:
 
       vars:
         BUNDLE_ID: app.boedekassen
+        APP_STORE_APP_ID: 6753489152
 
       ios_signing:
         distribution_type: app_store
@@ -29,6 +30,20 @@ workflows:
           rm -rf ~/Library/Developer/Xcode/DerivedData
           rm -rf ~/Library/Caches/org.swift.swiftpm
           rm -rf ~/Library/Caches/com.apple.dt.Xcode
+
+      - name: Set build number from App Store Connect
+        script: |
+          LATEST=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APP_ID" 2>/dev/null || true)
+          if [ -z "$LATEST" ]; then
+            LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APP_ID" 2>/dev/null || true)
+          fi
+          if [ -z "$LATEST" ]; then
+            LATEST=$(($BUILD_NUMBER))
+          fi
+          NEW_BUILD_NUMBER=$(($LATEST + 1))
+          echo "Bruger build number: $NEW_BUILD_NUMBER"
+          cd ios/App
+          agvtool new-version -all "$NEW_BUILD_NUMBER"
 
       - name: Install dependencies
         script: |
