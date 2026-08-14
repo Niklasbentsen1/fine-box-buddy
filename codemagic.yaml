@@ -30,6 +30,24 @@ workflows:
           rm -rf ~/Library/Caches/org.swift.swiftpm
           rm -rf ~/Library/Caches/com.apple.dt.Xcode
 
+      - name: Set build number from App Store Connect
+        script: |
+          set -e
+          APP_ID=$(app-store-connect list-apps --bundle-id-identifier "$BUNDLE_ID" --json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d[0]['id'] if d else '')")
+          LATEST=""
+          if [ -n "$APP_ID" ]; then
+            LATEST=$(app-store-connect get-latest-app-store-build-number "$APP_ID" 2>/dev/null || true)
+            if [ -z "$LATEST" ]; then
+              LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_ID" 2>/dev/null || true)
+            fi
+          fi
+          if [ -z "$LATEST" ]; then
+            LATEST=$(cd ios/App && agvtool what-version -terse)
+          fi
+          NEW_BUILD_NUMBER=$(($LATEST + 1))
+          echo "Bruger build number: $NEW_BUILD_NUMBER"
+          cd ios/App && agvtool new-version -all "$NEW_BUILD_NUMBER"
+
       - name: Install dependencies
         script: |
           npm ci
