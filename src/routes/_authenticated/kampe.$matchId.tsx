@@ -54,7 +54,7 @@ type PlayerRow = {
 };
 
 type MyVoteRow = { voted_for_id: string };
-type CountRow = { user_id: string; votes: number };
+type CountRow = { user_id: string; display_name: string | null; votes: number };
 
 function MatchDetailPage() {
   const { matchId } = Route.useParams();
@@ -171,6 +171,27 @@ function MatchDetailPage() {
       .filter(([, count]) => count === maxCount && count > 0)
       .map(([id]) => id),
   );
+
+  // Inkluder også spillere der er fjernet fra kampen, men som har modtaget stemmer,
+  // så resultatet stadig vises korrekt efter afstemningen er afsluttet.
+  const playerUserIds = new Set(players.map((p) => p.user_id));
+  const removedRecipients = counts
+    .filter((c) => !playerUserIds.has(c.user_id))
+    .map((c) => ({
+      id: `removed-${c.user_id}`,
+      user_id: c.user_id,
+      name: c.display_name ?? "Ukendt",
+      removed: true,
+    }));
+  const displayPlayers = [
+    ...players.map((p) => ({
+      id: p.id,
+      user_id: p.user_id,
+      name: p.profiles?.display_name ?? "Ukendt",
+      removed: false,
+    })),
+    ...removedRecipients,
+  ];
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["team", teamId] });
 
@@ -300,9 +321,9 @@ function MatchDetailPage() {
             {leaders.size === 1 ? "Kampens spiller" : "Kampens spillere (uafgjort)"}
           </h2>
           <p className="mt-1 text-lg font-semibold text-gold-foreground">
-            {players
+            {displayPlayers
               .filter((p) => leaders.has(p.user_id))
-              .map((p) => p.profiles?.display_name ?? "Ukendt")
+              .map((p) => p.name)
               .join(" & ")}
           </p>
           <p className="text-sm text-muted-foreground">
@@ -330,13 +351,13 @@ function MatchDetailPage() {
         {myVote && (
           <p className="mt-3 rounded-xl bg-pitch-soft p-3 text-sm text-pitch">
             Du har stemt på{" "}
-            {players.find((p) => p.user_id === myVote.voted_for_id)?.profiles?.display_name ??
+            {displayPlayers.find((p) => p.user_id === myVote.voted_for_id)?.name ??
               "en medspiller"}
             .
           </p>
         )}
 
-        {players.length === 0 ? (
+        {displayPlayers.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">
             {isAdmin
               ? "Ingen spillere tilføjet endnu — tilføj spillere for at åbne afstemningen."
@@ -344,9 +365,9 @@ function MatchDetailPage() {
           </p>
         ) : (
           <ul className="mt-4 space-y-3">
-            {players.map((player) => {
+            {displayPlayers.map((player) => {
               const count = voteCounts.get(player.user_id) ?? 0;
-              const name = player.profiles?.display_name ?? "Ukendt";
+              const name = player.name;
               const isSelf = player.user_id === user.id;
               const isLeader = leaders.has(player.user_id);
               return (
@@ -358,6 +379,9 @@ function MatchDetailPage() {
                     <p className="flex items-center gap-1.5 truncate text-sm font-semibold">
                       {name}
                       {isSelf && <span className="text-xs font-normal text-muted-foreground">(dig)</span>}
+                      {player.removed && (
+                        <span className="text-xs font-normal text-muted-foreground">(fjernet)</span>
+                      )}
                       {isLeader && totalVotes > 0 && <Crown className="h-4 w-4 text-gold" />}
                     </p>
                     <div className="mt-1 flex items-center gap-2">
@@ -374,12 +398,12 @@ function MatchDetailPage() {
                       </span>
                     </div>
                   </div>
-                  {canVote && !isSelf && (
+                  {canVote && !isSelf && !player.removed && (
                     <Button size="sm" variant="pitch" onClick={() => handleVote(player.user_id, name)}>
                       Stem
                     </Button>
                   )}
-                  {isAdmin && (
+                  {isAdmin && !player.removed && (
                     <button
                       onClick={() => handleRemovePlayer(player.id, name)}
                       className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
