@@ -635,6 +635,7 @@ export type Database = {
       get_match_vote_counts: {
         Args: { _match_id: string }
         Returns: {
+          display_name: string
           user_id: string
           votes: number
         }[]
