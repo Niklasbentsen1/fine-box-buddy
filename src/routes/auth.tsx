@@ -66,6 +66,21 @@ function AuthPage() {
     });
   }, [navigate]);
 
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setResetSent(true);
+  };
+
+
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
