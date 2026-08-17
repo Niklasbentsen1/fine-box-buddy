@@ -316,8 +316,19 @@ function AuthPage() {
                       />
                       Forbliv logget ind
                     </label>
+                    <button
+                      type="button"
+                      className="text-sm font-semibold text-pitch hover:underline"
+                      onClick={() => {
+                        setResetSent(false);
+                        setMode("forgot");
+                      }}
+                    >
+                      Glemt adgangskode?
+                    </button>
                   </div>
                 )}
+
                 <Button
                   type="submit"
                   className="w-full"
