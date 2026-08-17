@@ -29,7 +29,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -37,6 +37,8 @@ function AuthPage() {
   const [stayLoggedIn, setStayLoggedIn] = useState(true);
   const [busy, setBusy] = useState(false);
   const [signedUp, setSignedUp] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+
 
   const passwordRules = useMemo(() => {
     return [
@@ -63,6 +65,21 @@ function AuthPage() {
       if (data.session) navigate({ to: "/hjem", replace: true });
     });
   }, [navigate]);
+
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setResetSent(true);
+  };
+
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,7 +158,57 @@ function AuthPage() {
             </div>
           </div>
 
-          {signedUp ? (
+          {mode === "forgot" ? (
+            <div className="rounded-2xl border bg-card p-6 shadow-card">
+              {resetSent ? (
+                <div className="text-center">
+                  <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-pitch-soft text-pitch">
+                    <Mail className="h-6 w-6" />
+                  </span>
+                  <h1 className="font-display text-2xl font-semibold">Tjek din indbakke</h1>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Hvis der findes en konto med <strong>{email}</strong>, har vi sendt et link,
+                    hvor du kan vælge en ny adgangskode.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <h1 className="font-display text-2xl font-semibold">Glemt adgangskode</h1>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Indtast din e-mail, så sender vi dig et link til at vælge en ny adgangskode. Af
+                    sikkerhedsgrunde kan din nuværende adgangskode ikke sendes.
+                  </p>
+                  <form onSubmit={handleForgot} className="mt-5 space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="reset-email">E-mail</Label>
+                      <Input
+                        id="reset-email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="dig@eksempel.dk"
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={busy}>
+                      {busy ? "Vent et øjeblik…" : "Send nulstillingslink"}
+                    </Button>
+                  </form>
+                </>
+              )}
+              <Button
+                variant="outline"
+                className="mt-6 w-full"
+                onClick={() => {
+                  setResetSent(false);
+                  setMode("login");
+                }}
+              >
+                Tilbage til log ind
+              </Button>
+            </div>
+          ) : signedUp ? (
+
             <div className="rounded-2xl border bg-card p-6 text-center shadow-card">
               <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-pitch-soft text-pitch">
                 <Mail className="h-6 w-6" />
@@ -249,8 +316,19 @@ function AuthPage() {
                       />
                       Forbliv logget ind
                     </label>
+                    <button
+                      type="button"
+                      className="text-sm font-semibold text-pitch hover:underline"
+                      onClick={() => {
+                        setResetSent(false);
+                        setMode("forgot");
+                      }}
+                    >
+                      Glemt adgangskode?
+                    </button>
                   </div>
                 )}
+
                 <Button
                   type="submit"
                   className="w-full"
