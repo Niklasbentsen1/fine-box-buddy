@@ -94,6 +94,31 @@ function HoldPage() {
     queryFn: () => fetchTeamMembers(teamId!),
   });
 
+  const { data: leaving = [] } = useQuery({
+    queryKey: ["team", teamId, "leaving-members"],
+    enabled: !!teamId && isAdmin,
+    queryFn: async (): Promise<PendingRow[]> => {
+      const { data, error } = await supabase.rpc("get_leaving_members", { _team_id: teamId! });
+      if (error) throw error;
+      return (data ?? []) as PendingRow[];
+    },
+  });
+
+  const { data: myLeaveRequested = false } = useQuery({
+    queryKey: ["team", teamId, "my-leave-request", user.id],
+    enabled: !!teamId,
+    queryFn: async (): Promise<boolean> => {
+      const { data, error } = await supabase
+        .from("team_members")
+        .select("leave_requested_at")
+        .eq("team_id", teamId!)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return !!data?.leave_requested_at;
+    },
+  });
+
   const { data: pending = [] } = useQuery({
     queryKey: ["team", teamId, "pending-members"],
     enabled: !!teamId && isAdmin,
