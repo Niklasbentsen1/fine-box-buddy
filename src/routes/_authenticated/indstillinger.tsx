@@ -49,7 +49,7 @@ export const Route = createFileRoute("/_authenticated/indstillinger")({
 type PaymentSum = { amount: number; status: string };
 type WithdrawalSum = { amount: number };
 
-type ClubGroup = { clubId: string; clubName: string; inviteCode: string; teams: Membership[] };
+type ClubGroup = { clubId: string; clubName: string; teams: Membership[] };
 
 function IndstillingerPage() {
   const { current, memberships, isAdmin, refreshMemberships, setCurrentTeamId } = useTeam();
@@ -102,7 +102,7 @@ function IndstillingerPage() {
     for (const m of memberships) {
       const entry =
         map.get(m.clubId) ??
-        ({ clubId: m.clubId, clubName: m.clubName, inviteCode: m.inviteCode, teams: [] } as ClubGroup);
+        ({ clubId: m.clubId, clubName: m.clubName, teams: [] } as ClubGroup);
       entry.teams.push(m);
       map.set(m.clubId, entry);
     }
@@ -117,6 +117,7 @@ function IndstillingerPage() {
 
   const selectedClub = clubs.find((c) => c.clubId === selectedClubId) ?? null;
   const isClubAdmin = !!selectedClub?.teams.some((t) => t.role === "admin");
+  const inviteCode = useClubInviteCode(selectedClubId, isClubAdmin);
   const activeTeamInClub =
     selectedClub && current && current.clubId === selectedClub.clubId ? current : null;
 
@@ -127,10 +128,10 @@ function IndstillingerPage() {
   const cashBalance = carryover + paidTotal - sumAmounts(withdrawals);
 
   const copyInviteCode = async () => {
-    if (!selectedClub) return;
+    if (!selectedClub || !inviteCode) return;
     try {
       await navigator.clipboard.writeText(
-        `Tilmeld dig min klub med koden ${selectedClub.inviteCode}`,
+        `Tilmeld dig min klub med koden ${inviteCode}`,
       );
       setCodeCopied(true);
       setTimeout(() => setCodeCopied(false), 1500);
@@ -361,7 +362,7 @@ function IndstillingerPage() {
               Klubkode til {selectedClub.clubName}
             </p>
             <p className="font-mono text-xl font-bold tracking-[0.25em]">
-              {selectedClub.inviteCode}
+              {inviteCode ?? "…"}
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
               Del koden med nye spillere — de skal godkendes af en administrator.
