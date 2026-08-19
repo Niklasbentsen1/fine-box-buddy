@@ -24,6 +24,12 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Bødekassen bruger kameraet, så du kan tage et profilbillede.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Bødekassen bruger dine billeder, så du kan vælge et profilbillede.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Bødekassen kan gemme billeder i dit fotobibliotek.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
