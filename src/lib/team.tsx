@@ -27,6 +27,7 @@ type TeamContextValue = {
   current: Membership | null;
   isAdmin: boolean;
   isLoading: boolean;
+  hasError: boolean;
   pendingCount: number;
   setCurrentTeamId: (teamId: string) => void;
   refreshMemberships: () => Promise<void>;
@@ -45,9 +46,9 @@ type MembershipRow = {
     club_id: string;
     mobilepay_number: string | null;
     balance_carryover: number;
-    clubs: { id: string; name: string };
-  };
+  } | null;
 };
+
 
 export function TeamProvider({ user, children }: { user: User; children: ReactNode }) {
   const queryClient = useQueryClient();
@@ -56,29 +57,43 @@ export function TeamProvider({ user, children }: { user: User; children: ReactNo
     return window.localStorage.getItem(storageKey(user.id));
   });
 
-  const { data: memberships = [], isLoading: membershipsLoading } = useQuery({
+  const {
+    data: memberships = [],
+    isLoading: membershipsLoading,
+    isError: membershipsError,
+  } = useQuery({
     queryKey: ["memberships", user.id],
     queryFn: async (): Promise<Membership[]> => {
       const { data, error } = await supabase
         .from("team_members")
-        .select(
-          "team_id, role, teams!inner(id, name, club_id, mobilepay_number, balance_carryover, clubs!inner(id, name))",
-        )
+        .select("team_id, role, teams(id, name, club_id, mobilepay_number, balance_carryover)")
         .eq("user_id", user.id)
         .eq("status", "active")
         .order("joined_at", { ascending: true });
       if (error) throw error;
-      return ((data ?? []) as unknown as MembershipRow[]).map((row) => ({
+      const rows = ((data ?? []) as unknown as MembershipRow[]).filter((row) => row.teams);
+
+      // Klubnavne hentes separat, så et manglende klubopslag aldrig kan fjerne
+      // et gyldigt medlemskab (og dermed sende brugeren tilbage til onboarding).
+      const clubIds = Array.from(new Set(rows.map((row) => row.teams!.club_id)));
+      const clubNames = new Map<string, string>();
+      if (clubIds.length > 0) {
+        const { data: clubs } = await supabase.from("clubs").select("id, name").in("id", clubIds);
+        for (const club of clubs ?? []) clubNames.set(club.id, club.name);
+      }
+
+      return rows.map((row) => ({
         teamId: row.team_id,
-        teamName: row.teams.name,
-        clubId: row.teams.club_id,
-        clubName: row.teams.clubs.name,
-        mobilepayNumber: row.teams.mobilepay_number,
-        balanceCarryover: Number(row.teams.balance_carryover ?? 0),
+        teamName: row.teams!.name,
+        clubId: row.teams!.club_id,
+        clubName: clubNames.get(row.teams!.club_id) ?? "Klub",
+        mobilepayNumber: row.teams!.mobilepay_number,
+        balanceCarryover: Number(row.teams!.balance_carryover ?? 0),
         role: row.role,
       }));
     },
   });
+
 
   const { data: profile = null } = useQuery({
     queryKey: ["profile", user.id],
@@ -126,7 +141,9 @@ export function TeamProvider({ user, children }: { user: User; children: ReactNo
     current,
     isAdmin: current?.role === "admin",
     isLoading: membershipsLoading || pendingLoading,
+    hasError: membershipsError,
     pendingCount,
+
     setCurrentTeamId: (teamId) => {
       setSelectedTeamId(teamId);
       window.localStorage.setItem(storageKey(user.id), teamId);
