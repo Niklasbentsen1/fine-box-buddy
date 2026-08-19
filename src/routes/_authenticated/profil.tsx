@@ -183,6 +183,50 @@ function ProfilPage() {
     await refreshProfile();
   };
 
+  const handleDeleteAccount = async () => {
+    if (!user.email) {
+      toast.error("Din profil har ingen e-mail — kontakt en administrator");
+      return;
+    }
+    if (!deletePassword) {
+      toast.error("Indtast din adgangskode");
+      return;
+    }
+    setDeleteBusy(true);
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: deletePassword,
+    });
+    if (authError) {
+      setDeleteBusy(false);
+      toast.error("Forkert adgangskode");
+      return;
+    }
+    const ok = await confirm({
+      title: "Slet din profil permanent?",
+      description:
+        "Din profil, dine medlemskaber, bøder, indbetalinger og stemmer slettes for altid. Handlingen kan ikke fortrydes.",
+      confirmLabel: "Slet profil permanent",
+    });
+    if (!ok) {
+      setDeleteBusy(false);
+      return;
+    }
+    const { error } = await supabase.rpc("delete_own_account");
+    if (error) {
+      setDeleteBusy(false);
+      toast.error(error.message);
+      return;
+    }
+    await supabase.auth.signOut();
+    queryClient.clear();
+    setDeleteBusy(false);
+    setDeleteOpen(false);
+    setDeletePassword("");
+    toast.success("Din profil er slettet");
+    navigate({ to: "/auth" });
+  };
+
   const displayName = profile?.displayName || user.email || "Spiller";
 
   return (
