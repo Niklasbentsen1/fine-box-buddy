@@ -141,7 +141,9 @@ export function TeamProvider({ user, children }: { user: User; children: ReactNo
     current,
     isAdmin: current?.role === "admin",
     isLoading: membershipsLoading || pendingLoading,
+    hasError: membershipsError,
     pendingCount,
+
     setCurrentTeamId: (teamId) => {
       setSelectedTeamId(teamId);
       window.localStorage.setItem(storageKey(user.id), teamId);
