@@ -9,7 +9,6 @@ export type Membership = {
   teamName: string;
   clubId: string;
   clubName: string;
-  inviteCode: string;
   mobilepayNumber: string | null;
   balanceCarryover: number;
   role: "admin" | "member";
@@ -46,7 +45,7 @@ type MembershipRow = {
     club_id: string;
     mobilepay_number: string | null;
     balance_carryover: number;
-    clubs: { id: string; name: string; invite_code: string };
+    clubs: { id: string; name: string };
   };
 };
 
@@ -63,7 +62,7 @@ export function TeamProvider({ user, children }: { user: User; children: ReactNo
       const { data, error } = await supabase
         .from("team_members")
         .select(
-          "team_id, role, teams!inner(id, name, club_id, mobilepay_number, balance_carryover, clubs!inner(id, name, invite_code))",
+          "team_id, role, teams!inner(id, name, club_id, mobilepay_number, balance_carryover, clubs!inner(id, name))",
         )
         .eq("user_id", user.id)
         .eq("status", "active")
@@ -74,7 +73,6 @@ export function TeamProvider({ user, children }: { user: User; children: ReactNo
         teamName: row.teams.name,
         clubId: row.teams.club_id,
         clubName: row.teams.clubs.name,
-        inviteCode: row.teams.clubs.invite_code,
         mobilepayNumber: row.teams.mobilepay_number,
         balanceCarryover: Number(row.teams.balance_carryover ?? 0),
         role: row.role,
@@ -143,4 +141,21 @@ export function useTeam() {
   const ctx = useContext(TeamContext);
   if (!ctx) throw new Error("useTeam skal bruges inde i TeamProvider");
   return ctx;
+}
+
+/**
+ * Klubkoden må kun læses af klubbens administratorer og hentes derfor
+ * gennem en sikret databasefunktion i stedet for direkte fra klubtabellen.
+ */
+export function useClubInviteCode(clubId: string | null | undefined, enabled = true) {
+  const { data } = useQuery({
+    queryKey: ["club-invite-code", clubId],
+    enabled: !!clubId && enabled,
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase.rpc("get_club_invite_code", { _club_id: clubId! });
+      if (error) throw error;
+      return (data as string | null) ?? null;
+    },
+  });
+  return data ?? null;
 }

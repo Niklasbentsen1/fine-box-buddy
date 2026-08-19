@@ -20,7 +20,7 @@ import {
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
-import { useTeam } from "@/lib/team";
+import { useClubInviteCode, useTeam } from "@/lib/team";
 import { fetchTeamMembers } from "@/lib/api";
 import { firstName, formatDate, formatKr, sumAmounts } from "@/lib/format";
 import { StatCard } from "@/components/stat-card";
@@ -92,6 +92,7 @@ async function shareOrCopy(text: string, successMessage: string) {
 
 function HjemPage() {
   const { user, current, isAdmin, profile } = useTeam();
+  const inviteCode = useClubInviteCode(current?.clubId, isAdmin);
   const queryClient = useQueryClient();
   const teamId = current?.teamId;
 
@@ -289,7 +290,7 @@ function HjemPage() {
 
   const inviteLinkMessage = `Hej! Vi bruger appen Bødekassen til at holde styr på bødekassen i ${current.clubName}.\n\nDownload appen her: ${APP_DOWNLOAD_URL}\n\nNår du har oprettet dig, får du en klubkode af mig, så du kan tilmelde dig klubben.`;
 
-  const inviteCodeMessage = `Tilmeld dig min klub "${current.clubName}" i appen Bødekassen med koden ${current.inviteCode}.\n\nSådan gør du:\n1. Download Bødekassen: ${APP_DOWNLOAD_URL}\n2. Opret dig som bruger\n3. Vælg "Tilmeld med klubkode" og indtast koden ${current.inviteCode}\n4. Afvent godkendelse fra en administrator\n\nGlæder mig til at se dig på holdet!`;
+  const inviteCodeMessage = `Tilmeld dig min klub "${current.clubName}" i appen Bødekassen med koden ${inviteCode ?? ""}.\n\nSådan gør du:\n1. Download Bødekassen: ${APP_DOWNLOAD_URL}\n2. Opret dig som bruger\n3. Vælg "Tilmeld med klubkode" og indtast koden ${inviteCode ?? ""}\n4. Afvent godkendelse fra en administrator\n\nGlæder mig til at se dig på holdet!`;
 
   return (
     <div className="space-y-6">
