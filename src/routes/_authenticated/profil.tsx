@@ -103,6 +103,9 @@ function ProfilPage() {
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
   const [avatarBusy, setAvatarBusy] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteBusy, setDeleteBusy] = useState(false);
   const { confirm, confirmDialog } = useConfirm();
 
   useEffect(() => {
