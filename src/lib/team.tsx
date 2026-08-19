@@ -27,6 +27,7 @@ type TeamContextValue = {
   current: Membership | null;
   isAdmin: boolean;
   isLoading: boolean;
+  hasError: boolean;
   pendingCount: number;
   setCurrentTeamId: (teamId: string) => void;
   refreshMemberships: () => Promise<void>;
@@ -45,9 +46,9 @@ type MembershipRow = {
     club_id: string;
     mobilepay_number: string | null;
     balance_carryover: number;
-    clubs: { id: string; name: string };
-  };
+  } | null;
 };
+
 
 export function TeamProvider({ user, children }: { user: User; children: ReactNode }) {
   const queryClient = useQueryClient();
