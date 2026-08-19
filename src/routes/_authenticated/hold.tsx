@@ -322,6 +322,66 @@ function HoldPage() {
     await refresh();
   };
 
+  const handleRequestLeave = async () => {
+    const ok = await confirm({
+      title: `Forlad ${current.teamName}?`,
+      description:
+        "Din anmodning sendes til holdets administratorer. Du forlader først holdet, når en administrator har godkendt den.",
+      confirmLabel: "Send anmodning",
+      destructive: false,
+    });
+    if (!ok) return;
+    const { error } = await supabase.rpc("request_leave_team", { _team_id: teamId });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Anmodning sendt — afventer godkendelse");
+    await refresh();
+  };
+
+  const handleCancelLeave = async () => {
+    const { error } = await supabase.rpc("cancel_leave_request", { _team_id: teamId });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Anmodningen er trukket tilbage");
+    await refresh();
+  };
+
+  const handleApproveLeave = async (userId: string, name: string) => {
+    const ok = await confirm({
+      title: `Lad ${firstName(name)} forlade holdet?`,
+      description: "Medlemskabet fjernes. Bøder og indbetalinger bevares i historikken.",
+      confirmLabel: "Godkend",
+    });
+    if (!ok) return;
+    const { error } = await supabase.rpc("approve_leave_team", {
+      _team_id: teamId,
+      _user_id: userId,
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`${firstName(name)} har forladt holdet`);
+    await refresh();
+  };
+
+  const handleRejectLeave = async (userId: string, name: string) => {
+    const { error } = await supabase.rpc("reject_leave_team", {
+      _team_id: teamId,
+      _user_id: userId,
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`Anmodningen fra ${firstName(name)} er afvist`);
+    await refresh();
+  };
+
   const handleWithdraw = async () => {
     const amount = Number(withdrawAmount.replace(",", "."));
     if (!amount || amount <= 0) {
