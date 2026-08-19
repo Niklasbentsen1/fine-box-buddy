@@ -495,6 +495,7 @@ export type Database = {
         Row: {
           id: string
           joined_at: string
+          leave_requested_at: string | null
           role: Database["public"]["Enums"]["team_role"]
           status: Database["public"]["Enums"]["member_status"]
           team_id: string
@@ -503,6 +504,7 @@ export type Database = {
         Insert: {
           id?: string
           joined_at?: string
+          leave_requested_at?: string | null
           role?: Database["public"]["Enums"]["team_role"]
           status?: Database["public"]["Enums"]["member_status"]
           team_id: string
@@ -511,6 +513,7 @@ export type Database = {
         Update: {
           id?: string
           joined_at?: string
+          leave_requested_at?: string | null
           role?: Database["public"]["Enums"]["team_role"]
           status?: Database["public"]["Enums"]["member_status"]
           team_id?: string
@@ -608,10 +611,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_leave_team: {
+        Args: { _team_id: string; _user_id: string }
+        Returns: undefined
+      }
       approve_member: {
         Args: { _team_id: string; _user_id: string }
         Returns: undefined
       }
+      cancel_leave_request: { Args: { _team_id: string }; Returns: undefined }
       close_expired_votings: { Args: never; Returns: undefined }
       create_club: {
         Args: { _name: string; _team_name: string }
@@ -621,6 +629,7 @@ export type Database = {
         Args: { _club_id: string; _name: string }
         Returns: string
       }
+      delete_own_account: { Args: never; Returns: undefined }
       delete_team: { Args: { _team_id: string }; Returns: undefined }
       dispatch_push_notifications: { Args: never; Returns: undefined }
       end_season: { Args: { _team_id: string }; Returns: undefined }
@@ -630,6 +639,15 @@ export type Database = {
           id: string
           member_count: number
           name: string
+        }[]
+      }
+      get_leaving_members: {
+        Args: { _team_id: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          requested_at: string
+          user_id: string
         }[]
       }
       get_match_vote_counts: {
@@ -671,6 +689,11 @@ export type Database = {
       }
       join_club_by_code: { Args: { _code: string }; Returns: string }
       join_team: { Args: { _team_id: string }; Returns: undefined }
+      reject_leave_team: {
+        Args: { _team_id: string; _user_id: string }
+        Returns: undefined
+      }
+      request_leave_team: { Args: { _team_id: string }; Returns: undefined }
       set_team_member_role: {
         Args: {
           _role: Database["public"]["Enums"]["team_role"]

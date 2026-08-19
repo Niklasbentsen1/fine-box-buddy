@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BellRing,
   HandCoins,
+  LogOut,
   MoreVertical,
   Phone,
   PiggyBank,
@@ -92,6 +93,31 @@ function HoldPage() {
     queryKey: ["team", teamId, "members"],
     enabled: !!teamId,
     queryFn: () => fetchTeamMembers(teamId!),
+  });
+
+  const { data: leaving = [] } = useQuery({
+    queryKey: ["team", teamId, "leaving-members"],
+    enabled: !!teamId && isAdmin,
+    queryFn: async (): Promise<PendingRow[]> => {
+      const { data, error } = await supabase.rpc("get_leaving_members", { _team_id: teamId! });
+      if (error) throw error;
+      return (data ?? []) as PendingRow[];
+    },
+  });
+
+  const { data: myLeaveRequested = false } = useQuery({
+    queryKey: ["team", teamId, "my-leave-request", user.id],
+    enabled: !!teamId,
+    queryFn: async (): Promise<boolean> => {
+      const { data, error } = await supabase
+        .from("team_members")
+        .select("leave_requested_at")
+        .eq("team_id", teamId!)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return !!data?.leave_requested_at;
+    },
   });
 
   const { data: pending = [] } = useQuery({
@@ -289,6 +315,66 @@ function HoldPage() {
       .eq("team_id", teamId)
       .eq("user_id", userId)
       .eq("status", "pending");
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`Anmodningen fra ${firstName(name)} er afvist`);
+    await refresh();
+  };
+
+  const handleRequestLeave = async () => {
+    const ok = await confirm({
+      title: `Forlad ${current.teamName}?`,
+      description:
+        "Din anmodning sendes til holdets administratorer. Du forlader først holdet, når en administrator har godkendt den.",
+      confirmLabel: "Send anmodning",
+      destructive: false,
+    });
+    if (!ok) return;
+    const { error } = await supabase.rpc("request_leave_team", { _team_id: teamId });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Anmodning sendt — afventer godkendelse");
+    await refresh();
+  };
+
+  const handleCancelLeave = async () => {
+    const { error } = await supabase.rpc("cancel_leave_request", { _team_id: teamId });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Anmodningen er trukket tilbage");
+    await refresh();
+  };
+
+  const handleApproveLeave = async (userId: string, name: string) => {
+    const ok = await confirm({
+      title: `Lad ${firstName(name)} forlade holdet?`,
+      description: "Medlemskabet fjernes. Bøder og indbetalinger bevares i historikken.",
+      confirmLabel: "Godkend",
+    });
+    if (!ok) return;
+    const { error } = await supabase.rpc("approve_leave_team", {
+      _team_id: teamId,
+      _user_id: userId,
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`${firstName(name)} har forladt holdet`);
+    await refresh();
+  };
+
+  const handleRejectLeave = async (userId: string, name: string) => {
+    const { error } = await supabase.rpc("reject_leave_team", {
+      _team_id: teamId,
+      _user_id: userId,
+    });
     if (error) {
       toast.error(error.message);
       return;
@@ -505,6 +591,69 @@ function HoldPage() {
           </ul>
         </section>
       )}
+
+      {isAdmin && leaving.length > 0 && (
+        <section className="rounded-2xl border border-destructive/30 bg-card p-5 shadow-card">
+          <h2 className="font-display text-xl font-semibold">
+            Vil forlade holdet ({leaving.length})
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Disse spillere har anmodet om at forlade holdet og afventer din godkendelse.
+          </p>
+          <ul className="mt-3 divide-y">
+            {leaving.map((p) => (
+              <li key={p.user_id} className="flex items-center gap-3 py-3">
+                <Avatar name={p.display_name} url={p.avatar_url} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{p.display_name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Anmodede {formatDateTime(p.requested_at)}
+                  </p>
+                </div>
+                <Button
+                  variant="pitch"
+                  size="sm"
+                  onClick={() => handleApproveLeave(p.user_id, p.display_name)}
+                >
+                  <UserCheck className="mr-2 h-4 w-4" /> Godkend
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleRejectLeave(p.user_id, p.display_name)}
+                >
+                  <UserX className="mr-2 h-4 w-4" /> Afvis
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section className="rounded-2xl border bg-card p-5 shadow-card">
+        <h2 className="font-display text-xl font-semibold">Forlad holdet</h2>
+        {myLeaveRequested ? (
+          <>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Din anmodning om at forlade {current.teamName} afventer godkendelse fra en
+              administrator.
+            </p>
+            <Button variant="outline" size="sm" className="mt-3" onClick={handleCancelLeave}>
+              Fortryd anmodning
+            </Button>
+          </>
+        ) : (
+          <>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Send en anmodning om at forlade {current.teamName}. En administrator skal godkende
+              den, før du fjernes fra holdet.
+            </p>
+            <Button variant="destructive" size="sm" className="mt-3" onClick={handleRequestLeave}>
+              <LogOut className="mr-2 h-4 w-4" /> Anmod om at forlade holdet
+            </Button>
+          </>
+        )}
+      </section>
 
       <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
         <DialogContent>

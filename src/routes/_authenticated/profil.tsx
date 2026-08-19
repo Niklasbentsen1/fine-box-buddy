@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Camera, Check, Palette, Save, Trash2, UserRound } from "lucide-react";
+import { Camera, Check, Palette, Save, ShieldAlert, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,13 @@ import { Avatar } from "@/components/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/profil")({
   head: () => ({
@@ -26,34 +33,63 @@ export const Route = createFileRoute("/_authenticated/profil")({
   component: ProfilPage,
 });
 
-function resizeImage(file: File): Promise<string> {
+function drawToDataUrl(source: CanvasImageSource, width: number, height: number): string {
+  const size = 256;
+  const scale = Math.max(size / width, size / height);
+  const w = Math.round(width * scale);
+  const h = Math.round(height * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas understøttes ikke");
+  ctx.drawImage(source, (size - w) / 2, (size - h) / 2, w, h);
+  return canvas.toDataURL("image/jpeg", 0.85);
+}
+
+function readAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
-    const objectUrl = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      const size = 256;
-      const scale = Math.max(size / img.width, size / img.height);
-      const w = Math.round(img.width * scale);
-      const h = Math.round(img.height * scale);
-      const canvas = document.createElement("canvas");
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        URL.revokeObjectURL(objectUrl);
-        reject(new Error("Canvas understøttes ikke"));
-        return;
-      }
-      ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
-      URL.revokeObjectURL(objectUrl);
-      resolve(canvas.toDataURL("image/jpeg", 0.85));
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error("Billedet kunne ikke læses"));
-    };
-    img.src = objectUrl;
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("Billedet kunne ikke læses"));
+    reader.readAsDataURL(file);
   });
+}
+
+/**
+ * Skalerer et billede til 256x256 JPEG. Bruger createImageBitmap (håndterer
+ * store kamerabilleder og EXIF-rotation) med fallback til <img> + data-URL,
+ * så iOS-kamerabilleder ikke crasher appen.
+ */
+async function resizeImage(file: File): Promise<string> {
+  if (typeof createImageBitmap === "function") {
+    try {
+      const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+      try {
+        return drawToDataUrl(bitmap, bitmap.width, bitmap.height);
+      } finally {
+        bitmap.close?.();
+      }
+    } catch {
+      // falder tilbage til <img>-metoden nedenfor
+    }
+  }
+
+  const dataUrl = await readAsDataUrl(file);
+  const img = new Image();
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error("Billedformatet understøttes ikke"));
+    img.src = dataUrl;
+  });
+  if (typeof img.decode === "function") {
+    try {
+      await img.decode();
+    } catch {
+      /* nogle browsere kaster her selvom billedet er klar */
+    }
+  }
+  return drawToDataUrl(img, img.naturalWidth || img.width, img.naturalHeight || img.height);
 }
 
 function ProfilPage() {
@@ -67,6 +103,9 @@ function ProfilPage() {
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
   const [avatarBusy, setAvatarBusy] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteBusy, setDeleteBusy] = useState(false);
   const { confirm, confirmDialog } = useConfirm();
 
   useEffect(() => {
@@ -142,6 +181,50 @@ function ProfilPage() {
     }
     toast.success("Profilbillede fjernet");
     await refreshProfile();
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user.email) {
+      toast.error("Din profil har ingen e-mail — kontakt en administrator");
+      return;
+    }
+    if (!deletePassword) {
+      toast.error("Indtast din adgangskode");
+      return;
+    }
+    setDeleteBusy(true);
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: deletePassword,
+    });
+    if (authError) {
+      setDeleteBusy(false);
+      toast.error("Forkert adgangskode");
+      return;
+    }
+    const ok = await confirm({
+      title: "Slet din profil permanent?",
+      description:
+        "Din profil, dine medlemskaber, bøder, indbetalinger og stemmer slettes for altid. Handlingen kan ikke fortrydes.",
+      confirmLabel: "Slet profil permanent",
+    });
+    if (!ok) {
+      setDeleteBusy(false);
+      return;
+    }
+    const { error } = await supabase.rpc("delete_own_account");
+    if (error) {
+      setDeleteBusy(false);
+      toast.error(error.message);
+      return;
+    }
+    await supabase.auth.signOut();
+    queryClient.clear();
+    setDeleteBusy(false);
+    setDeleteOpen(false);
+    setDeletePassword("");
+    toast.success("Din profil er slettet");
+    navigate({ to: "/auth" });
   };
 
   const displayName = profile?.displayName || user.email || "Spiller";
@@ -253,6 +336,58 @@ function ProfilPage() {
           })}
         </div>
       </section>
+
+      <section className="space-y-3 rounded-2xl border border-destructive/30 bg-card p-5 shadow-card">
+        <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
+          <ShieldAlert className="h-5 w-5 text-destructive" /> Slet profil
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Sletter din profil og alle dine data permanent. Du skal bekræfte med din adgangskode.
+        </p>
+        <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
+          <Trash2 className="mr-2 h-4 w-4" /> Slet min profil
+        </Button>
+      </section>
+
+      <Dialog
+        open={deleteOpen}
+        onOpenChange={(open) => {
+          setDeleteOpen(open);
+          if (!open) setDeletePassword("");
+        }}
+      >
+        <DialogContent>
+          <div className="space-y-1.5">
+            <DialogTitle>Slet profil permanent</DialogTitle>
+            <DialogDescription>
+              Bekræft med din adgangskode. Din profil og alle dine data slettes for altid.
+            </DialogDescription>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="delete-password">Adgangskode</Label>
+            <Input
+              id="delete-password"
+              type="password"
+              autoComplete="current-password"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              placeholder="Din adgangskode"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+              Annuller
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAccount}
+              disabled={deleteBusy || !deletePassword}
+            >
+              <Trash2 className="mr-2 h-4 w-4" /> {deleteBusy ? "Sletter…" : "Slet profil"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {confirmDialog}
     </div>
