@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BellRing,
   HandCoins,
+  LogOut,
   MoreVertical,
   Phone,
   PiggyBank,
