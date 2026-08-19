@@ -20,7 +20,7 @@ import {
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
-import { useTeam } from "@/lib/team";
+import { useClubInviteCode, useTeam } from "@/lib/team";
 import { fetchTeamMembers } from "@/lib/api";
 import { firstName, formatDate, formatKr, sumAmounts } from "@/lib/format";
 import { StatCard } from "@/components/stat-card";

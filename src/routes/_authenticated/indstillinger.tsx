@@ -17,7 +17,7 @@ import {
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
-import { useTeam, type Membership } from "@/lib/team";
+import { useClubInviteCode, useTeam, type Membership } from "@/lib/team";
 import { formatKr, sumAmounts } from "@/lib/format";
 import { useConfirm } from "@/components/confirm-dialog";
 import { Badge } from "@/components/ui/badge";
