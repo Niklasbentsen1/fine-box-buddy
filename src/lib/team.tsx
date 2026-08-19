@@ -142,3 +142,20 @@ export function useTeam() {
   if (!ctx) throw new Error("useTeam skal bruges inde i TeamProvider");
   return ctx;
 }
+
+/**
+ * Klubkoden må kun læses af klubbens administratorer og hentes derfor
+ * gennem en sikret databasefunktion i stedet for direkte fra klubtabellen.
+ */
+export function useClubInviteCode(clubId: string | null | undefined, enabled = true) {
+  const { data } = useQuery({
+    queryKey: ["club-invite-code", clubId],
+    enabled: !!clubId && enabled,
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase.rpc("get_club_invite_code", { _club_id: clubId! });
+      if (error) throw error;
+      return (data as string | null) ?? null;
+    },
+  });
+  return data ?? null;
+}
