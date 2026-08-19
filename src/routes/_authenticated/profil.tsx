@@ -337,6 +337,58 @@ function ProfilPage() {
         </div>
       </section>
 
+      <section className="space-y-3 rounded-2xl border border-destructive/30 bg-card p-5 shadow-card">
+        <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
+          <ShieldAlert className="h-5 w-5 text-destructive" /> Slet profil
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Sletter din profil og alle dine data permanent. Du skal bekræfte med din adgangskode.
+        </p>
+        <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
+          <Trash2 className="mr-2 h-4 w-4" /> Slet min profil
+        </Button>
+      </section>
+
+      <Dialog
+        open={deleteOpen}
+        onOpenChange={(open) => {
+          setDeleteOpen(open);
+          if (!open) setDeletePassword("");
+        }}
+      >
+        <DialogContent>
+          <div className="space-y-1.5">
+            <DialogTitle>Slet profil permanent</DialogTitle>
+            <DialogDescription>
+              Bekræft med din adgangskode. Din profil og alle dine data slettes for altid.
+            </DialogDescription>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="delete-password">Adgangskode</Label>
+            <Input
+              id="delete-password"
+              type="password"
+              autoComplete="current-password"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              placeholder="Din adgangskode"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+              Annuller
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAccount}
+              disabled={deleteBusy || !deletePassword}
+            >
+              <Trash2 className="mr-2 h-4 w-4" /> {deleteBusy ? "Sletter…" : "Slet profil"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {confirmDialog}
     </div>
   );
