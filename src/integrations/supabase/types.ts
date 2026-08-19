@@ -641,6 +641,7 @@ export type Database = {
           name: string
         }[]
       }
+      get_club_invite_code: { Args: { _club_id: string }; Returns: string }
       get_leaving_members: {
         Args: { _team_id: string }
         Returns: {
