@@ -591,6 +591,69 @@ function HoldPage() {
         </section>
       )}
 
+      {isAdmin && leaving.length > 0 && (
+        <section className="rounded-2xl border border-destructive/30 bg-card p-5 shadow-card">
+          <h2 className="font-display text-xl font-semibold">
+            Vil forlade holdet ({leaving.length})
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Disse spillere har anmodet om at forlade holdet og afventer din godkendelse.
+          </p>
+          <ul className="mt-3 divide-y">
+            {leaving.map((p) => (
+              <li key={p.user_id} className="flex items-center gap-3 py-3">
+                <Avatar name={p.display_name} url={p.avatar_url} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{p.display_name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Anmodede {formatDateTime(p.requested_at)}
+                  </p>
+                </div>
+                <Button
+                  variant="pitch"
+                  size="sm"
+                  onClick={() => handleApproveLeave(p.user_id, p.display_name)}
+                >
+                  <UserCheck className="mr-2 h-4 w-4" /> Godkend
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleRejectLeave(p.user_id, p.display_name)}
+                >
+                  <UserX className="mr-2 h-4 w-4" /> Afvis
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section className="rounded-2xl border bg-card p-5 shadow-card">
+        <h2 className="font-display text-xl font-semibold">Forlad holdet</h2>
+        {myLeaveRequested ? (
+          <>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Din anmodning om at forlade {current.teamName} afventer godkendelse fra en
+              administrator.
+            </p>
+            <Button variant="outline" size="sm" className="mt-3" onClick={handleCancelLeave}>
+              Fortryd anmodning
+            </Button>
+          </>
+        ) : (
+          <>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Send en anmodning om at forlade {current.teamName}. En administrator skal godkende
+              den, før du fjernes fra holdet.
+            </p>
+            <Button variant="destructive" size="sm" className="mt-3" onClick={handleRequestLeave}>
+              <LogOut className="mr-2 h-4 w-4" /> Anmod om at forlade holdet
+            </Button>
+          </>
+        )}
+      </section>
+
       <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
         <DialogContent>
           <div className="space-y-1.5">
