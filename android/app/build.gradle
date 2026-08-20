@@ -36,6 +36,7 @@ android {
         }
     }
     signingConfigs {
+<<<<<<< HEAD
         if (hasReleaseSigning) {
             release {
                 storeFile file(storeFilePath)
@@ -52,6 +53,21 @@ android {
             if (hasReleaseSigning) {
                 signingConfig signingConfigs.release
             }
+=======
+    release {
+        storeFile file(System.getenv("ANDROID_KEYSTORE_PATH"))
+        storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+        keyAlias System.getenv("ANDROID_KEY_ALIAS")
+        keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+    }
+}
+
+buildTypes {
+    release {
+        minifyEnabled false
+        signingConfig signingConfigs.release
+        proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+>>>>>>> c9c78b4 (Configure Android release signing)
         }
     }
 }
