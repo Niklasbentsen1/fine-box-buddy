@@ -96,3 +96,60 @@ workflows:
       app_store_connect:
         auth: integration
         submit_to_testflight: true
+
+  android-capacitor:
+    name: Android Capacitor Build (APK + AAB)
+
+    instance_type: linux_x2
+    max_build_duration: 60
+
+    environment:
+      java: 21
+      node: 20
+      vars:
+        PACKAGE_NAME: app.boedekassen
+      # Tilføj gruppen 'android_signing' i Codemagic med:
+      #   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD,
+      #   ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+      groups:
+        - android_signing
+
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm ci
+
+      - name: Build web
+        script: |
+          npm run build
+
+      - name: Sync Capacitor
+        script: |
+          npx cap sync android
+
+      - name: Set up keystore (springes over hvis den mangler)
+        script: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$CM_BUILD_DIR/finebuddy.keystore"
+            export ANDROID_KEYSTORE_PATH="$CM_BUILD_DIR/finebuddy.keystore"
+            echo "ANDROID_KEYSTORE_PATH=$ANDROID_KEYSTORE_PATH" >> "$CM_ENV"
+          else
+            echo "Ingen keystore konfigureret — release bygges usigneret."
+          fi
+
+      - name: Sæt versionCode fra build-nummer
+        script: |
+          cd android
+          sed -i "s/versionCode 1/versionCode $(($BUILD_NUMBER + 1))/" app/build.gradle
+
+      - name: Build debug APK
+        script: |
+          cd android && ./gradlew assembleDebug
+
+      - name: Build release APK + AAB
+        script: |
+          cd android && ./gradlew assembleRelease bundleRelease
+
+    artifacts:
+      - android/app/build/outputs/**/*.apk
+      - android/app/build/outputs/**/*.aab
