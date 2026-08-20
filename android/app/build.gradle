@@ -1,5 +1,24 @@
 apply plugin: 'com.android.application'
 
+// Release signing læses fra enten android/keystore.properties (lokalt) eller
+// miljøvariabler (CI). Findes ingen af delene, bygges release usigneret, så
+// debug-builds og CI uden nøgle stadig virker.
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+def resolveSigning = { String propKey, String envKey ->
+    return keystoreProperties.getProperty(propKey) ?: System.getenv(envKey)
+}
+
+def storeFilePath = resolveSigning("storeFile", "ANDROID_KEYSTORE_PATH")
+def storePasswordValue = resolveSigning("storePassword", "ANDROID_KEYSTORE_PASSWORD")
+def keyAliasValue = resolveSigning("keyAlias", "ANDROID_KEY_ALIAS")
+def keyPasswordValue = resolveSigning("keyPassword", "ANDROID_KEY_PASSWORD")
+def hasReleaseSigning = storeFilePath != null && file(storeFilePath).exists()
+
 android {
     namespace = "app.boedekassen"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -8,7 +27,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0"
+        versionName "1.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,10 +35,23 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (hasReleaseSigning) {
+            release {
+                storeFile file(storeFilePath)
+                storePassword storePasswordValue
+                keyAlias keyAliasValue
+                keyPassword keyPasswordValue
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }
