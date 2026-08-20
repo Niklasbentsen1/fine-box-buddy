@@ -8,11 +8,12 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
+import { registerAuthDeepLinkListener } from "@/lib/deep-link";
 
 const KEEP_LOGGED_IN_KEY = "boedekassen:keep-logged-in";
 const SESSION_ALIVE_KEY = "boedekassen:session-alive";
