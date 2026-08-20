@@ -128,7 +128,7 @@ function AuthPage() {
   };
 
   return (
-    <div className="grid min-h-dvh bg-background lg:grid-cols-2">
+    <div className="grid min-h-dvh app-backdrop lg:grid-cols-2">
       <div className="relative hidden overflow-hidden bg-primary lg:block">
         <img
           src={authIllustration}

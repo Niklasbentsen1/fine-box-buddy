@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -13,6 +13,7 @@ import {
   Pencil,
   Plus,
   Smartphone,
+  ShieldAlert,
   Trash2,
   Users,
 } from "lucide-react";
@@ -91,6 +92,7 @@ function TeamInviteCode({ teamId, teamName }: { teamId: string; teamName: string
 function IndstillingerPage() {
   const { current, memberships, isAdmin, refreshMemberships, setCurrentTeamId } = useTeam();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { confirm, confirmDialog } = useConfirm();
   const teamId = current?.teamId;
 
@@ -310,6 +312,29 @@ function IndstillingerPage() {
     await refreshMemberships();
   };
 
+  /** Kun klubbens administratorer kan slette hele klubben og alle dens data. */
+  const handleDeleteClub = async () => {
+    if (!selectedClub) return;
+    const ok = await confirm({
+      title: "Er du sikker på, at du vil slette klubben?",
+      description: `Alle data for ${selectedClub.clubName} — hold, medlemskaber, bøder, bødesatser, indbetalinger, kampe og afstemninger — bliver slettet, og handlingen kan ikke fortrydes.`,
+      confirmLabel: "Slet klub",
+    });
+    if (!ok) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("delete_club", { _club_id: selectedClub.clubId });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`Klubben "${selectedClub.clubName}" er slettet`);
+    setSelectedClubId(null);
+    await queryClient.invalidateQueries();
+    await refreshMemberships();
+    navigate({ to: "/hjem" });
+  };
+
   const handleEndSeason = async () => {
     setBusy(true);
     const { error } = await supabase.rpc("end_season", { _team_id: teamId });
@@ -486,6 +511,24 @@ function IndstillingerPage() {
               )}
             </div>
           )}
+        </section>
+      )}
+
+      {selectedClub && isClubAdmin && (
+        <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-destructive/30 bg-card p-4 shadow-card">
+          <div>
+            <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <ShieldAlert className="h-4 w-4 text-destructive" /> Slet klub · {selectedClub.clubName}
+            </p>
+            <p className="mt-1 text-sm font-semibold">Slet klubben permanent</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Alle klubbens hold, medlemskaber, bøder, indbetalinger, kampe og afstemninger slettes.
+              Handlingen kan ikke fortrydes.
+            </p>
+          </div>
+          <Button variant="destructive" size="sm" onClick={handleDeleteClub} disabled={busy}>
+            <Trash2 className="mr-2 h-4 w-4" /> Slet klub
+          </Button>
         </section>
       )}
 

@@ -69,7 +69,7 @@ function ResetPasswordPage() {
   };
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-background px-safe py-safe">
+    <div className="flex min-h-dvh items-center justify-center app-backdrop px-safe py-safe">
       <div className="w-full max-w-md px-4">
         <div className="mb-8 flex items-center gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground">

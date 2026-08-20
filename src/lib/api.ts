@@ -11,7 +11,7 @@ export type MemberRow = {
 export async function fetchTeamMembers(teamId: string): Promise<MemberRow[]> {
   const { data, error } = await supabase
     .from("team_members")
-    .select("user_id, role, profiles(display_name, avatar_url, phone)")
+    .select("user_id, role, profiles(display_name, nickname, avatar_url, phone)")
     .eq("team_id", teamId)
     .eq("status", "active")
     .order("joined_at", { ascending: true });
@@ -19,7 +19,7 @@ export async function fetchTeamMembers(teamId: string): Promise<MemberRow[]> {
   return (data ?? []).map((row) => ({
     userId: row.user_id,
     role: row.role,
-    name: row.profiles?.display_name ?? "Ukendt",
+    name: row.profiles?.nickname?.trim() || row.profiles?.display_name || "Ukendt",
     avatarUrl: row.profiles?.avatar_url ?? null,
     phone: row.profiles?.phone ?? null,
   }));

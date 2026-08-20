@@ -437,6 +437,7 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          nickname: string | null
           phone: string | null
         }
         Insert: {
@@ -444,6 +445,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           id: string
+          nickname?: string | null
           phone?: string | null
         }
         Update: {
@@ -451,6 +453,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          nickname?: string | null
           phone?: string | null
         }
         Relationships: []
@@ -635,6 +638,7 @@ export type Database = {
         Args: { _club_id: string; _name: string }
         Returns: string
       }
+      delete_club: { Args: { _club_id: string }; Returns: undefined }
       delete_own_account: { Args: never; Returns: undefined }
       delete_team: { Args: { _team_id: string }; Returns: undefined }
       dispatch_push_notifications: { Args: never; Returns: undefined }

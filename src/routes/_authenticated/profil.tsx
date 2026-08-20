@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useConfirm } from "@/components/confirm-dialog";
 import { useTeam } from "@/lib/team";
 import { COLOR_THEMES, useColorTheme } from "@/lib/theme";
-import { resizeImage } from "@/lib/image";
+import { ImageCropper } from "@/components/image-cropper";
 
 import { Avatar } from "@/components/avatar";
 import { Button } from "@/components/ui/button";
@@ -46,7 +46,9 @@ function ProfilPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
+  const [nickname, setNickname] = useState("");
   const [phone, setPhone] = useState("");
+  const [cropFile, setCropFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -57,6 +59,7 @@ function ProfilPage() {
   useEffect(() => {
     if (profile) {
       setName(profile.displayName);
+      setNickname(profile.nickname ?? "");
       setPhone(profile.phone ?? "");
     }
   }, [profile]);
@@ -74,7 +77,11 @@ function ProfilPage() {
     setBusy(true);
     const { error } = await supabase
       .from("profiles")
-      .update({ display_name: name.trim(), phone: phone.trim() || null })
+      .update({
+        display_name: name.trim(),
+        nickname: nickname.trim() || null,
+        phone: phone.trim() || null,
+      })
       .eq("id", user.id);
     setBusy(false);
     if (error) {
@@ -86,7 +93,7 @@ function ProfilPage() {
     navigate({ to: "/hjem" });
   };
 
-  const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
@@ -94,18 +101,22 @@ function ProfilPage() {
       toast.error("Vælg en billedfil");
       return;
     }
+    setCropFile(file);
+  };
+
+  const handleCropped = async (dataUrl: string) => {
     setAvatarBusy(true);
     try {
-      const dataUrl = await resizeImage(file);
       const { error } = await supabase
         .from("profiles")
         .update({ avatar_url: dataUrl })
         .eq("id", user.id);
       if (error) throw error;
+      setCropFile(null);
       toast.success("Profilbillede opdateret");
       await refreshProfile();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Kunne ikke uploade billedet");
+      toast.error(err instanceof Error ? err.message : "Kunne ikke gemme billedet");
     } finally {
       setAvatarBusy(false);
     }
@@ -173,7 +184,7 @@ function ProfilPage() {
     navigate({ to: "/auth" });
   };
 
-  const displayName = profile?.displayName || user.email || "Spiller";
+  const displayName = profile?.label || user.email || "Spiller";
 
   return (
     <div className="space-y-6">
@@ -224,6 +235,19 @@ function ProfilPage() {
             onChange={(e) => setName(e.target.value)}
             placeholder="Fx Anders Hansen"
           />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="profile-nickname">Kaldenavn (valgfrit)</Label>
+          <Input
+            id="profile-nickname"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            placeholder="Fx Niko"
+            maxLength={30}
+          />
+          <p className="text-xs text-muted-foreground">
+            Har du et kaldenavn, vises det i stedet for dit navn. Ryd feltet for at fjerne det igen.
+          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="profile-phone">Telefonnummer</Label>
@@ -334,6 +358,13 @@ function ProfilPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ImageCropper
+        file={cropFile}
+        onCancel={() => setCropFile(null)}
+        onCropped={handleCropped}
+        title="Beskær profilbillede"
+      />
 
       {confirmDialog}
     </div>

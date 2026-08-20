@@ -43,7 +43,7 @@ function MembershipGate() {
   // vis en fejl med mulighed for at prøve igen i stedet for onboarding.
   if (hasError) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-background px-safe py-safe">
+      <div className="flex min-h-dvh items-center justify-center app-backdrop px-safe py-safe">
         <div className="w-full max-w-md rounded-2xl border bg-card p-8 text-center shadow-card">
           <h1 className="font-display text-2xl font-semibold">Kunne ikke hente dine hold</h1>
           <p className="mt-2 text-sm text-muted-foreground">

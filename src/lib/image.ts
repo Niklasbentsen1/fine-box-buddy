@@ -57,3 +57,45 @@ export async function resizeImage(file: File): Promise<string> {
   }
   return drawToDataUrl(img, img.naturalWidth || img.width, img.naturalHeight || img.height);
 }
+
+/**
+ * Indlæser en billedfil som et <img>, der er klar til at blive tegnet på et
+ * canvas — bruges af beskæringsværktøjet til profilbilleder.
+ */
+export async function loadImage(file: File): Promise<HTMLImageElement> {
+  const dataUrl = await readAsDataUrl(file);
+  const img = new Image();
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error("Billedformatet understøttes ikke"));
+    img.src = dataUrl;
+  });
+  if (typeof img.decode === "function") {
+    try {
+      await img.decode();
+    } catch {
+      /* nogle browsere kaster her, selvom billedet er klar */
+    }
+  }
+  return img;
+}
+
+/** Beskærer et kvadratisk udsnit af billedet og returnerer et 256px JPEG. */
+export function cropToDataUrl(
+  image: HTMLImageElement,
+  crop: { sx: number; sy: number; size: number },
+): string {
+  const out = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = out;
+  canvas.height = out;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas understøttes ikke");
+  const natW = image.naturalWidth || image.width;
+  const natH = image.naturalHeight || image.height;
+  const size = Math.max(1, Math.min(crop.size, natW, natH));
+  const sx = Math.max(0, Math.min(crop.sx, natW - size));
+  const sy = Math.max(0, Math.min(crop.sy, natH - size));
+  ctx.drawImage(image, sx, sy, size, size, 0, 0, out, out);
+  return canvas.toDataURL("image/jpeg", 0.85);
+}
