@@ -9,6 +9,7 @@ export type Membership = {
   teamName: string;
   clubId: string;
   clubName: string;
+  clubLogoUrl: string | null;
   mobilepayNumber: string | null;
   balanceCarryover: number;
   role: "admin" | "member";
@@ -77,9 +78,16 @@ export function TeamProvider({ user, children }: { user: User; children: ReactNo
       // et gyldigt medlemskab (og dermed sende brugeren tilbage til onboarding).
       const clubIds = Array.from(new Set(rows.map((row) => row.teams!.club_id)));
       const clubNames = new Map<string, string>();
+      const clubLogos = new Map<string, string | null>();
       if (clubIds.length > 0) {
-        const { data: clubs } = await supabase.from("clubs").select("id, name").in("id", clubIds);
-        for (const club of clubs ?? []) clubNames.set(club.id, club.name);
+        const { data: clubs } = await supabase
+          .from("clubs")
+          .select("id, name, logo_url")
+          .in("id", clubIds);
+        for (const club of clubs ?? []) {
+          clubNames.set(club.id, club.name);
+          clubLogos.set(club.id, club.logo_url ?? null);
+        }
       }
 
       return rows.map((row) => ({
@@ -87,6 +95,7 @@ export function TeamProvider({ user, children }: { user: User; children: ReactNo
         teamName: row.teams!.name,
         clubId: row.teams!.club_id,
         clubName: clubNames.get(row.teams!.club_id) ?? "Klub",
+        clubLogoUrl: clubLogos.get(row.teams!.club_id) ?? null,
         mobilepayNumber: row.teams!.mobilepay_number,
         balanceCarryover: Number(row.teams!.balance_carryover ?? 0),
         role: row.role,
@@ -170,6 +179,22 @@ export function useClubInviteCode(clubId: string | null | undefined, enabled = t
     enabled: !!clubId && enabled,
     queryFn: async (): Promise<string | null> => {
       const { data, error } = await supabase.rpc("get_club_invite_code", { _club_id: clubId! });
+      if (error) throw error;
+      return (data as string | null) ?? null;
+    },
+  });
+  return data ?? null;
+}
+
+/**
+ * Holdets egen tilknytningskode må kun læses af holdets administratorer.
+ */
+export function useTeamInviteCode(teamId: string | null | undefined, enabled = true) {
+  const { data } = useQuery({
+    queryKey: ["team-invite-code", teamId],
+    enabled: !!teamId && enabled,
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase.rpc("get_team_invite_code", { _team_id: teamId! });
       if (error) throw error;
       return (data as string | null) ?? null;
     },
