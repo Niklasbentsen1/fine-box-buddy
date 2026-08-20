@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { authEmailRedirectUrl } from "@/lib/app-links";
+import { handleAuthLink, stripAuthParamsFromUrl } from "@/lib/deep-link";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -56,6 +57,29 @@ function AuthPage() {
     const remembered = window.localStorage.getItem(REMEMBERED_EMAIL_KEY);
     if (remembered) setEmail(remembered);
   }, []);
+
+  // Kommer brugeren hertil fra "Bekræft min mail"-knappen i mailen, ligger
+  // tokens i adressen — så logger vi ind og siger tillykke i stedet for at
+  // bede om adgangskoden igen.
+  useEffect(() => {
+    const url = window.location.href;
+    if (!/access_token=|(\?|&|#)code=|error_description=/.test(url)) return;
+    void handleAuthLink(url).then((result) => {
+      stripAuthParamsFromUrl();
+      if (result === "recovery") {
+        navigate({ to: "/reset-password", replace: true });
+        return;
+      }
+      if (result === "confirmed") {
+        toast.success("Din mail er bekræftet — velkommen til!");
+        navigate({ to: "/hjem", replace: true });
+        return;
+      }
+      if (result === "error") {
+        toast.error("Linket er udløbet eller allerede brugt. Log ind for at fortsætte.");
+      }
+    });
+  }, [navigate]);
 
   useEffect(() => {
     const mustSignOut =
