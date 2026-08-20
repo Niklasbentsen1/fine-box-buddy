@@ -4,6 +4,7 @@ import { Check, Coins, Mail, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
+import { authEmailRedirectUrl } from "@/lib/app-links";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -89,7 +90,7 @@ function AuthPage() {
         email: email.trim(),
         password,
         options: {
-          emailRedirectTo: window.location.origin,
+          emailRedirectTo: authEmailRedirectUrl(),
           data: { display_name: displayName.trim() },
         },
       });
@@ -216,7 +217,8 @@ function AuthPage() {
               <h1 className="font-display text-2xl font-semibold">Tjek din indbakke</h1>
               <p className="mt-2 text-sm text-muted-foreground">
                 Vi har sendt en bekræftelsesmail til <strong>{email}</strong>. Klik på linket i
-                mailen for at aktivere din konto, og log derefter ind.
+                mailen — knappen "Bekræft min mail" sender dig direkte tilbage til appen, hvor du kan
+                logge ind.
               </p>
               <Button
                 variant="outline"

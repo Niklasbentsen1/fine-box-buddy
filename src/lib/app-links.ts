@@ -21,3 +21,19 @@ export const APP_DOWNLOAD_LINKS: { label: string; url: string }[] = [
 
 /** Primært downloadlink brugt i invitationsbeskeder. */
 export const APP_DOWNLOAD_URL = APP_STORE_URL;
+
+/** Custom URL scheme, som iOS/Android-appen er registreret med. */
+export const APP_URL_SCHEME = "app.boedekassen";
+
+/**
+ * Hvor bekræftelses-mailen sender brugeren hen. På telefonen åbnes appen via
+ * dens eget URL-scheme, så man ikke ender i en browser; i web-previewet bruges
+ * den nuværende adresse.
+ */
+export function authEmailRedirectUrl(): string {
+  if (typeof window === "undefined") return `${APP_URL_SCHEME}://auth`;
+  const isNative =
+    Boolean((window as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor
+      ?.isNativePlatform?.()) || window.location.protocol === "capacitor:";
+  return isNative ? `${APP_URL_SCHEME}://auth` : `${window.location.origin}/auth`;
+}
