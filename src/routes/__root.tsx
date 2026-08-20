@@ -8,11 +8,12 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
+import { registerAuthDeepLinkListener } from "@/lib/deep-link";
 
 const KEEP_LOGGED_IN_KEY = "boedekassen:keep-logged-in";
 const SESSION_ALIVE_KEY = "boedekassen:session-alive";
@@ -148,6 +149,23 @@ function RootComponent() {
     }
     window.sessionStorage.setItem(SESSION_ALIVE_KEY, "1");
   }, []);
+
+  // Bekræftelses- og nulstillingslinks, der åbner appen via app.boedekassen://
+  useEffect(() => {
+    return registerAuthDeepLinkListener((result) => {
+      if (result === "recovery") {
+        void router.navigate({ to: "/reset-password" });
+        return;
+      }
+      if (result === "confirmed") {
+        toast.success("Din mail er bekræftet — velkommen til!");
+        void router.navigate({ to: "/hjem" });
+        return;
+      }
+      toast.error("Linket er udløbet eller allerede brugt. Prøv at logge ind igen.");
+      void router.navigate({ to: "/auth" });
+    });
+  }, [router]);
 
   useEffect(() => {
     const {
