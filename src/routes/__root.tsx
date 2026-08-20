@@ -149,6 +149,23 @@ function RootComponent() {
     window.sessionStorage.setItem(SESSION_ALIVE_KEY, "1");
   }, []);
 
+  // Bekræftelses- og nulstillingslinks, der åbner appen via app.boedekassen://
+  useEffect(() => {
+    return registerAuthDeepLinkListener((result) => {
+      if (result === "recovery") {
+        void router.navigate({ to: "/reset-password" });
+        return;
+      }
+      if (result === "confirmed") {
+        toast.success("Din mail er bekræftet — velkommen til!");
+        void router.navigate({ to: "/hjem" });
+        return;
+      }
+      toast.error("Linket er udløbet eller allerede brugt. Prøv at logge ind igen.");
+      void router.navigate({ to: "/auth" });
+    });
+  }, [router]);
+
   useEffect(() => {
     const {
       data: { subscription },
