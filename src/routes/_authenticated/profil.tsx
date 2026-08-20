@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useConfirm } from "@/components/confirm-dialog";
 import { useTeam } from "@/lib/team";
 import { COLOR_THEMES, useColorTheme } from "@/lib/theme";
+import { resizeImage } from "@/lib/image";
+
 import { Avatar } from "@/components/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
