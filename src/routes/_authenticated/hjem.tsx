@@ -7,6 +7,7 @@ import {
   HandCoins,
   Check,
   Copy,
+  Download,
   KeyRound,
 
   Link2,
@@ -21,6 +22,7 @@ import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useTeam, useTeamInviteCode } from "@/lib/team";
+import { APP_DOWNLOAD_URL, APP_STORE_URL } from "@/lib/app-links";
 import { fetchTeamMembers } from "@/lib/api";
 import { firstName, formatDate, formatKr, sumAmounts } from "@/lib/format";
 import { StatCard } from "@/components/stat-card";
@@ -71,7 +73,7 @@ function parseAmount(value: string): number {
   return Number(value.replace(",", "."));
 }
 
-const APP_DOWNLOAD_URL = "https://fine-box-buddy.lovable.app";
+// Invitationer linker direkte til App Store — se src/lib/app-links.ts.
 
 async function shareOrCopy(text: string, successMessage: string) {
   if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
@@ -288,16 +290,16 @@ function HjemPage() {
     await refresh();
   };
 
-  const inviteLinkMessage = `Hej! Vi bruger appen Bødekassen til at holde styr på bødekassen i ${current.clubName}.\n\nDownload appen her: ${APP_DOWNLOAD_URL}\n\nNår du har oprettet dig, får du en holdkode af mig, så du kan tilmelde dig holdet.`;
+  const inviteLinkMessage = `Hej! Vi bruger appen Bødekassen til at holde styr på bødekassen i ${current.clubName}.\n\nHent appen i App Store: ${APP_DOWNLOAD_URL}\n\nNår du har oprettet dig, får du en holdkode af mig, så du kan tilmelde dig holdet.`;
 
-  const inviteCodeMessage = `Tilmeld dig holdet "${current.teamName}" i ${current.clubName} i appen Bødekassen med koden ${inviteCode ?? ""}.\n\nSådan gør du:\n1. Download Bødekassen: ${APP_DOWNLOAD_URL}\n2. Opret dig som bruger\n3. Vælg "Tilmeld med kode" og indtast koden ${inviteCode ?? ""}\n4. Afvent godkendelse fra en administrator\n\nGlæder mig til at se dig på holdet!`;
+  const inviteCodeMessage = `Tilmeld dig holdet "${current.teamName}" i ${current.clubName} i appen Bødekassen med koden ${inviteCode ?? ""}.\n\nSådan gør du:\n1. Hent appen i App Store: ${APP_DOWNLOAD_URL}\n2. Opret dig som bruger\n3. Vælg "Tilmeld med kode" og indtast koden ${inviteCode ?? ""}\n4. Afvent godkendelse fra en administrator\n\nGlæder mig til at se dig på holdet!`;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-4xl font-semibold">
-            Hej {firstName(profile?.displayName || "spiller")}
+            Hej {firstName(profile?.label || "spiller")}
           </h1>
           <p className="mt-1 text-muted-foreground">
             {current.clubName} · {current.teamName}
@@ -646,7 +648,14 @@ function HjemPage() {
                   void shareOrCopy(inviteLinkMessage, "Link kopieret — del det med dine spillere")
                 }
               >
-                <Share2 className="mr-2 h-4 w-4" /> Del link
+                <Share2 className="mr-2 h-4 w-4" /> Del hent-link
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => window.open(APP_STORE_URL, "_blank", "noopener")}
+              >
+                <Download className="mr-2 h-4 w-4" /> Hent FineBuddy
               </Button>
             </div>
             <div className="space-y-2.5 rounded-2xl border p-4">

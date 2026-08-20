@@ -16,7 +16,12 @@ export type Membership = {
 };
 
 export type Profile = {
+  /** Brugerens fulde navn. */
   displayName: string;
+  /** Valgfrit kaldenavn. */
+  nickname: string | null;
+  /** Kaldenavn hvis angivet, ellers det fulde navn — brug denne i UI. */
+  label: string;
   avatarUrl: string | null;
   phone: string | null;
 };
@@ -109,11 +114,17 @@ export function TeamProvider({ user, children }: { user: User; children: ReactNo
     queryFn: async (): Promise<Profile | null> => {
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, avatar_url, phone")
+        .select("display_name, nickname, avatar_url, phone")
         .eq("id", user.id)
         .maybeSingle();
       if (!data) return null;
-      return { displayName: data.display_name, avatarUrl: data.avatar_url, phone: data.phone };
+      return {
+        displayName: data.display_name,
+        nickname: data.nickname ?? null,
+        label: data.nickname?.trim() || data.display_name,
+        avatarUrl: data.avatar_url,
+        phone: data.phone,
+      };
     },
   });
 

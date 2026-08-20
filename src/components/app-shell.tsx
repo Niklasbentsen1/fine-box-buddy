@@ -240,10 +240,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     await refreshMemberships();
   };
 
-  const displayName = profile?.displayName || user.email || "Spiller";
+  const displayName = profile?.label || user.email || "Spiller";
 
   return (
-    <div className="min-h-dvh bg-background">
+    <div className="min-h-dvh app-backdrop">
       <header className="sticky top-0 z-40 border-b bg-card/95 pt-safe backdrop-blur">
         <div className="mx-auto flex h-16 max-w-5xl items-center gap-3 px-safe">
           <Link to="/hjem" className="flex shrink-0 items-center gap-2.5">
