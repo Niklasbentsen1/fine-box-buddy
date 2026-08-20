@@ -20,6 +20,7 @@ export type Database = {
           created_by: string
           id: string
           invite_code: string
+          logo_url: string | null
           name: string
         }
         Insert: {
@@ -27,6 +28,7 @@ export type Database = {
           created_by: string
           id?: string
           invite_code: string
+          logo_url?: string | null
           name: string
         }
         Update: {
@@ -34,6 +36,7 @@ export type Database = {
           created_by?: string
           id?: string
           invite_code?: string
+          logo_url?: string | null
           name?: string
         }
         Relationships: []
@@ -542,6 +545,7 @@ export type Database = {
           club_id: string
           created_at: string
           id: string
+          invite_code: string
           mobilepay_number: string | null
           name: string
         }
@@ -550,6 +554,7 @@ export type Database = {
           club_id: string
           created_at?: string
           id?: string
+          invite_code: string
           mobilepay_number?: string | null
           name: string
         }
@@ -558,6 +563,7 @@ export type Database = {
           club_id?: string
           created_at?: string
           id?: string
+          invite_code?: string
           mobilepay_number?: string | null
           name?: string
         }
@@ -633,6 +639,7 @@ export type Database = {
       delete_team: { Args: { _team_id: string }; Returns: undefined }
       dispatch_push_notifications: { Args: never; Returns: undefined }
       end_season: { Args: { _team_id: string }; Returns: undefined }
+      generate_invite_code: { Args: never; Returns: string }
       get_all_clubs: {
         Args: never
         Returns: {
@@ -668,6 +675,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_team_invite_code: { Args: { _team_id: string }; Returns: string }
       get_team_motm_leaderboard: {
         Args: { _team_id: string }
         Returns: {
@@ -695,6 +703,10 @@ export type Database = {
         Returns: undefined
       }
       request_leave_team: { Args: { _team_id: string }; Returns: undefined }
+      set_club_logo: {
+        Args: { _club_id: string; _logo_url: string }
+        Returns: undefined
+      }
       set_team_member_role: {
         Args: {
           _role: Database["public"]["Enums"]["team_role"]

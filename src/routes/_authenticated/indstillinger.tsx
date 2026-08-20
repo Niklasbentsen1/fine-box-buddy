@@ -1,12 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Building2,
   CalendarOff,
+  Camera,
   Check,
   ChevronRight,
   Copy,
+  ImageIcon,
   KeyRound,
   Pencil,
   Plus,
@@ -17,7 +19,8 @@ import {
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
-import { useClubInviteCode, useTeam, type Membership } from "@/lib/team";
+import { useTeam, useTeamInviteCode, type Membership } from "@/lib/team";
+import { resizeImage } from "@/lib/image";
 import { formatKr, sumAmounts } from "@/lib/format";
 import { useConfirm } from "@/components/confirm-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -49,7 +52,41 @@ export const Route = createFileRoute("/_authenticated/indstillinger")({
 type PaymentSum = { amount: number; status: string };
 type WithdrawalSum = { amount: number };
 
-type ClubGroup = { clubId: string; clubName: string; teams: Membership[] };
+type ClubGroup = { clubId: string; clubName: string; logoUrl: string | null; teams: Membership[] };
+
+/** Holdets egen tilknytningskode — kun synlig for holdets administratorer. */
+function TeamInviteCode({ teamId, teamName }: { teamId: string; teamName: string }) {
+  const code = useTeamInviteCode(teamId);
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(
+        `Tilmeld dig holdet ${teamName} med koden ${code}`,
+      );
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Kunne ikke kopiere koden");
+    }
+  };
+
+  return (
+    <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-secondary/60 px-3 py-2">
+      <div>
+        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          Holdets tilknytningskode
+        </p>
+        <p className="font-mono text-base font-bold tracking-[0.25em]">{code ?? "…"}</p>
+      </div>
+      <Button variant="subtle" size="sm" onClick={copy} disabled={!code}>
+        {copied ? <Check className="mr-2 h-4 w-4 text-pitch" /> : <Copy className="mr-2 h-4 w-4" />}
+        {copied ? "Kopieret" : "Kopiér kode"}
+      </Button>
+    </div>
+  );
+}
 
 function IndstillingerPage() {
   const { current, memberships, isAdmin, refreshMemberships, setCurrentTeamId } = useTeam();
@@ -58,7 +95,8 @@ function IndstillingerPage() {
   const teamId = current?.teamId;
 
   const [busy, setBusy] = useState(false);
-  const [codeCopied, setCodeCopied] = useState(false);
+  const [logoBusy, setLogoBusy] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [selectedClubId, setSelectedClubId] = useState<string | null>(current?.clubId ?? null);
   const [createOpen, setCreateOpen] = useState(false);
   const [teamName, setTeamName] = useState("");
@@ -102,7 +140,7 @@ function IndstillingerPage() {
     for (const m of memberships) {
       const entry =
         map.get(m.clubId) ??
-        ({ clubId: m.clubId, clubName: m.clubName, teams: [] } as ClubGroup);
+        ({ clubId: m.clubId, clubName: m.clubName, logoUrl: m.clubLogoUrl, teams: [] } as ClubGroup);
       entry.teams.push(m);
       map.set(m.clubId, entry);
     }
@@ -117,7 +155,6 @@ function IndstillingerPage() {
 
   const selectedClub = clubs.find((c) => c.clubId === selectedClubId) ?? null;
   const isClubAdmin = !!selectedClub?.teams.some((t) => t.role === "admin");
-  const inviteCode = useClubInviteCode(selectedClubId, isClubAdmin);
   const activeTeamInClub =
     selectedClub && current && current.clubId === selectedClub.clubId ? current : null;
 
@@ -127,17 +164,51 @@ function IndstillingerPage() {
   const paidTotal = sumAmounts(payments.filter((p) => p.status === "approved"));
   const cashBalance = carryover + paidTotal - sumAmounts(withdrawals);
 
-  const copyInviteCode = async () => {
-    if (!selectedClub || !inviteCode) return;
-    try {
-      await navigator.clipboard.writeText(
-        `Tilmeld dig min klub med koden ${inviteCode}`,
-      );
-      setCodeCopied(true);
-      setTimeout(() => setCodeCopied(false), 1500);
-    } catch {
-      toast.error("Kunne ikke kopiere koden");
+  const handleClubLogoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !selectedClub) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Vælg en billedfil");
+      return;
     }
+    setLogoBusy(true);
+    try {
+      const dataUrl = await resizeImage(file);
+      const { error } = await supabase.rpc("set_club_logo", {
+        _club_id: selectedClub.clubId,
+        _logo_url: dataUrl,
+      });
+      if (error) throw error;
+      toast.success("Klubbens billede er opdateret");
+      await refreshMemberships();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Kunne ikke uploade billedet");
+    } finally {
+      setLogoBusy(false);
+    }
+  };
+
+  const handleRemoveClubLogo = async () => {
+    if (!selectedClub) return;
+    const ok = await confirm({
+      title: "Fjern klubbens billede?",
+      description: "Klubben vises igen uden billede.",
+      confirmLabel: "Fjern billede",
+    });
+    if (!ok) return;
+    setLogoBusy(true);
+    const { error } = await supabase.rpc("set_club_logo", {
+      _club_id: selectedClub.clubId,
+      _logo_url: null as unknown as string,
+    });
+    setLogoBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Klubbens billede er fjernet");
+    await refreshMemberships();
   };
 
   const handleCreateClub = async () => {
@@ -324,7 +395,8 @@ function IndstillingerPage() {
           </div>
           <ul className="mt-3 divide-y">
             {selectedClub.teams.map((m) => (
-              <li key={m.teamId} className="flex items-center gap-3 py-3">
+              <li key={m.teamId} className="py-3">
+                <div className="flex items-center gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-2 truncate text-sm font-semibold">
                     {m.teamName}
@@ -349,33 +421,71 @@ function IndstillingerPage() {
                     <Trash2 className="mr-2 h-4 w-4" /> Slet
                   </Button>
                 )}
+                </div>
+                {m.role === "admin" && (
+                  <TeamInviteCode teamId={m.teamId} teamName={m.teamName} />
+                )}
               </li>
             ))}
           </ul>
         </section>
       )}
 
-      {selectedClub && isClubAdmin && (
-        <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card p-4 shadow-card">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Klubkode til {selectedClub.clubName}
-            </p>
-            <p className="font-mono text-xl font-bold tracking-[0.25em]">
-              {inviteCode ?? "…"}
-            </p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Del koden med nye spillere — de skal godkendes af en administrator.
-            </p>
-          </div>
-          <Button variant="subtle" size="sm" onClick={copyInviteCode}>
-            {codeCopied ? (
-              <Check className="mr-2 h-4 w-4 text-pitch" />
+      {selectedClub && (
+        <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border bg-card p-4 shadow-card">
+          <div className="flex items-center gap-4">
+            {selectedClub.logoUrl ? (
+              <img
+                src={selectedClub.logoUrl}
+                alt={`Klubbillede for ${selectedClub.clubName}`}
+                className="h-16 w-16 shrink-0 rounded-xl border object-cover"
+              />
             ) : (
-              <Copy className="mr-2 h-4 w-4" />
+              <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border bg-secondary">
+                <ImageIcon className="h-6 w-6 text-muted-foreground" />
+              </span>
             )}
-            {codeCopied ? "Kopieret" : "Kopiér kode"}
-          </Button>
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Klubbillede · {selectedClub.clubName}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {isClubAdmin
+                  ? "Vises for klubbens medlemmer i appen."
+                  : "Kun klubbens administratorer kan ændre billedet."}
+              </p>
+            </div>
+          </div>
+          {isClubAdmin && (
+            <div className="flex flex-wrap gap-2">
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleClubLogoFile}
+              />
+              <Button
+                variant="subtle"
+                size="sm"
+                onClick={() => logoInputRef.current?.click()}
+                disabled={logoBusy}
+              >
+                <Camera className="mr-2 h-4 w-4" />
+                {logoBusy ? "Uploader…" : selectedClub.logoUrl ? "Skift billede" : "Upload billede"}
+              </Button>
+              {selectedClub.logoUrl && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRemoveClubLogo}
+                  disabled={logoBusy}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" /> Fjern
+                </Button>
+              )}
+            </div>
+          )}
         </section>
       )}
 

@@ -92,6 +92,19 @@ function NotificationBell() {
 
   const unreadCount = notifications.filter((n) => !n.read_at).length;
 
+  /** Åbner brugeren oversigten, markeres alle ulæste notifikationer som læst. */
+  const markAllRead = async () => {
+    const unreadIds = notifications.filter((n) => !n.read_at).map((n) => n.id);
+    if (unreadIds.length === 0) return;
+    await supabase
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .in("id", unreadIds);
+    await queryClient.invalidateQueries({
+      queryKey: ["team", teamId, "notifications", user.id],
+    });
+  };
+
   const openNotification = async (notification: NotificationRow) => {
     if (!notification.read_at) {
       await supabase
@@ -118,7 +131,11 @@ function NotificationBell() {
   if (!teamId) return null;
 
   return (
-    <DropdownMenu>
+    <DropdownMenu
+      onOpenChange={(open) => {
+        if (open) void markAllRead();
+      }}
+    >
       <DropdownMenuTrigger asChild>
         <button
           className="relative flex h-10 w-10 items-center justify-center rounded-xl border bg-card transition-colors hover:bg-secondary"
@@ -182,11 +199,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [busy, setBusy] = useState(false);
 
   const clubs = useMemo(() => {
-    const grouped = new Map<string, { clubId: string; clubName: string; teams: Membership[] }>();
+    const grouped = new Map<
+      string,
+      { clubId: string; clubName: string; logoUrl: string | null; teams: Membership[] }
+    >();
     for (const m of memberships) {
       const existing = grouped.get(m.clubId);
       if (existing) existing.teams.push(m);
-      else grouped.set(m.clubId, { clubId: m.clubId, clubName: m.clubName, teams: [m] });
+      else
+        grouped.set(m.clubId, {
+          clubId: m.clubId,
+          clubName: m.clubName,
+          logoUrl: m.clubLogoUrl,
+          teams: [m],
+        });
     }
     return [...grouped.values()];
   }, [memberships]);
@@ -250,9 +276,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 rounded-xl border bg-card px-3 py-1.5 text-left transition-colors hover:bg-secondary">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-pitch text-[11px] font-bold text-pitch-foreground">
-                      {initials(current.teamName)}
-                    </span>
+                    {current.clubLogoUrl ? (
+                      <img
+                        src={current.clubLogoUrl}
+                        alt={`Klubbillede for ${current.clubName}`}
+                        className="h-7 w-7 shrink-0 rounded-md object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-pitch text-[11px] font-bold text-pitch-foreground">
+                        {initials(current.teamName)}
+                      </span>
+                    )}
                     <span className="min-w-0">
                       <span className="block max-w-28 truncate text-sm font-semibold leading-tight sm:max-w-40">
                         {current.teamName}
@@ -272,8 +306,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <div key={club.clubId}>
                       {index > 0 && <DropdownMenuSeparator />}
                       <DropdownMenuLabel className="flex items-center justify-between gap-2">
-                        <span className="truncate text-xs font-semibold uppercase tracking-wide">
-                          {club.clubName}
+                        <span className="flex min-w-0 items-center gap-2">
+                          {club.logoUrl && (
+                            <img
+                              src={club.logoUrl}
+                              alt=""
+                              className="h-5 w-5 shrink-0 rounded object-cover"
+                            />
+                          )}
+                          <span className="truncate text-xs font-semibold uppercase tracking-wide">
+                            {club.clubName}
+                          </span>
                         </span>
                         {club.clubId === current.clubId && (
                           <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-pitch">

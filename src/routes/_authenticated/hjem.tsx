@@ -20,7 +20,7 @@ import {
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
-import { useClubInviteCode, useTeam } from "@/lib/team";
+import { useTeam, useTeamInviteCode } from "@/lib/team";
 import { fetchTeamMembers } from "@/lib/api";
 import { firstName, formatDate, formatKr, sumAmounts } from "@/lib/format";
 import { StatCard } from "@/components/stat-card";
@@ -92,7 +92,7 @@ async function shareOrCopy(text: string, successMessage: string) {
 
 function HjemPage() {
   const { user, current, isAdmin, profile } = useTeam();
-  const inviteCode = useClubInviteCode(current?.clubId, isAdmin);
+  const inviteCode = useTeamInviteCode(current?.teamId, isAdmin);
   const queryClient = useQueryClient();
   const teamId = current?.teamId;
 
@@ -288,9 +288,9 @@ function HjemPage() {
     await refresh();
   };
 
-  const inviteLinkMessage = `Hej! Vi bruger appen Bødekassen til at holde styr på bødekassen i ${current.clubName}.\n\nDownload appen her: ${APP_DOWNLOAD_URL}\n\nNår du har oprettet dig, får du en klubkode af mig, så du kan tilmelde dig klubben.`;
+  const inviteLinkMessage = `Hej! Vi bruger appen Bødekassen til at holde styr på bødekassen i ${current.clubName}.\n\nDownload appen her: ${APP_DOWNLOAD_URL}\n\nNår du har oprettet dig, får du en holdkode af mig, så du kan tilmelde dig holdet.`;
 
-  const inviteCodeMessage = `Tilmeld dig min klub "${current.clubName}" i appen Bødekassen med koden ${inviteCode ?? ""}.\n\nSådan gør du:\n1. Download Bødekassen: ${APP_DOWNLOAD_URL}\n2. Opret dig som bruger\n3. Vælg "Tilmeld med klubkode" og indtast koden ${inviteCode ?? ""}\n4. Afvent godkendelse fra en administrator\n\nGlæder mig til at se dig på holdet!`;
+  const inviteCodeMessage = `Tilmeld dig holdet "${current.teamName}" i ${current.clubName} i appen Bødekassen med koden ${inviteCode ?? ""}.\n\nSådan gør du:\n1. Download Bødekassen: ${APP_DOWNLOAD_URL}\n2. Opret dig som bruger\n3. Vælg "Tilmeld med kode" og indtast koden ${inviteCode ?? ""}\n4. Afvent godkendelse fra en administrator\n\nGlæder mig til at se dig på holdet!`;
 
   return (
     <div className="space-y-6">
@@ -625,9 +625,9 @@ function HjemPage() {
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent>
           <div className="space-y-1.5">
-            <DialogTitle>Inviter til {current.clubName}</DialogTitle>
+            <DialogTitle>Inviter til {current.teamName}</DialogTitle>
             <DialogDescription>
-              Del et downloadlink til appen, eller send en færdig besked med klubkode og
+              Del et downloadlink til appen, eller send en færdig besked med holdets kode og
               vejledning til nye spillere.
             </DialogDescription>
           </div>
