@@ -7,6 +7,7 @@ workflows:
     environment:
       node: latest
       java: 21
+
       android_signing:
         - finebuddy
 
@@ -23,10 +24,10 @@ workflows:
       - name: Set Android SDK location
         script: echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/android/local.properties"
 
-      - name: Build Android APK
+      - name: Build Android App Bundle
         script: |
           cd android
-          ./gradlew assembleRelease
+          ./gradlew bundleRelease
 
     artifacts:
-      - android/app/build/outputs/**/*.apk
+      - android/app/build/outputs/**/*.aab
