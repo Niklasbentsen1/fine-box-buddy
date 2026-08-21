@@ -1,13 +1,23 @@
 apply plugin: 'com.android.application'
 
-// Release signing læses fra Codemagic i CI
-// eller fra android/keystore.properties lokalt.
+// Release signing læses fra enten android/keystore.properties (lokalt) eller
+// miljøvariabler (CI). Findes ingen af delene, bygges release usigneret, så
+// debug-builds og CI uden nøgle stadig virker.
 def keystorePropertiesFile = rootProject.file("keystore.properties")
 def keystoreProperties = new Properties()
-
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
+
+def resolveSigning = { String propKey, String envKey ->
+    return keystoreProperties.getProperty(propKey) ?: System.getenv(envKey)
+}
+
+def storeFilePath = resolveSigning("storeFile", "ANDROID_KEYSTORE_PATH")
+def storePasswordValue = resolveSigning("storePassword", "ANDROID_KEYSTORE_PASSWORD")
+def keyAliasValue = resolveSigning("keyAlias", "ANDROID_KEY_ALIAS")
+def keyPasswordValue = resolveSigning("keyPassword", "ANDROID_KEY_PASSWORD")
+def hasReleaseSigning = storeFilePath != null && file(storeFilePath).exists()
 
 android {
     namespace = "app.boedekassen"
@@ -27,17 +37,12 @@ android {
     }
 
     signingConfigs {
-        release {
-            if (System.getenv()["CI"]) {
-                storeFile file(System.getenv()["CM_KEYSTORE_PATH"])
-                storePassword System.getenv()["CM_KEYSTORE_PASSWORD"]
-                keyAlias System.getenv()["CM_KEY_ALIAS"]
-                keyPassword System.getenv()["CM_KEY_PASSWORD"]
-            } else {
-                keyAlias keystoreProperties['keyAlias']
-                keyPassword keystoreProperties['keyPassword']
-                storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-                storePassword keystoreProperties['storePassword']
+        if (hasReleaseSigning) {
+            release {
+                storeFile file(storeFilePath)
+                storePassword storePasswordValue
+                keyAlias keyAliasValue
+                keyPassword keyPasswordValue
             }
         }
     }
@@ -46,7 +51,10 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
+
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }
@@ -63,9 +71,6 @@ dependencies {
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation project(':capacitor-android')
-    testImplementation "junit:junit:$junitVersion"
-    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
-    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoVersion"
     implementation project(':capacitor-cordova-android-plugins')
 }
 
