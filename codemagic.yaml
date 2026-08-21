@@ -1,86 +1,31 @@
-apply plugin: 'com.android.application'
+workflows:
+  android-release:
+    name: Fine Box Buddy Android
+    max_build_duration: 120
+    instance_type: linux_x2
 
-// Release signing læses fra enten android/keystore.properties (lokalt) eller
-// miljøvariabler (CI). Findes ingen af delene, bygges release usigneret, så
-// debug-builds og CI uden nøgle stadig virker.
-def keystorePropertiesFile = rootProject.file("keystore.properties")
-def keystoreProperties = new Properties()
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-}
+    environment:
+      node: latest
+      java: 21
+      android_signing:
+        - finebuddy
 
-def resolveSigning = { String propKey, String envKey ->
-    return keystoreProperties.getProperty(propKey) ?: System.getenv(envKey)
-}
+    scripts:
+      - name: Install dependencies
+        script: npm install
 
-def storeFilePath = resolveSigning("storeFile", "CM_KEYSTORE_PATH")
-def storePasswordValue = resolveSigning("storePassword", "CM_KEYSTORE_PASSWORD")
-def keyAliasValue = resolveSigning("keyAlias", "CM_KEY_ALIAS")
-def keyPasswordValue = resolveSigning("keyPassword", "CM_KEY_PASSWORD")
-def hasReleaseSigning = storeFilePath != null && file(storeFilePath).exists()
+      - name: Build web app
+        script: npm run build
 
-android {
-    namespace = "app.boedekassen"
-    compileSdk = rootProject.ext.compileSdkVersion
+      - name: Sync Capacitor Android
+        script: npx cap sync android
 
-    defaultConfig {
-        applicationId "app.boedekassen"
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.2"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+      - name: Build Android release
+        script: |
+          cd android
+          chmod +x gradlew
+          ./gradlew bundleRelease
 
-        aaptOptions {
-            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
-        }
-    }
-
-    signingConfigs {
-        if (hasReleaseSigning) {
-            release {
-                storeFile file(storeFilePath)
-                storePassword storePasswordValue
-                keyAlias keyAliasValue
-                keyPassword keyPasswordValue
-            }
-        }
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-
-            if (hasReleaseSigning) {
-                signingConfig signingConfigs.release
-            }
-        }
-    }
-}
-
-repositories {
-    flatDir {
-        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
-    }
-}
-
-dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
-    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
-    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
-    implementation project(':capacitor-android')
-    implementation project(':capacitor-cordova-android-plugins')
-}
-
-apply from: 'capacitor.build.gradle'
-
-try {
-    def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
-        apply plugin: 'com.google.gms.google-services'
-    }
-} catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
-}
+    artifacts:
+      - android/app/build/outputs/**/*.aab
+      - android/app/build/outputs/**/*.apk
