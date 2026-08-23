@@ -89,6 +89,97 @@ function TeamInviteCode({ teamId, teamName }: { teamId: string; teamName: string
   );
 }
 
+type ClubTeamCountRow = {
+  team_id: string;
+  team_name: string;
+  member_count: number;
+};
+
+/** Read-only oversigt over alle hold i brugerens klubber — kun holdnavn og medlemstal. */
+function OtherTeamsOverview() {
+  const { memberships } = useTeam();
+  const clubs = useMemo(() => {
+    const map = new Map<string, { clubId: string; clubName: string; logoUrl: string | null }>();
+    for (const m of memberships) {
+      if (!map.has(m.clubId)) {
+        map.set(m.clubId, { clubId: m.clubId, clubName: m.clubName, logoUrl: m.clubLogoUrl });
+      }
+    }
+    return [...map.values()];
+  }, [memberships]);
+  const clubIds = clubs.map((c) => c.clubId);
+
+  const { data: teamsByClub = {} } = useQuery({
+    queryKey: ["club-team-member-counts", clubIds],
+    enabled: clubIds.length > 0,
+    queryFn: async (): Promise<Record<string, ClubTeamCountRow[]>> => {
+      const entries = await Promise.all(
+        clubIds.map(async (id) => {
+          const { data, error } = await supabase.rpc("get_club_team_member_counts", {
+            _club_id: id,
+          });
+          if (error) throw error;
+          return [id, (data ?? []) as ClubTeamCountRow[]] as const;
+        }),
+      );
+      return Object.fromEntries(entries);
+    },
+  });
+
+  if (clubs.length === 0) return null;
+
+  return (
+    <section className="rounded-2xl border bg-card p-5 shadow-card">
+      <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
+        <Users className="h-5 w-5 text-muted-foreground" /> Andre hold i mine klubber
+      </h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Oversigt over alle hold i dine klubber. Du kan kun se holdnavn og antal medlemmer.
+      </p>
+      <div className="mt-4 space-y-4">
+        {clubs.map((club) => {
+          const teams = teamsByClub[club.clubId] ?? [];
+          return (
+            <div key={club.clubId} className="rounded-xl border p-4">
+              <p className="flex items-center gap-2 text-sm font-semibold">
+                {club.logoUrl ? (
+                  <img
+                    src={club.logoUrl}
+                    alt=""
+                    className="h-5 w-5 shrink-0 rounded object-cover"
+                  />
+                ) : (
+                  <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                )}
+                {club.clubName}
+              </p>
+              <ul className="mt-2 divide-y">
+                {teams.length === 0 ? (
+                  <li className="py-2 text-xs text-muted-foreground">Ingen hold fundet.</li>
+                ) : (
+                  teams.map((team) => {
+                    const isMine = memberships.some((m) => m.teamId === team.team_id);
+                    return (
+                      <li key={team.team_id} className="flex items-center gap-2 py-2">
+                        <span className="min-w-0 flex-1 truncate text-sm">{team.team_name}</span>
+                        {isMine && <Badge variant="pitch">Mit hold</Badge>}
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {team.member_count}{" "}
+                          {team.member_count === 1 ? "medlem" : "medlemmer"}
+                        </span>
+                      </li>
+                    );
+                  })
+                )}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function IndstillingerPage() {
   const { current, memberships, isAdmin, refreshMemberships, setCurrentTeamId } = useTeam();
   const queryClient = useQueryClient();
@@ -417,6 +508,8 @@ function IndstillingerPage() {
           })}
         </ul>
       </section>
+
+      <OtherTeamsOverview />
 
       {selectedClub && (
         <section className="rounded-2xl border bg-card p-5 shadow-card">
