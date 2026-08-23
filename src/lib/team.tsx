@@ -11,6 +11,7 @@ export type Membership = {
   clubName: string;
   clubLogoUrl: string | null;
   mobilepayNumber: string | null;
+  mobilepayBoxCode: string | null;
   balanceCarryover: number;
   role: "admin" | "member";
 };
@@ -51,6 +52,7 @@ type MembershipRow = {
     name: string;
     club_id: string;
     mobilepay_number: string | null;
+    mobilepay_box_code: string | null;
     balance_carryover: number;
   } | null;
 };
@@ -72,7 +74,7 @@ export function TeamProvider({ user, children }: { user: User; children: ReactNo
     queryFn: async (): Promise<Membership[]> => {
       const { data, error } = await supabase
         .from("team_members")
-        .select("team_id, role, teams(id, name, club_id, mobilepay_number, balance_carryover)")
+        .select("team_id, role, teams(id, name, club_id, mobilepay_number, mobilepay_box_code, balance_carryover)")
         .eq("user_id", user.id)
         .eq("status", "active")
         .order("joined_at", { ascending: true });
@@ -102,6 +104,7 @@ export function TeamProvider({ user, children }: { user: User; children: ReactNo
         clubName: clubNames.get(row.teams!.club_id) ?? "Klub",
         clubLogoUrl: clubLogos.get(row.teams!.club_id) ?? null,
         mobilepayNumber: row.teams!.mobilepay_number,
+        mobilepayBoxCode: row.teams!.mobilepay_box_code ?? null,
         balanceCarryover: Number(row.teams!.balance_carryover ?? 0),
         role: row.role,
       }));

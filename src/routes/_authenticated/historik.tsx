@@ -10,6 +10,13 @@ import { useTeam } from "@/lib/team";
 import { formatDateTime, formatKr } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/historik")({
   head: () => ({
@@ -35,6 +42,7 @@ type PaymentRow = {
   amount: number;
   status: "pending" | "approved" | "rejected";
   note: string | null;
+  method: string | null;
   created_at: string;
   user_id: string;
   profiles: { display_name: string } | null;
@@ -60,6 +68,22 @@ type FeedItem = {
   createdBy?: string;
 };
 
+const METHOD_LABEL: Record<string, string> = {
+  mobilepay: "MobilePay",
+  cash: "Kontant",
+  bank: "Bankoverførsel",
+};
+
+/** Ældre indbetalinger har ingen metode gemt — udled den så vidt muligt af noten. */
+function paymentMethodLabel(payment: { method: string | null; note: string | null }): string {
+  if (payment.method) return METHOD_LABEL[payment.method] ?? payment.method;
+  const note = (payment.note ?? "").toLowerCase();
+  if (note.includes("mobilepay")) return "MobilePay";
+  if (note.includes("kontant")) return "Kontant";
+  if (note.includes("bank")) return "Bankoverførsel";
+  return "Ikke angivet";
+}
+
 const STATUS_LABEL: Record<PaymentRow["status"], string> = {
   pending: "Afventer",
   approved: "Godkendt",
@@ -71,6 +95,7 @@ function HistorikPage() {
   const queryClient = useQueryClient();
   const teamId = current?.teamId;
   const [expandedFineId, setExpandedFineId] = useState<string | null>(null);
+  const [detailPayment, setDetailPayment] = useState<PaymentRow | null>(null);
   const { confirm, confirmDialog } = useConfirm();
 
   const { data: fines = [] } = useQuery({
@@ -112,7 +137,7 @@ function HistorikPage() {
     queryFn: async (): Promise<PaymentRow[]> => {
       const { data, error } = await supabase
         .from("payments")
-        .select("id, amount, status, note, created_at, user_id, profiles(display_name)")
+        .select("id, amount, status, note, method, created_at, user_id, profiles(display_name)")
         .eq("team_id", teamId!)
         .order("created_at", { ascending: false })
         .limit(200);
@@ -220,7 +245,9 @@ function HistorikPage() {
             <li
               key={item.id}
               className={`flex items-center gap-3 rounded-2xl border bg-card p-4 shadow-card ${
-                item.kind === "fine" ? "cursor-pointer transition-colors hover:bg-muted/40" : ""
+                item.kind === "fine" || item.kind === "payment"
+                  ? "cursor-pointer transition-colors hover:bg-muted/40"
+                  : ""
               }`}
               onClick={
                 item.kind === "fine"
@@ -228,7 +255,12 @@ function HistorikPage() {
                       setExpandedFineId((prev) =>
                         prev === item.fineId ? null : item.fineId!,
                       )
-                  : undefined
+                  : item.kind === "payment"
+                    ? () =>
+                        setDetailPayment(
+                          payments.find((p) => p.id === item.paymentId) ?? null,
+                        )
+                    : undefined
               }
             >
               <span
@@ -339,6 +371,64 @@ function HistorikPage() {
           ))}
         </ul>
       )}
+
+      <Dialog
+        open={!!detailPayment}
+        onOpenChange={(open) => !open && setDetailPayment(null)}
+      >
+        <DialogContent>
+          <div className="space-y-1.5">
+            <DialogTitle>Betalingsdetaljer</DialogTitle>
+            <DialogDescription>Oplysninger om den registrerede indbetaling.</DialogDescription>
+          </div>
+          {detailPayment && (
+            <dl className="divide-y rounded-xl border bg-background px-4">
+              {[
+                ["Medlem", detailPayment.profiles?.display_name ?? "Ukendt"],
+                ["Beløb", formatKr(Number(detailPayment.amount))],
+                ["Dato", formatDateTime(detailPayment.created_at)],
+                ["Betalingsmetode", paymentMethodLabel(detailPayment)],
+                ["Status", STATUS_LABEL[detailPayment.status]],
+                ...(detailPayment.note ? [["Note", detailPayment.note]] : []),
+              ].map(([label, value]) => (
+                <div key={label} className="flex items-center justify-between gap-3 py-2.5">
+                  <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                    {label}
+                  </dt>
+                  <dd className="text-sm font-semibold">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          <DialogFooter>
+            {isAdmin && detailPayment?.status === "pending" && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    handleReview(detailPayment.id, "rejected");
+                    setDetailPayment(null);
+                  }}
+                >
+                  Afvis
+                </Button>
+                <Button
+                  variant="pitch"
+                  onClick={() => {
+                    handleReview(detailPayment.id, "approved");
+                    setDetailPayment(null);
+                  }}
+                >
+                  Godkend
+                </Button>
+              </>
+            )}
+            <Button variant="outline" onClick={() => setDetailPayment(null)}>
+              Luk
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {confirmDialog}
     </div>

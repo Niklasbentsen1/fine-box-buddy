@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpDown, Plus, Ticket, Trash2 } from "lucide-react";
+import { ArrowUpDown, Plus, Ticket, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useTeam } from "@/lib/team";
+import { fetchTeamMembers } from "@/lib/api";
 import { useConfirm } from "@/components/confirm-dialog";
 import { formatDate, formatKr } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
@@ -50,7 +51,7 @@ type FineRow = {
 type SortOption = "newest" | "price-asc" | "price-desc" | "label-asc" | "label-desc";
 
 function BoederPage() {
-  const { current, isAdmin } = useTeam();
+  const { user, current, isAdmin } = useTeam();
   const queryClient = useQueryClient();
   const teamId = current?.teamId;
 
@@ -59,6 +60,8 @@ function BoederPage() {
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [openType, setOpenType] = useState<FineTypeRow | null>(null);
+  const [assignMember, setAssignMember] = useState("");
   const { confirm, confirmDialog } = useConfirm();
 
   const { data: fineTypes = [] } = useQuery({
@@ -73,6 +76,12 @@ function BoederPage() {
       if (error) throw error;
       return (data ?? []) as FineTypeRow[];
     },
+  });
+
+  const { data: members = [] } = useQuery({
+    queryKey: ["team", teamId, "members"],
+    enabled: !!teamId,
+    queryFn: () => fetchTeamMembers(teamId!),
   });
 
   const { data: fines = [] } = useQuery({
@@ -167,6 +176,32 @@ function BoederPage() {
     await refresh();
   };
 
+  const handleAssign = async () => {
+    if (!openType || !assignMember) {
+      toast.error("Vælg en spiller");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.from("fines").insert({
+      team_id: teamId,
+      user_id: assignMember,
+      fine_type_id: openType.id,
+      label: openType.label,
+      amount: Number(openType.amount),
+      created_by: user.id,
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    const member = members.find((m) => m.userId === assignMember);
+    toast.success(`Bøde tildelt til ${member?.name ?? "spilleren"}`);
+    setOpenType(null);
+    setAssignMember("");
+    await refresh();
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -196,7 +231,11 @@ function BoederPage() {
             {fineTypes.map((type) => (
               <li
                 key={type.id}
-                className="flex items-center justify-between gap-3 rounded-xl border bg-background px-4 py-3"
+                onClick={() => {
+                  setAssignMember("");
+                  setOpenType(type);
+                }}
+                className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border bg-background px-4 py-3 transition-colors hover:bg-muted/40"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{type.label}</p>
@@ -205,7 +244,10 @@ function BoederPage() {
                   <Badge variant="gold">{formatKr(Number(type.amount))}</Badge>
                   {isAdmin && (
                     <button
-                      onClick={() => handleDeleteType(type.id, type.label)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteType(type.id, type.label);
+                      }}
                       className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                       aria-label={`Slet ${type.label}`}
                     >
@@ -303,6 +345,49 @@ function BoederPage() {
             <Button onClick={handleAddType} disabled={busy || !label.trim() || !amount.trim()}>
               Tilføj bødesats
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!openType} onOpenChange={(open) => !open && setOpenType(null)}>
+        <DialogContent>
+          <div className="space-y-1.5">
+            <DialogTitle>{openType?.label}</DialogTitle>
+            <DialogDescription>
+              Bødesats på {openType ? formatKr(Number(openType.amount)) : ""} for{" "}
+              {current.teamName}.
+            </DialogDescription>
+          </div>
+          {isAdmin ? (
+            <div className="space-y-2">
+              <Label>Tildel til spiller</Label>
+              <Select value={assignMember} onValueChange={setAssignMember}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Vælg spiller" />
+                </SelectTrigger>
+                <SelectContent>
+                  {members.map((m) => (
+                    <SelectItem key={m.userId} value={m.userId}>
+                      {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Kun administratorer kan tildele bøder.
+            </p>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenType(null)}>
+              Luk
+            </Button>
+            {isAdmin && (
+              <Button onClick={handleAssign} disabled={busy || !assignMember}>
+                <UserPlus className="mr-2 h-4 w-4" /> Tildel bøde
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

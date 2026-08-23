@@ -104,6 +104,7 @@ function IndstillingerPage() {
   const [teamName, setTeamName] = useState("");
   const [mpOpen, setMpOpen] = useState(false);
   const [mpNumber, setMpNumber] = useState("");
+  const [mpBoxCode, setMpBoxCode] = useState("");
   const [seasonOpen, setSeasonOpen] = useState(false);
   const [clubOpen, setClubOpen] = useState(false);
   const [newClubName, setNewClubName] = useState("");
@@ -297,17 +298,18 @@ function IndstillingerPage() {
       toast.error("Nummeret skal være præcis 8 cifre");
       return;
     }
+    const trimmedBox = mpBoxCode.trim();
     setBusy(true);
     const { error } = await supabase
       .from("teams")
-      .update({ mobilepay_number: trimmed || null })
+      .update({ mobilepay_number: trimmed || null, mobilepay_box_code: trimmedBox || null })
       .eq("id", teamId);
     setBusy(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success(trimmed ? "MobilePay-nummer gemt" : "MobilePay-nummer fjernet");
+    toast.success(trimmed || trimmedBox ? "MobilePay-oplysninger gemt" : "MobilePay-oplysninger fjernet");
     setMpOpen(false);
     await refreshMemberships();
   };
@@ -548,12 +550,21 @@ function IndstillingerPage() {
                   ? "Medlemmer kan overføre deres bøder til dette nummer"
                   : "Medlemmer kan ikke betale via MobilePay, før nummeret er sat op"}
               </p>
+              {current.mobilepayBoxCode && (
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Box-kode:{" "}
+                  <span className="font-mono font-semibold text-foreground">
+                    {current.mobilepayBoxCode}
+                  </span>
+                </p>
+              )}
             </div>
             <Button
               variant="subtle"
               size="sm"
               onClick={() => {
                 setMpNumber(current.mobilepayNumber ?? "");
+                setMpBoxCode(current.mobilepayBoxCode ?? "");
                 setMpOpen(true);
               }}
             >
@@ -686,7 +697,7 @@ function IndstillingerPage() {
       <Dialog open={mpOpen} onOpenChange={setMpOpen}>
         <DialogContent>
           <div className="space-y-1.5">
-            <DialogTitle>MobilePay-nummer</DialogTitle>
+            <DialogTitle>MobilePay-oplysninger</DialogTitle>
             <DialogDescription>
               Det mobilnummer, som medlemmerne overfører deres bøder til via MobilePay. Lad feltet
               stå tomt for at fjerne nummeret.
@@ -702,6 +713,18 @@ function IndstillingerPage() {
               onChange={(e) => setMpNumber(e.target.value.replace(/\D/g, ""))}
               placeholder="Fx 12345678"
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="mp-box-code">MobilePay Box-kode (valgfri)</Label>
+            <Input
+              id="mp-box-code"
+              value={mpBoxCode}
+              onChange={(e) => setMpBoxCode(e.target.value)}
+              placeholder="Fx 1234AB"
+            />
+            <p className="text-xs text-muted-foreground">
+              Vises til medlemmerne sammen med nummeret, når de registrerer en indbetaling.
+            </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setMpOpen(false)}>
