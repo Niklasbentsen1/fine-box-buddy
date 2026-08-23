@@ -3,7 +3,6 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Bell,
-  Building2,
   Check,
   ChevronDown,
   History,
@@ -369,10 +368,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     {user.email}
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate({ to: "/klubber" })}>
-                  <Building2 className="mr-2 h-4 w-4" /> Klubber
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate({ to: "/indstillinger" })}>
                   <Settings className="mr-2 h-4 w-4" /> Indstillinger
                 </DropdownMenuItem>
