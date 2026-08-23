@@ -704,9 +704,13 @@ function HoldPage() {
         <DialogContent>
           {selectedMember && (
             <div className="flex flex-col items-center gap-3 text-center">
-              <Avatar name={selectedMember.name} url={selectedMember.avatarUrl} size="xl" />
+              <Avatar name={selectedMember.fullName} url={selectedMember.avatarUrl} size="xl" />
               <div>
-                <DialogTitle>{selectedMember.name}</DialogTitle>
+                <DialogTitle>{selectedMember.fullName}</DialogTitle>
+                {selectedMember.nickname && (
+                  <p className="text-xs text-muted-foreground">{selectedMember.nickname}</p>
+                )}
+
                 {selectedMember.role === "admin" && (
                   <Badge variant="navy" className="mt-1.5">
                     Admin
