@@ -247,9 +247,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex h-16 max-w-5xl items-center gap-3 px-safe">
           <Link to="/hjem" className="flex shrink-0 items-center gap-2.5">
             <img
-              src="/icons/icon-128.webp"
-              alt="Bødekassen logo"
-              className="h-9 w-9 rounded-xl shadow-sm"
+              src={fineBuddyLogo.url}
+              alt="FineBuddy logo"
+              className="h-10 w-auto object-contain"
             />
             <span className="hidden font-display text-2xl font-semibold tracking-wide min-[26rem]:inline">
               Bødekassen
