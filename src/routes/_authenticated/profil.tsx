@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Camera, Check, Palette, Save, ShieldAlert, Trash2, UserRound } from "lucide-react";
+import { Camera, Check, KeyRound, Palette, Save, ShieldAlert, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -54,6 +54,9 @@ function ProfilPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [repeatPassword, setRepeatPassword] = useState("");
+  const [passwordBusy, setPasswordBusy] = useState(false);
   const { confirm, confirmDialog } = useConfirm();
 
   useEffect(() => {
@@ -138,6 +141,27 @@ function ProfilPage() {
     }
     toast.success("Profilbillede fjernet");
     await refreshProfile();
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 8 || !/[A-Za-zÆØÅæøå]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      toast.error("Adgangskoden skal være mindst 8 tegn og indeholde både bogstaver og tal");
+      return;
+    }
+    if (newPassword !== repeatPassword) {
+      toast.error("De to adgangskoder er ikke ens");
+      return;
+    }
+    setPasswordBusy(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setPasswordBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setNewPassword("");
+    setRepeatPassword("");
+    toast.success("Din adgangskode er ændret");
   };
 
   const handleDeleteAccount = async () => {
@@ -307,7 +331,46 @@ function ProfilPage() {
         </div>
       </section>
 
+      <section className="space-y-4 rounded-2xl border bg-card p-5 shadow-card">
+        <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
+          <KeyRound className="h-5 w-5 text-muted-foreground" /> Ændr adgangskode
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Adgangskoden skal være mindst 8 tegn og indeholde både bogstaver og tal.
+        </p>
+        <div className="space-y-2">
+          <Label htmlFor="new-password">Ny adgangskode</Label>
+          <Input
+            id="new-password"
+            type="password"
+            autoComplete="new-password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="Ny adgangskode"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="repeat-password">Gentag ny adgangskode</Label>
+          <Input
+            id="repeat-password"
+            type="password"
+            autoComplete="new-password"
+            value={repeatPassword}
+            onChange={(e) => setRepeatPassword(e.target.value)}
+            placeholder="Gentag adgangskoden"
+          />
+        </div>
+        <Button
+          onClick={handleChangePassword}
+          disabled={passwordBusy || !newPassword || !repeatPassword}
+        >
+          <KeyRound className="mr-2 h-4 w-4" />
+          {passwordBusy ? "Gemmer…" : "Ændr adgangskode"}
+        </Button>
+      </section>
+
       <section className="space-y-3 rounded-2xl border border-destructive/30 bg-card p-5 shadow-card">
+
         <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
           <ShieldAlert className="h-5 w-5 text-destructive" /> Slet profil
         </h2>

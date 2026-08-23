@@ -7,10 +7,8 @@ import {
   HandCoins,
   Check,
   Copy,
-  Download,
   KeyRound,
 
-  Link2,
   PiggyBank,
   Share2,
   Smartphone,
@@ -22,7 +20,7 @@ import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useTeam, useTeamInviteCode } from "@/lib/team";
-import { APP_DOWNLOAD_URL, APP_STORE_URL } from "@/lib/app-links";
+import { APP_DOWNLOAD_URL } from "@/lib/app-links";
 import { fetchTeamMembers } from "@/lib/api";
 import { firstName, formatDate, formatKr, sumAmounts } from "@/lib/format";
 import { StatCard } from "@/components/stat-card";
@@ -291,7 +289,6 @@ function HjemPage() {
     await refresh();
   };
 
-  const inviteLinkMessage = `Hej! Vi bruger appen Bødekassen til at holde styr på bødekassen i ${current.clubName}.\n\nHent appen i App Store: ${APP_DOWNLOAD_URL}\n\nNår du har oprettet dig, får du en holdkode af mig, så du kan tilmelde dig holdet.`;
 
   const inviteCodeMessage = `Tilmeld dig holdet "${current.teamName}" i ${current.clubName} i appen Bødekassen med koden ${inviteCode ?? ""}.\n\nSådan gør du:\n1. Hent appen i App Store: ${APP_DOWNLOAD_URL}\n2. Opret dig som bruger\n3. Vælg "Tilmeld med kode" og indtast koden ${inviteCode ?? ""}\n4. Afvent godkendelse fra en administrator\n\nGlæder mig til at se dig på holdet!`;
 
@@ -638,35 +635,10 @@ function HjemPage() {
           <div className="space-y-1.5">
             <DialogTitle>Inviter til {current.teamName}</DialogTitle>
             <DialogDescription>
-              Del et downloadlink til appen, eller send en færdig besked med holdets kode og
-              vejledning til nye spillere.
+              Send en færdig besked med holdets kode og vejledning til nye spillere.
             </DialogDescription>
           </div>
           <div className="space-y-4">
-            <div className="space-y-2.5 rounded-2xl border p-4">
-              <p className="flex items-center gap-2 text-sm font-semibold">
-                <Link2 className="h-4 w-4 text-pitch" /> Inviter via link
-              </p>
-              <p className="whitespace-pre-line rounded-xl bg-secondary px-3 py-2.5 text-xs text-muted-foreground">
-                {inviteLinkMessage}
-              </p>
-              <Button
-                variant="pitch"
-                className="w-full"
-                onClick={() =>
-                  void shareOrCopy(inviteLinkMessage, "Link kopieret — del det med dine spillere")
-                }
-              >
-                <Share2 className="mr-2 h-4 w-4" /> Del hent-link
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => window.open(APP_STORE_URL, "_blank", "noopener")}
-              >
-                <Download className="mr-2 h-4 w-4" /> Hent FineBuddy
-              </Button>
-            </div>
             <div className="space-y-2.5 rounded-2xl border p-4">
               <p className="flex items-center gap-2 text-sm font-semibold">
                 <KeyRound className="h-4 w-4 text-gold-foreground" /> Inviter via kode
@@ -685,6 +657,7 @@ function HjemPage() {
           </div>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }

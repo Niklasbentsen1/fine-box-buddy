@@ -3,7 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 export type MemberRow = {
   userId: string;
   role: "admin" | "member";
+  /** Primært visningsnavn (kaldenavn hvis angivet) — bruges i beskeder og lister uden for Hold. */
   name: string;
+  /** Spillerens rigtige navn. */
+  fullName: string;
+  /** Valgfrit kaldenavn. */
+  nickname: string | null;
   avatarUrl: string | null;
   phone: string | null;
 };
@@ -16,14 +21,21 @@ export async function fetchTeamMembers(teamId: string): Promise<MemberRow[]> {
     .eq("status", "active")
     .order("joined_at", { ascending: true });
   if (error) throw error;
-  return (data ?? []).map((row) => ({
-    userId: row.user_id,
-    role: row.role,
-    name: row.profiles?.nickname?.trim() || row.profiles?.display_name || "Ukendt",
-    avatarUrl: row.profiles?.avatar_url ?? null,
-    phone: row.profiles?.phone ?? null,
-  }));
+  return (data ?? []).map((row) => {
+    const fullName = row.profiles?.display_name?.trim() || "Ukendt";
+    const nickname = row.profiles?.nickname?.trim() || null;
+    return {
+      userId: row.user_id,
+      role: row.role,
+      name: nickname || fullName,
+      fullName,
+      nickname,
+      avatarUrl: row.profiles?.avatar_url ?? null,
+      phone: row.profiles?.phone ?? null,
+    };
+  });
 }
+
 
 export type ClubTeamRow = {
   id: string;

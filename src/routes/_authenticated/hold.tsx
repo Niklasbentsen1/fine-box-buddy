@@ -478,16 +478,20 @@ function HoldPage() {
                 setFineTypePick("");
               }}
             >
-              <Avatar name={m.name} url={m.avatarUrl} />
+              <Avatar name={m.fullName} url={m.avatarUrl} />
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-2 truncate text-sm font-semibold">
-                  {m.name}
+                  {m.fullName}
                   {m.role === "admin" && <Badge variant="navy">Admin</Badge>}
                 </p>
+                {m.nickname && (
+                  <p className="truncate text-xs text-muted-foreground">{m.nickname}</p>
+                )}
                 <p className="truncate text-xs text-muted-foreground">
                   Bøder {formatKr(m.fines)} · Indbetalt {formatKr(m.paid)}
                 </p>
               </div>
+
               <div className="w-24 shrink-0 text-right tabular-nums sm:w-28">
                 <Badge
                   variant={m.owed > 0 ? "destructive" : "pitch"}
@@ -700,9 +704,13 @@ function HoldPage() {
         <DialogContent>
           {selectedMember && (
             <div className="flex flex-col items-center gap-3 text-center">
-              <Avatar name={selectedMember.name} url={selectedMember.avatarUrl} size="xl" />
+              <Avatar name={selectedMember.fullName} url={selectedMember.avatarUrl} size="xl" />
               <div>
-                <DialogTitle>{selectedMember.name}</DialogTitle>
+                <DialogTitle>{selectedMember.fullName}</DialogTitle>
+                {selectedMember.nickname && (
+                  <p className="text-xs text-muted-foreground">{selectedMember.nickname}</p>
+                )}
+
                 {selectedMember.role === "admin" && (
                   <Badge variant="navy" className="mt-1.5">
                     Admin
