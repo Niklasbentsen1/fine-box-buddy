@@ -4,7 +4,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 // dist/index.html plus hashed assets, which Capacitor bundles into the native apps.
 const config: CapacitorConfig = {
   appId: "app.boedekassen",
-  appName: "Bødekassen",
+  appName: "FineBuddy",
   webDir: "dist",
   plugins: {
     LocalNotifications: {

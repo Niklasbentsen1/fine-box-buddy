@@ -26,8 +26,8 @@ export function initNotificationPush(userId: string): () => void {
       if (Capacitor.getPlatform() === "android") {
         await LocalNotifications.createChannel({
           id: ANDROID_CHANNEL_ID,
-          name: "Bødekassen",
-          description: "Notifikationer fra dine hold i Bødekassen",
+          name: "FineBuddy",
+          description: "Notifikationer fra dine hold i FineBuddy",
           importance: 4, // IMPORTANCE_HIGH
           visibility: 1,
           vibration: true,
@@ -50,7 +50,7 @@ export function initNotificationPush(userId: string): () => void {
               notifications: [
                 {
                   id: Date.now() % 2_000_000_000,
-                  title: row.title ?? "Bødekassen",
+                  title: row.title ?? "FineBuddy",
                   body: row.body ?? "",
                   channelId: ANDROID_CHANNEL_ID,
                 },
