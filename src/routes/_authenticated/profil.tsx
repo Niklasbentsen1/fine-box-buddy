@@ -307,7 +307,46 @@ function ProfilPage() {
         </div>
       </section>
 
+      <section className="space-y-4 rounded-2xl border bg-card p-5 shadow-card">
+        <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
+          <KeyRound className="h-5 w-5 text-muted-foreground" /> Ændr adgangskode
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Adgangskoden skal være mindst 8 tegn og indeholde både bogstaver og tal.
+        </p>
+        <div className="space-y-2">
+          <Label htmlFor="new-password">Ny adgangskode</Label>
+          <Input
+            id="new-password"
+            type="password"
+            autoComplete="new-password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="Ny adgangskode"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="repeat-password">Gentag ny adgangskode</Label>
+          <Input
+            id="repeat-password"
+            type="password"
+            autoComplete="new-password"
+            value={repeatPassword}
+            onChange={(e) => setRepeatPassword(e.target.value)}
+            placeholder="Gentag adgangskoden"
+          />
+        </div>
+        <Button
+          onClick={handleChangePassword}
+          disabled={passwordBusy || !newPassword || !repeatPassword}
+        >
+          <KeyRound className="mr-2 h-4 w-4" />
+          {passwordBusy ? "Gemmer…" : "Ændr adgangskode"}
+        </Button>
+      </section>
+
       <section className="space-y-3 rounded-2xl border border-destructive/30 bg-card p-5 shadow-card">
+
         <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
           <ShieldAlert className="h-5 w-5 text-destructive" /> Slet profil
         </h2>
