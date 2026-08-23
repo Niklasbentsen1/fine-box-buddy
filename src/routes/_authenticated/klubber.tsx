@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, Users } from "lucide-react";
+import { Building2, Shield, Users } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { fetchClubTeams } from "@/lib/api";
+import { useTeam } from "@/lib/team";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/klubber")({
@@ -21,6 +23,57 @@ type ClubRow = {
   member_count: number;
 };
 
+function MyClubTeams() {
+  const { memberships } = useTeam();
+  const myClubs = Array.from(
+    new Map(memberships.map((m) => [m.clubId, { id: m.clubId, name: m.clubName }])).values(),
+  );
+  const clubIds = myClubs.map((c) => c.id);
+
+  const { data: teamsByClub = {} } = useQuery({
+    queryKey: ["my-club-teams", clubIds],
+    enabled: clubIds.length > 0,
+    queryFn: async (): Promise<Record<string, { id: string; name: string }[]>> => {
+      const entries = await Promise.all(
+        clubIds.map(async (id) => [id, await fetchClubTeams(id)] as const),
+      );
+      return Object.fromEntries(entries);
+    },
+  });
+
+  if (myClubs.length === 0) return null;
+
+  return (
+    <section className="space-y-4 rounded-2xl border bg-card p-5 shadow-card">
+      <div>
+        <h2 className="font-display text-xl font-semibold">Mine klubber</h2>
+        <p className="text-sm text-muted-foreground">
+          Holdene i dine klubber. Du har kun adgang til data på dine egne hold.
+        </p>
+      </div>
+      {myClubs.map((club) => (
+        <div key={club.id} className="rounded-xl border p-4">
+          <p className="flex items-center gap-2 text-sm font-semibold">
+            <Building2 className="h-4 w-4 text-muted-foreground" /> {club.name}
+          </p>
+          <ul className="mt-2 space-y-1.5">
+            {(teamsByClub[club.id] ?? []).map((team) => {
+              const isMine = memberships.some((m) => m.teamId === team.id);
+              return (
+                <li key={team.id} className="flex items-center gap-2 text-sm">
+                  <Shield className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 flex-1 truncate">{team.name}</span>
+                  {isMine && <Badge variant="pitch">Mit hold</Badge>}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </section>
+  );
+}
+
 function KlubberPage() {
   const { data: clubs = [], isLoading } = useQuery({
     queryKey: ["all-clubs"],
@@ -30,6 +83,7 @@ function KlubberPage() {
       return (data ?? []) as ClubRow[];
     },
   });
+
 
   return (
     <div className="space-y-6">
