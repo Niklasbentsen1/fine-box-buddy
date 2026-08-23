@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Camera, Check, Palette, Save, ShieldAlert, Trash2, UserRound } from "lucide-react";
+import { Camera, Check, KeyRound, Palette, Save, ShieldAlert, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -54,6 +54,9 @@ function ProfilPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [repeatPassword, setRepeatPassword] = useState("");
+  const [passwordBusy, setPasswordBusy] = useState(false);
   const { confirm, confirmDialog } = useConfirm();
 
   useEffect(() => {
@@ -138,6 +141,27 @@ function ProfilPage() {
     }
     toast.success("Profilbillede fjernet");
     await refreshProfile();
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 8 || !/[A-Za-zÆØÅæøå]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      toast.error("Adgangskoden skal være mindst 8 tegn og indeholde både bogstaver og tal");
+      return;
+    }
+    if (newPassword !== repeatPassword) {
+      toast.error("De to adgangskoder er ikke ens");
+      return;
+    }
+    setPasswordBusy(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setPasswordBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setNewPassword("");
+    setRepeatPassword("");
+    toast.success("Din adgangskode er ændret");
   };
 
   const handleDeleteAccount = async () => {
