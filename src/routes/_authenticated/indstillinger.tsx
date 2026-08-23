@@ -21,7 +21,7 @@ import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useTeam, useTeamInviteCode, type Membership } from "@/lib/team";
-import { resizeImage } from "@/lib/image";
+import { ImageCropper } from "@/components/image-cropper";
 import { formatKr, sumAmounts } from "@/lib/format";
 import { useConfirm } from "@/components/confirm-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -98,6 +98,8 @@ function IndstillingerPage() {
 
   const [busy, setBusy] = useState(false);
   const [logoBusy, setLogoBusy] = useState(false);
+  const [logoCropFile, setLogoCropFile] = useState<File | null>(null);
+  const [logoCropClubId, setLogoCropClubId] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const [selectedClubId, setSelectedClubId] = useState<string | null>(current?.clubId ?? null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -167,7 +169,7 @@ function IndstillingerPage() {
   const paidTotal = sumAmounts(payments.filter((p) => p.status === "approved"));
   const cashBalance = carryover + paidTotal - sumAmounts(withdrawals);
 
-  const handleClubLogoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleClubLogoFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file || !selectedClub) return;
@@ -175,16 +177,24 @@ function IndstillingerPage() {
       toast.error("Vælg en billedfil");
       return;
     }
+    setLogoCropClubId(selectedClub.clubId);
+    setLogoCropFile(file);
+  };
+
+  const handleClubLogoCropped = async (dataUrl: string) => {
+    const clubId = logoCropClubId;
+    if (!clubId) return;
     setLogoBusy(true);
     try {
-      const dataUrl = await resizeImage(file);
       const { error } = await supabase.rpc("set_club_logo", {
-        _club_id: selectedClub.clubId,
+        _club_id: clubId,
         _logo_url: dataUrl,
       });
       if (error) throw error;
       toast.success("Klubbens billede er opdateret");
       await refreshMemberships();
+      setLogoCropFile(null);
+      setLogoCropClubId(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Kunne ikke uploade billedet");
     } finally {
@@ -757,6 +767,16 @@ function IndstillingerPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ImageCropper
+        file={logoCropFile}
+        onCancel={() => {
+          setLogoCropFile(null);
+          setLogoCropClubId(null);
+        }}
+        onCropped={handleClubLogoCropped}
+        title="Beskær klubbillede"
+      />
 
       {confirmDialog}
     </div>
