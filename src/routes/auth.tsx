@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Check, Coins, Mail, X } from "lucide-react";
+import { Check, Mail, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import authIllustration from "@/assets/auth-illustration.jpg";
+import fineBuddyLogo from "@/assets/finebuddy-logo.jpg.asset.json";
 
 const REMEMBERED_EMAIL_KEY = "boedekassen:remembered-email";
 const KEEP_LOGGED_IN_KEY = "boedekassen:keep-logged-in";
