@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Check, Coins, Mail, X } from "lucide-react";
+import { Check, Mail, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import authIllustration from "@/assets/auth-illustration.jpg";
+import fineBuddyLogo from "@/assets/finebuddy-logo.jpg.asset.json";
 
 const REMEMBERED_EMAIL_KEY = "boedekassen:remembered-email";
 const KEEP_LOGGED_IN_KEY = "boedekassen:keep-logged-in";
@@ -174,9 +175,11 @@ function AuthPage() {
       <div className="flex items-center justify-center px-safe pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))]">
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-              <Coins className="h-6 w-6" />
-            </span>
+            <img
+              src={fineBuddyLogo.url}
+              alt="FineBuddy logo"
+              className="h-14 w-auto object-contain"
+            />
             <div>
               <p className="font-display text-3xl font-semibold leading-none">Bødekassen</p>
               <p className="text-sm text-muted-foreground">Din klubs bødekasse, samlet ét sted</p>
