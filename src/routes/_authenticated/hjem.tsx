@@ -46,7 +46,7 @@ import {
 export const Route = createFileRoute("/_authenticated/hjem")({
   head: () => ({
     meta: [
-      { title: "Hjem — Bødekassen" },
+      { title: "Hjem — FineBuddy" },
       { name: "description", content: "Din saldo, dine bøder og indbetalinger i bødekassen." },
     ],
   }),
@@ -290,7 +290,7 @@ function HjemPage() {
   };
 
 
-  const inviteCodeMessage = `Tilmeld dig holdet "${current.teamName}" i ${current.clubName} i appen Bødekassen med koden ${inviteCode ?? ""}.\n\nSådan gør du:\n1. Hent appen i App Store: ${APP_DOWNLOAD_URL}\n2. Opret dig som bruger\n3. Vælg "Tilmeld med kode" og indtast koden ${inviteCode ?? ""}\n4. Afvent godkendelse fra en administrator\n\nGlæder mig til at se dig på holdet!`;
+  const inviteCodeMessage = `Tilmeld dig holdet "${current.teamName}" i ${current.clubName} i appen FineBuddy med koden ${inviteCode ?? ""}.\n\nSådan gør du:\n1. Hent appen i App Store: ${APP_DOWNLOAD_URL}\n2. Opret dig som bruger\n3. Vælg "Tilmeld med kode" og indtast koden ${inviteCode ?? ""}\n4. Afvent godkendelse fra en administrator\n\nGlæder mig til at se dig på holdet!`;
 
   return (
     <div className="space-y-6">

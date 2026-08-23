@@ -6,8 +6,8 @@
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
-	<key>CFBundleDisplayName</key>
-        <string>Bødekassen</string>
+  <key>CFBundleDisplayName</key>
+        <string>FineBuddy</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -36,11 +36,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Bødekassen bruger kameraet, så du kan tage et profilbillede.</string>
+	<string>FineBuddy bruger kameraet, så du kan tage et profilbillede.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Bødekassen bruger dine billeder, så du kan vælge et profilbillede.</string>
+	<string>FineBuddy bruger dine billeder, så du kan vælge et profilbillede.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Bødekassen kan gemme billeder i dit fotobibliotek.</string>
+	<string>FineBuddy kan gemme billeder i dit fotobibliotek.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

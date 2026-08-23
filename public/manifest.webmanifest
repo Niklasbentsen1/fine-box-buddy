@@ -1,6 +1,6 @@
 {
-  "name": "Bødekassen",
-  "short_name": "Bødekassen",
+  "name": "FineBuddy",
+  "short_name": "FineBuddy",
   "description": "Hold styr på klubbens bødekasse: bøder, indbetalinger, påmindelser og kampens spiller.",
   "start_url": "/",
   "display": "standalone",

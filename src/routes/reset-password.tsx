@@ -11,15 +11,15 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Vælg ny adgangskode — Bødekassen" },
+      { title: "Vælg ny adgangskode — FineBuddy" },
       {
         name: "description",
-        content: "Vælg en ny adgangskode til din Bødekassen-konto.",
+        content: "Vælg en ny adgangskode til din FineBuddy-konto.",
       },
-      { property: "og:title", content: "Vælg ny adgangskode — Bødekassen" },
+      { property: "og:title", content: "Vælg ny adgangskode — FineBuddy" },
       {
         property: "og:description",
-        content: "Vælg en ny adgangskode til din Bødekassen-konto.",
+        content: "Vælg en ny adgangskode til din FineBuddy-konto.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -75,7 +75,7 @@ function ResetPasswordPage() {
           <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
             <Coins className="h-6 w-6" />
           </span>
-          <p className="font-display text-3xl font-semibold leading-none">Bødekassen</p>
+          <p className="font-display text-3xl font-semibold leading-none">FineBuddy</p>
         </div>
         <div className="rounded-2xl border bg-card p-6 shadow-card">
           <h1 className="font-display text-2xl font-semibold">Vælg ny adgangskode</h1>

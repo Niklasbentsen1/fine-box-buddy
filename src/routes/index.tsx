@@ -7,11 +7,11 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Bødekassen — hold styr på klubbens bødekasse" },
+      { title: "FineBuddy — hold styr på klubbens bødekasse" },
       {
         name: "description",
         content:
-          "Bødekassen gør det nemt for sportsklubber at holde styr på bøder, indbetalinger og kampens spiller.",
+          "FineBuddy gør det nemt for sportsklubber at holde styr på bøder, indbetalinger og kampens spiller.",
       },
     ],
   }),

@@ -39,7 +39,7 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/_authenticated/indstillinger")({
   head: () => ({
     meta: [
-      { title: "Indstillinger — Bødekassen" },
+      { title: "Indstillinger — FineBuddy" },
       {
         name: "description",
         content:
