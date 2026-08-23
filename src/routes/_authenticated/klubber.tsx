@@ -94,6 +94,9 @@ function KlubberPage() {
         </p>
       </div>
 
+      <MyClubTeams />
+
+
       <section className="rounded-2xl border bg-card p-5 shadow-card">
         {isLoading ? (
           <p className="py-6 text-center text-sm text-muted-foreground">Henter klubber…</p>
