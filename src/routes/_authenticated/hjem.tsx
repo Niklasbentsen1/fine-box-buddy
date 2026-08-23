@@ -204,6 +204,7 @@ function HjemPage() {
       user_id: user.id,
       amount,
       note: payNote.trim() || (payMethod === "mobilepay" ? "MobilePay" : "Kontant"),
+      method: payMethod,
     });
     setBusy(false);
     if (error) {
@@ -524,6 +525,14 @@ function HjemPage() {
                     <p className="mt-1 text-xs text-muted-foreground">
                       {numberCopied ? "Nummeret er kopieret" : "Tryk for at kopiere nummeret"}
                     </p>
+                    {current.mobilepayBoxCode && (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Box-kode:{" "}
+                        <span className="font-mono text-sm font-bold tracking-widest text-foreground">
+                          {current.mobilepayBoxCode}
+                        </span>
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <div className="rounded-2xl border bg-secondary p-4 text-center">
