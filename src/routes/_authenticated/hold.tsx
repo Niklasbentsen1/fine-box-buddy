@@ -54,7 +54,7 @@ import {
 export const Route = createFileRoute("/_authenticated/hold")({
   head: () => ({
     meta: [
-      { title: "Hold — Bødekassen" },
+      { title: "Hold — FineBuddy" },
       { name: "description", content: "Holdets medlemmer, bødekassens saldo og skyldige beløb." },
     ],
   }),

@@ -253,7 +253,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               className="h-10 w-auto object-contain"
             />
             <span className="hidden font-display text-2xl font-semibold tracking-wide min-[26rem]:inline">
-              Bødekassen
+              FineBuddy
             </span>
           </Link>
 

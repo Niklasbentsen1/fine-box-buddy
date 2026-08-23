@@ -10,8 +10,8 @@ import { Badge } from "@/components/ui/badge";
 export const Route = createFileRoute("/_authenticated/klubber")({
   head: () => ({
     meta: [
-      { title: "Klubber — Bødekassen" },
-      { name: "description", content: "Oversigt over alle aktive klubber i Bødekassen." },
+      { title: "Klubber — FineBuddy" },
+      { name: "description", content: "Oversigt over alle aktive klubber i FineBuddy." },
     ],
   }),
   component: KlubberPage,
@@ -90,7 +90,7 @@ function KlubberPage() {
       <div>
         <h1 className="font-display text-4xl font-semibold">Klubber</h1>
         <p className="mt-1 text-muted-foreground">
-          Alle klubber, der bruger Bødekassen
+          Alle klubber, der bruger FineBuddy
         </p>
       </div>
 

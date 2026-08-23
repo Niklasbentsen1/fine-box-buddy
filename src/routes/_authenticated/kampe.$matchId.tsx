@@ -31,7 +31,7 @@ import {
 export const Route = createFileRoute("/_authenticated/kampe/$matchId")({
   head: () => ({
     meta: [
-      { title: "Kamp — Bødekassen" },
+      { title: "Kamp — FineBuddy" },
       { name: "description", content: "Stem på kampens spiller og se afstemningens resultat." },
     ],
   }),

@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
     meta: [
-      { title: "Kom i gang — Bødekassen" },
+      { title: "Kom i gang — FineBuddy" },
       { name: "description", content: "Opret en klub eller tilmeld dig med en klubkode." },
     ],
   }),
@@ -72,7 +72,7 @@ function OnboardingPage() {
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <Coins className="h-5 w-5" />
             </span>
-            <span className="font-display text-2xl font-semibold">Bødekassen</span>
+            <span className="font-display text-2xl font-semibold">FineBuddy</span>
           </div>
           <Button variant="ghost" size="sm" onClick={handleSignOut}>
             <LogOut className="mr-2 h-4 w-4" /> Log ud

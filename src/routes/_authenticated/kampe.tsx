@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/_authenticated/kampe")({
   head: () => ({
     meta: [
-      { title: "Kampe — Bødekassen" },
+      { title: "Kampe — FineBuddy" },
       { name: "description", content: "Opret kampe og stem på kampens spiller." },
     ],
   }),

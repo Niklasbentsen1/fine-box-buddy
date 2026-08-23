@@ -25,7 +25,7 @@ import {
 export const Route = createFileRoute("/_authenticated/profil")({
   head: () => ({
     meta: [
-      { title: "Min profil — Bødekassen" },
+      { title: "Min profil — FineBuddy" },
       {
         name: "description",
         content: "Rediger dit navn, profilbillede og kontaktoplysninger.",

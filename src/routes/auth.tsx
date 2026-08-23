@@ -20,10 +20,10 @@ const SESSION_ALIVE_KEY = "boedekassen:session-alive";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Log ind — Bødekassen" },
+      { title: "Log ind — FineBuddy" },
       {
         name: "description",
-        content: "Log ind eller opret dig i Bødekassen og få styr på klubbens bødekasse.",
+        content: "Log ind eller opret dig i FineBuddy og få styr på klubbens bødekasse.",
       },
     ],
   }),
@@ -158,7 +158,7 @@ function AuthPage() {
       <div className="relative hidden overflow-hidden bg-primary lg:block">
         <img
           src={authIllustration}
-          alt="Sparegris med mønter — Bødekassen"
+          alt="Sparegris med mønter — FineBuddy"
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/30 to-transparent" />
@@ -181,7 +181,7 @@ function AuthPage() {
               className="h-14 w-auto object-contain"
             />
             <div>
-              <p className="font-display text-3xl font-semibold leading-none">Bødekassen</p>
+              <p className="font-display text-3xl font-semibold leading-none">FineBuddy</p>
               <p className="text-sm text-muted-foreground">Din klubs bødekasse, samlet ét sted</p>
             </div>
           </div>

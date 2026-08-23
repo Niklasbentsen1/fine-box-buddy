@@ -31,7 +31,7 @@ import {
 export const Route = createFileRoute("/_authenticated/boeder")({
   head: () => ({
     meta: [
-      { title: "Bøder — Bødekassen" },
+      { title: "Bøder — FineBuddy" },
       { name: "description", content: "Bødesatser og uddelte bøder på holdet." },
     ],
   }),

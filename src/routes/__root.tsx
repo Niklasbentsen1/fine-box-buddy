@@ -83,13 +83,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: "Bødekassen — hold styr på klubbens bødekasse" },
+      { title: "FineBuddy — hold styr på klubbens bødekasse" },
       {
         name: "description",
         content:
-          "Bødekassen gør det nemt for sportsklubber at holde styr på bøder, indbetalinger, holdets medlemmer og afstemningen om kampens spiller.",
+          "FineBuddy gør det nemt for sportsklubber at holde styr på bøder, indbetalinger, holdets medlemmer og afstemningen om kampens spiller.",
       },
-      { property: "og:title", content: "Bødekassen" },
+      { property: "og:title", content: "FineBuddy" },
       {
         property: "og:description",
         content:
@@ -99,7 +99,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "theme-color", content: "#12324F" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-title", content: "Bødekassen" },
+      { name: "apple-mobile-web-app-title", content: "FineBuddy" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

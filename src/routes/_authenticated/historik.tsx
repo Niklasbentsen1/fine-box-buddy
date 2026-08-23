@@ -21,7 +21,7 @@ import {
 export const Route = createFileRoute("/_authenticated/historik")({
   head: () => ({
     meta: [
-      { title: "Historik — Bødekassen" },
+      { title: "Historik — FineBuddy" },
       { name: "description", content: "Historik over alle bøder, indbetalinger og udbetalinger." },
     ],
   }),
