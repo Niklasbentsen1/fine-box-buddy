@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 
-import fineBuddyLogo from "@/assets/finebuddy-logo.jpg.asset.json";
+import fineBuddyLogo from "@/assets/finebuddy-logo.png.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
