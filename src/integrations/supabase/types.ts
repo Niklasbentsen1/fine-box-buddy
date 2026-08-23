@@ -385,6 +385,7 @@ export type Database = {
           amount: number
           created_at: string
           id: string
+          method: string | null
           note: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -396,6 +397,7 @@ export type Database = {
           amount: number
           created_at?: string
           id?: string
+          method?: string | null
           note?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -407,6 +409,7 @@ export type Database = {
           amount?: number
           created_at?: string
           id?: string
+          method?: string | null
           note?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -549,6 +552,7 @@ export type Database = {
           created_at: string
           id: string
           invite_code: string
+          mobilepay_box_code: string | null
           mobilepay_number: string | null
           name: string
         }
@@ -558,6 +562,7 @@ export type Database = {
           created_at?: string
           id?: string
           invite_code: string
+          mobilepay_box_code?: string | null
           mobilepay_number?: string | null
           name: string
         }
@@ -567,6 +572,7 @@ export type Database = {
           created_at?: string
           id?: string
           invite_code?: string
+          mobilepay_box_code?: string | null
           mobilepay_number?: string | null
           name?: string
         }
