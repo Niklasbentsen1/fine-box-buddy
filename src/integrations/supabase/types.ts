@@ -659,6 +659,14 @@ export type Database = {
         }[]
       }
       get_club_invite_code: { Args: { _club_id: string }; Returns: string }
+      get_club_team_member_counts: {
+        Args: { _club_id: string }
+        Returns: {
+          member_count: number
+          team_id: string
+          team_name: string
+        }[]
+      }
       get_leaving_members: {
         Args: { _team_id: string }
         Returns: {
