@@ -174,9 +174,11 @@ function AuthPage() {
       <div className="flex items-center justify-center px-safe pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))]">
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-              <Coins className="h-6 w-6" />
-            </span>
+            <img
+              src={fineBuddyLogo.url}
+              alt="FineBuddy logo"
+              className="h-14 w-auto object-contain"
+            />
             <div>
               <p className="font-display text-3xl font-semibold leading-none">Bødekassen</p>
               <p className="text-sm text-muted-foreground">Din klubs bødekasse, samlet ét sted</p>
