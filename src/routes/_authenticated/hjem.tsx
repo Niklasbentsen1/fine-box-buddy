@@ -638,35 +638,10 @@ function HjemPage() {
           <div className="space-y-1.5">
             <DialogTitle>Inviter til {current.teamName}</DialogTitle>
             <DialogDescription>
-              Del et downloadlink til appen, eller send en færdig besked med holdets kode og
-              vejledning til nye spillere.
+              Send en færdig besked med holdets kode og vejledning til nye spillere.
             </DialogDescription>
           </div>
           <div className="space-y-4">
-            <div className="space-y-2.5 rounded-2xl border p-4">
-              <p className="flex items-center gap-2 text-sm font-semibold">
-                <Link2 className="h-4 w-4 text-pitch" /> Inviter via link
-              </p>
-              <p className="whitespace-pre-line rounded-xl bg-secondary px-3 py-2.5 text-xs text-muted-foreground">
-                {inviteLinkMessage}
-              </p>
-              <Button
-                variant="pitch"
-                className="w-full"
-                onClick={() =>
-                  void shareOrCopy(inviteLinkMessage, "Link kopieret — del det med dine spillere")
-                }
-              >
-                <Share2 className="mr-2 h-4 w-4" /> Del hent-link
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => window.open(APP_STORE_URL, "_blank", "noopener")}
-              >
-                <Download className="mr-2 h-4 w-4" /> Hent FineBuddy
-              </Button>
-            </div>
             <div className="space-y-2.5 rounded-2xl border p-4">
               <p className="flex items-center gap-2 text-sm font-semibold">
                 <KeyRound className="h-4 w-4 text-gold-foreground" /> Inviter via kode
@@ -685,6 +660,7 @@ function HjemPage() {
           </div>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }
