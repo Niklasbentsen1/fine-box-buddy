@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTeam, type Membership } from "@/lib/team";
 import { initNotificationPush } from "@/lib/push";
 import { formatDateTime, initials } from "@/lib/format";
+import fineBuddyLogo from "@/assets/finebuddy-logo.jpg.asset.json";
 import { Avatar } from "@/components/avatar";
 import { Button } from "@/components/ui/button";
 import {
