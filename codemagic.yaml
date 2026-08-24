@@ -67,8 +67,10 @@ workflows:
         script: |
           LATEST=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo "")
           if [ -z "$LATEST" ]; then LATEST=0; fi
+          NEWVER=$(($LATEST + 1))
+          if [ "$NEWVER" -lt 17 ]; then NEWVER=17; fi
           cd ios/App
-          agvtool new-version -all $(($LATEST + 1))
+          agvtool new-version -all "$NEWVER"
 
       - name: Build .ipa
         script: |
