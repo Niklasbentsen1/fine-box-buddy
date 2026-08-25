@@ -757,9 +757,13 @@ function HoldPage() {
                 </div>
                 <div className="rounded-xl border p-2.5">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                    Skylder
+                    {selectedMember.credit > 0 ? "Til gode" : "Skylder"}
                   </p>
-                  <p className="mt-0.5 text-sm font-bold">{formatKr(selectedMember.owed)}</p>
+                  <p className="mt-0.5 text-sm font-bold">
+                    {selectedMember.credit > 0
+                      ? `+${formatKr(selectedMember.credit)}`
+                      : formatKr(selectedMember.owed)}
+                  </p>
                 </div>
               </div>
               {isAdmin && (
