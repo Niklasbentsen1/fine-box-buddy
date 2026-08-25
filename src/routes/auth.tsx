@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import authIllustration from "@/assets/auth-illustration.jpg";
-import fineBuddyLogo from "@/assets/finebuddy-logo.png.asset.json";
+import fineBuddyLogo from "@/assets/finebuddy-logo.png";
 
 const REMEMBERED_EMAIL_KEY = "boedekassen:remembered-email";
 const KEEP_LOGGED_IN_KEY = "boedekassen:keep-logged-in";
@@ -176,7 +176,7 @@ function AuthPage() {
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center gap-3">
             <img
-              src={fineBuddyLogo.url}
+              src={fineBuddyLogo}
               alt="FineBuddy logo"
               className="h-14 w-auto object-contain"
             />
