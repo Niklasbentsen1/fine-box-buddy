@@ -196,7 +196,15 @@ function HoldPage() {
   const perMember = members.map((m) => {
     const memberFines = sumAmounts(fines.filter((f) => f.user_id === m.userId));
     const memberPaid = sumAmounts(approvedPayments.filter((p) => p.user_id === m.userId));
-    return { ...m, fines: memberFines, paid: memberPaid, owed: Math.max(0, memberFines - memberPaid) };
+    const net = memberFines - memberPaid;
+    return {
+      ...m,
+      fines: memberFines,
+      paid: memberPaid,
+      owed: Math.max(0, net),
+      // Overskydende indbetaling = positiv saldo, modregnes automatisk i nye bøder
+      credit: Math.max(0, -net),
+    };
   });
 
   const sortedMembers = [...perMember].sort((a, b) => {
