@@ -20,7 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTeam, type Membership } from "@/lib/team";
 import { initNotificationPush } from "@/lib/push";
 import { formatDateTime, initials } from "@/lib/format";
-import fineBuddyLogo from "@/assets/finebuddy-logo.png.asset.json";
+import fineBuddyLogo from "@/assets/finebuddy-logo.png";
 import { Avatar } from "@/components/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -248,7 +248,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex h-16 max-w-5xl items-center gap-3 px-safe">
           <Link to="/hjem" className="flex shrink-0 items-center gap-2.5">
             <img
-              src={fineBuddyLogo.url}
+              src={fineBuddyLogo}
               alt="FineBuddy logo"
               className="h-10 w-auto object-contain"
             />

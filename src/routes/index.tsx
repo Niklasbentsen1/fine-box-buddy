@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 
-import fineBuddyLogo from "@/assets/finebuddy-logo.png.asset.json";
+import fineBuddyLogo from "@/assets/finebuddy-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
@@ -34,7 +34,7 @@ function Index() {
 
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-background px-safe py-safe">
-      <img src={fineBuddyLogo.url} alt="FineBuddy logo" className="h-28 w-auto object-contain" />
+      <img src={fineBuddyLogo} alt="FineBuddy logo" className="h-28 w-auto object-contain" />
       <div className="h-6 w-6 animate-spin rounded-full border-2 border-pitch border-t-transparent" />
     </div>
   );
