@@ -81,7 +81,7 @@ function HoldPage() {
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawNote, setWithdrawNote] = useState("");
   const [selectedMember, setSelectedMember] = useState<
-    (MemberRow & { fines: number; paid: number; owed: number }) | null
+    (MemberRow & { fines: number; paid: number; owed: number; credit: number }) | null
   >(null);
   const [busy, setBusy] = useState(false);
   const [memberSort, setMemberSort] = useState<"name" | "owed-desc" | "owed-asc">("name");
@@ -196,7 +196,15 @@ function HoldPage() {
   const perMember = members.map((m) => {
     const memberFines = sumAmounts(fines.filter((f) => f.user_id === m.userId));
     const memberPaid = sumAmounts(approvedPayments.filter((p) => p.user_id === m.userId));
-    return { ...m, fines: memberFines, paid: memberPaid, owed: Math.max(0, memberFines - memberPaid) };
+    const net = memberFines - memberPaid;
+    return {
+      ...m,
+      fines: memberFines,
+      paid: memberPaid,
+      owed: Math.max(0, net),
+      // Overskydende indbetaling = positiv saldo, modregnes automatisk i nye bøder
+      credit: Math.max(0, -net),
+    };
   });
 
   const sortedMembers = [...perMember].sort((a, b) => {
@@ -497,8 +505,11 @@ function HoldPage() {
                   variant={m.owed > 0 ? "destructive" : "pitch"}
                   className="justify-center tabular-nums"
                 >
-                  {formatKr(m.owed)}
+                  {m.credit > 0 ? `+${formatKr(m.credit)}` : formatKr(m.owed)}
                 </Badge>
+                {m.credit > 0 && (
+                  <p className="mt-0.5 text-[11px] font-medium text-muted-foreground">Til gode</p>
+                )}
               </div>
               {isAdmin && m.userId !== user.id && (
                 <DropdownMenu>
@@ -746,9 +757,13 @@ function HoldPage() {
                 </div>
                 <div className="rounded-xl border p-2.5">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                    Skylder
+                    {selectedMember.credit > 0 ? "Til gode" : "Skylder"}
                   </p>
-                  <p className="mt-0.5 text-sm font-bold">{formatKr(selectedMember.owed)}</p>
+                  <p className="mt-0.5 text-sm font-bold">
+                    {selectedMember.credit > 0
+                      ? `+${formatKr(selectedMember.credit)}`
+                      : formatKr(selectedMember.owed)}
+                  </p>
                 </div>
               </div>
               {isAdmin && (
