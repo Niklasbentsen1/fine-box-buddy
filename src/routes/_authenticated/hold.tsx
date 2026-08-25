@@ -81,7 +81,7 @@ function HoldPage() {
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawNote, setWithdrawNote] = useState("");
   const [selectedMember, setSelectedMember] = useState<
-    (MemberRow & { fines: number; paid: number; owed: number }) | null
+    (MemberRow & { fines: number; paid: number; owed: number; credit: number }) | null
   >(null);
   const [busy, setBusy] = useState(false);
   const [memberSort, setMemberSort] = useState<"name" | "owed-desc" | "owed-asc">("name");
