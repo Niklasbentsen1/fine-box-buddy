@@ -591,7 +591,14 @@ function HjemPage() {
             </div>
             <div className="space-y-2">
               <Label>Bøde</Label>
-              <Select value={fineTypeId} onValueChange={setFineTypeId}>
+              <Select
+                value={fineTypeId}
+                onValueChange={(v) => {
+                  setFineTypeId(v);
+                  const preset = fineTypes.find((t) => t.id === v);
+                  setFineAmount(preset ? String(Number(preset.amount)) : "");
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Vælg bøde" />
                 </SelectTrigger>
@@ -606,28 +613,38 @@ function HjemPage() {
               </Select>
             </div>
             {fineTypeId === "custom" && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="fine-label">Beskrivelse</Label>
-                  <Input
-                    id="fine-label"
-                    value={fineLabel}
-                    onChange={(e) => setFineLabel(e.target.value)}
-                    placeholder="Fx Glemt støvler"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="fine-amount">Beløb (kr.)</Label>
-                  <Input
-                    id="fine-amount"
-                    inputMode="decimal"
-                    value={fineAmount}
-                    onChange={(e) => setFineAmount(e.target.value)}
-                    placeholder="Fx 20"
-                  />
-                </div>
-              </>
+              <div className="space-y-2">
+                <Label htmlFor="fine-label">Beskrivelse</Label>
+                <Input
+                  id="fine-label"
+                  value={fineLabel}
+                  onChange={(e) => setFineLabel(e.target.value)}
+                  placeholder="Fx Glemt støvler"
+                />
+              </div>
             )}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="fine-amount">Beløb (kr.)</Label>
+                <Input
+                  id="fine-amount"
+                  inputMode="decimal"
+                  value={fineAmount}
+                  onChange={(e) => setFineAmount(e.target.value)}
+                  placeholder="Fx 20"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="fine-count">Antal</Label>
+                <Input
+                  id="fine-count"
+                  inputMode="numeric"
+                  value={fineCount}
+                  onChange={(e) => setFineCount(e.target.value.replace(/[^0-9]/g, ""))}
+                />
+              </div>
+            </div>
+
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFineOpen(false)}>
