@@ -379,22 +379,52 @@ function BoederPage() {
             </DialogDescription>
           </div>
           {isAdmin ? (
-            <div className="space-y-2">
-              <Label>Tildel til spiller</Label>
-              <Select value={assignMember} onValueChange={setAssignMember}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Vælg spiller" />
-                </SelectTrigger>
-                <SelectContent>
-                  {members.map((m) => (
-                    <SelectItem key={m.userId} value={m.userId}>
-                      {m.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Tildel til spiller</Label>
+                <Select value={assignMember} onValueChange={setAssignMember}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Vælg spiller" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {members.map((m) => (
+                      <SelectItem key={m.userId} value={m.userId}>
+                        {m.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="assign-amount">Beløb (kr.)</Label>
+                  <Input
+                    id="assign-amount"
+                    inputMode="decimal"
+                    value={assignAmount}
+                    onChange={(e) => setAssignAmount(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="assign-count">Antal</Label>
+                  <Input
+                    id="assign-count"
+                    inputMode="numeric"
+                    value={assignCount}
+                    onChange={(e) => setAssignCount(e.target.value.replace(/[^0-9]/g, ""))}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                I alt:{" "}
+                {formatKr(
+                  Math.max(0, Number(assignAmount.replace(",", ".")) || 0) *
+                    Math.max(0, Number(assignCount) || 0),
+                )}
+              </p>
             </div>
           ) : (
+
             <p className="text-sm text-muted-foreground">
               Kun administratorer kan tildele bøder.
             </p>
