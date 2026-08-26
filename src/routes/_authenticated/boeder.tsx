@@ -235,6 +235,8 @@ function BoederPage() {
                 key={type.id}
                 onClick={() => {
                   setAssignMember("");
+                  setAssignAmount(String(Number(type.amount)));
+                  setAssignCount("1");
                   setOpenType(type);
                 }}
                 className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border bg-background px-4 py-3 transition-colors hover:bg-muted/40"
