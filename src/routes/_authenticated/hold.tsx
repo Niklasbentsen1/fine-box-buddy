@@ -240,25 +240,43 @@ function HoldPage() {
       toast.error("Vælg en bøde");
       return;
     }
+    const value = Number(fineAmountEdit.replace(",", "."));
+    if (!Number.isFinite(value) || value <= 0) {
+      toast.error("Beløbet skal være større end 0 kr.");
+      return;
+    }
+    const count = Number(fineCount);
+    if (!Number.isInteger(count) || count < 1 || count > 50) {
+      toast.error("Antal skal være et helt tal mellem 1 og 50");
+      return;
+    }
     setGivingFine(true);
-    const { error } = await supabase.from("fines").insert({
+    const rows = Array.from({ length: count }, () => ({
       team_id: teamId,
       user_id: selectedMember.userId,
       fine_type_id: preset.id,
       label: preset.label,
-      amount: Number(preset.amount),
+      amount: value,
       created_by: user.id,
-    });
+    }));
+    const { error } = await supabase.from("fines").insert(rows);
     setGivingFine(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success(`Bøde givet til ${firstName(selectedMember.name)}`);
+    toast.success(
+      count > 1
+        ? `${count} bøder á ${formatKr(value)} givet til ${firstName(selectedMember.name)}`
+        : `Bøde givet til ${firstName(selectedMember.name)}`,
+    );
     setFineTypePick("");
+    setFineAmountEdit("");
+    setFineCount("1");
     setSelectedMember(null);
     await refresh();
   };
+
 
   const handleRemove = async (userId: string, name: string) => {
     const ok = await confirm({
