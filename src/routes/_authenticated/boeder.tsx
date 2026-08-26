@@ -183,26 +183,42 @@ function BoederPage() {
       toast.error("Vælg en spiller");
       return;
     }
+    const value = Number(assignAmount.replace(",", "."));
+    if (!Number.isFinite(value) || value <= 0) {
+      toast.error("Beløbet skal være større end 0 kr.");
+      return;
+    }
+    const count = Number(assignCount);
+    if (!Number.isInteger(count) || count < 1 || count > 50) {
+      toast.error("Antal skal være et helt tal mellem 1 og 50");
+      return;
+    }
     setBusy(true);
-    const { error } = await supabase.from("fines").insert({
+    const rows = Array.from({ length: count }, () => ({
       team_id: teamId,
       user_id: assignMember,
       fine_type_id: openType.id,
       label: openType.label,
-      amount: Number(openType.amount),
+      amount: value,
       created_by: user.id,
-    });
+    }));
+    const { error } = await supabase.from("fines").insert(rows);
     setBusy(false);
     if (error) {
       toast.error(error.message);
       return;
     }
     const member = members.find((m) => m.userId === assignMember);
-    toast.success(`Bøde tildelt til ${member?.name ?? "spilleren"}`);
+    toast.success(
+      count > 1
+        ? `${count} bøder á ${formatKr(value)} tildelt til ${member?.name ?? "spilleren"}`
+        : `Bøde tildelt til ${member?.name ?? "spilleren"}`,
+    );
     setOpenType(null);
     setAssignMember("");
     await refresh();
   };
+
 
   return (
     <div className="space-y-6">
