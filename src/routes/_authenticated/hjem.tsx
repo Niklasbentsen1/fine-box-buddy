@@ -109,6 +109,7 @@ function HjemPage() {
   const [fineTypeId, setFineTypeId] = useState("custom");
   const [fineLabel, setFineLabel] = useState("");
   const [fineAmount, setFineAmount] = useState("");
+  const [fineCount, setFineCount] = useState("1");
   const [busy, setBusy] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
 
