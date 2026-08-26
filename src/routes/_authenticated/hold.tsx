@@ -86,6 +86,8 @@ function HoldPage() {
   const [busy, setBusy] = useState(false);
   const [memberSort, setMemberSort] = useState<"name" | "owed-desc" | "owed-asc">("name");
   const [fineTypePick, setFineTypePick] = useState("");
+  const [fineAmountEdit, setFineAmountEdit] = useState("");
+  const [fineCount, setFineCount] = useState("1");
   const [givingFine, setGivingFine] = useState(false);
   const { confirm, confirmDialog } = useConfirm();
 
@@ -238,25 +240,43 @@ function HoldPage() {
       toast.error("Vælg en bøde");
       return;
     }
+    const value = Number(fineAmountEdit.replace(",", "."));
+    if (!Number.isFinite(value) || value <= 0) {
+      toast.error("Beløbet skal være større end 0 kr.");
+      return;
+    }
+    const count = Number(fineCount);
+    if (!Number.isInteger(count) || count < 1 || count > 50) {
+      toast.error("Antal skal være et helt tal mellem 1 og 50");
+      return;
+    }
     setGivingFine(true);
-    const { error } = await supabase.from("fines").insert({
+    const rows = Array.from({ length: count }, () => ({
       team_id: teamId,
       user_id: selectedMember.userId,
       fine_type_id: preset.id,
       label: preset.label,
-      amount: Number(preset.amount),
+      amount: value,
       created_by: user.id,
-    });
+    }));
+    const { error } = await supabase.from("fines").insert(rows);
     setGivingFine(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success(`Bøde givet til ${firstName(selectedMember.name)}`);
+    toast.success(
+      count > 1
+        ? `${count} bøder á ${formatKr(value)} givet til ${firstName(selectedMember.name)}`
+        : `Bøde givet til ${firstName(selectedMember.name)}`,
+    );
     setFineTypePick("");
+    setFineAmountEdit("");
+    setFineCount("1");
     setSelectedMember(null);
     await refresh();
   };
+
 
   const handleRemove = async (userId: string, name: string) => {
     const ok = await confirm({
@@ -773,7 +793,15 @@ function HoldPage() {
                   </p>
                   {sortedFineTypes.length > 0 ? (
                     <>
-                      <Select value={fineTypePick} onValueChange={setFineTypePick}>
+                      <Select
+                        value={fineTypePick}
+                        onValueChange={(v) => {
+                          setFineTypePick(v);
+                          const preset = sortedFineTypes.find((t) => t.id === v);
+                          setFineAmountEdit(preset ? String(Number(preset.amount)) : "");
+                          setFineCount("1");
+                        }}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Vælg bøde" />
                         </SelectTrigger>
@@ -785,6 +813,34 @@ function HoldPage() {
                           ))}
                         </SelectContent>
                       </Select>
+                      {fineTypePick && (
+                        <div className="grid grid-cols-2 gap-2.5 text-left">
+                          <div className="space-y-1.5">
+                            <Label htmlFor="member-fine-amount" className="text-xs">
+                              Beløb (kr.)
+                            </Label>
+                            <Input
+                              id="member-fine-amount"
+                              inputMode="decimal"
+                              value={fineAmountEdit}
+                              onChange={(e) => setFineAmountEdit(e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label htmlFor="member-fine-count" className="text-xs">
+                              Antal
+                            </Label>
+                            <Input
+                              id="member-fine-count"
+                              inputMode="numeric"
+                              value={fineCount}
+                              onChange={(e) =>
+                                setFineCount(e.target.value.replace(/[^0-9]/g, ""))
+                              }
+                            />
+                          </div>
+                        </div>
+                      )}
                       <Button
                         variant="gold"
                         className="w-full"
@@ -796,6 +852,7 @@ function HoldPage() {
                           ? "Giver bøde…"
                           : `Giv bøde til ${firstName(selectedMember.name)}`}
                       </Button>
+
                     </>
                   ) : (
                     <p className="text-left text-xs text-muted-foreground">

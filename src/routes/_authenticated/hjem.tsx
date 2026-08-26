@@ -109,6 +109,7 @@ function HjemPage() {
   const [fineTypeId, setFineTypeId] = useState("custom");
   const [fineLabel, setFineLabel] = useState("");
   const [fineAmount, setFineAmount] = useState("");
+  const [fineCount, setFineCount] = useState("1");
   const [busy, setBusy] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
 
@@ -240,40 +241,49 @@ function HjemPage() {
       return;
     }
     let label = fineLabel.trim();
-    let amount = parseAmount(fineAmount);
+    const amount = parseAmount(fineAmount);
     if (fineTypeId !== "custom") {
       const preset = fineTypes.find((t) => t.id === fineTypeId);
-      if (preset) {
-        label = preset.label;
-        amount = Number(preset.amount);
-      }
+      if (preset) label = preset.label;
     }
     if (!label || !amount || amount <= 0) {
       toast.error("Udfyld bøde og beløb");
       return;
     }
+    const count = Number(fineCount);
+    if (!Number.isInteger(count) || count < 1 || count > 50) {
+      toast.error("Antal skal være et helt tal mellem 1 og 50");
+      return;
+    }
     setBusy(true);
-    const { error } = await supabase.from("fines").insert({
+    const rows = Array.from({ length: count }, () => ({
       team_id: teamId,
       user_id: fineMember,
       fine_type_id: fineTypeId !== "custom" ? fineTypeId : null,
       label,
       amount,
       created_by: user.id,
-    });
+    }));
+    const { error } = await supabase.from("fines").insert(rows);
     setBusy(false);
     if (error) {
       toast.error(error.message);
       return;
     }
     const member = members.find((m) => m.userId === fineMember);
-    toast.success(`Bøde givet til ${member ? firstName(member.name) : "medlemmet"}`);
+    toast.success(
+      count > 1
+        ? `${count} bøder á ${formatKr(amount)} givet til ${member ? firstName(member.name) : "medlemmet"}`
+        : `Bøde givet til ${member ? firstName(member.name) : "medlemmet"}`,
+    );
     setFineOpen(false);
     setFineMember("");
     setFineTypeId("custom");
     setFineLabel("");
     setFineAmount("");
+    setFineCount("1");
     await refresh();
+
   };
 
   const handleReview = async (paymentId: string, status: "approved" | "rejected") => {
@@ -581,7 +591,14 @@ function HjemPage() {
             </div>
             <div className="space-y-2">
               <Label>Bøde</Label>
-              <Select value={fineTypeId} onValueChange={setFineTypeId}>
+              <Select
+                value={fineTypeId}
+                onValueChange={(v) => {
+                  setFineTypeId(v);
+                  const preset = fineTypes.find((t) => t.id === v);
+                  setFineAmount(preset ? String(Number(preset.amount)) : "");
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Vælg bøde" />
                 </SelectTrigger>
@@ -596,28 +613,38 @@ function HjemPage() {
               </Select>
             </div>
             {fineTypeId === "custom" && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="fine-label">Beskrivelse</Label>
-                  <Input
-                    id="fine-label"
-                    value={fineLabel}
-                    onChange={(e) => setFineLabel(e.target.value)}
-                    placeholder="Fx Glemt støvler"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="fine-amount">Beløb (kr.)</Label>
-                  <Input
-                    id="fine-amount"
-                    inputMode="decimal"
-                    value={fineAmount}
-                    onChange={(e) => setFineAmount(e.target.value)}
-                    placeholder="Fx 20"
-                  />
-                </div>
-              </>
+              <div className="space-y-2">
+                <Label htmlFor="fine-label">Beskrivelse</Label>
+                <Input
+                  id="fine-label"
+                  value={fineLabel}
+                  onChange={(e) => setFineLabel(e.target.value)}
+                  placeholder="Fx Glemt støvler"
+                />
+              </div>
             )}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="fine-amount">Beløb (kr.)</Label>
+                <Input
+                  id="fine-amount"
+                  inputMode="decimal"
+                  value={fineAmount}
+                  onChange={(e) => setFineAmount(e.target.value)}
+                  placeholder="Fx 20"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="fine-count">Antal</Label>
+                <Input
+                  id="fine-count"
+                  inputMode="numeric"
+                  value={fineCount}
+                  onChange={(e) => setFineCount(e.target.value.replace(/[^0-9]/g, ""))}
+                />
+              </div>
+            </div>
+
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFineOpen(false)}>
