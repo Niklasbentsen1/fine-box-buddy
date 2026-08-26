@@ -86,6 +86,8 @@ function HoldPage() {
   const [busy, setBusy] = useState(false);
   const [memberSort, setMemberSort] = useState<"name" | "owed-desc" | "owed-asc">("name");
   const [fineTypePick, setFineTypePick] = useState("");
+  const [fineAmountEdit, setFineAmountEdit] = useState("");
+  const [fineCount, setFineCount] = useState("1");
   const [givingFine, setGivingFine] = useState(false);
   const { confirm, confirmDialog } = useConfirm();
 
