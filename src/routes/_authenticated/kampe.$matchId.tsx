@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  ClipboardList,
   Crown,
   Lock,
   Trash2,
