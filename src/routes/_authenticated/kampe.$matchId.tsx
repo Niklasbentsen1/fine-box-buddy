@@ -129,6 +129,19 @@ function MatchDetailPage() {
     queryFn: () => fetchTeamMembers(teamId!),
   });
 
+  // Kun administratorer kan se hvem der har stemt (håndhævet i databasen).
+  const { data: participation = [] } = useQuery({
+    queryKey: ["team", teamId, "match-participation", matchId],
+    enabled: !!teamId && isAdmin,
+    queryFn: async (): Promise<ParticipationRow[]> => {
+      const { data, error } = await supabase.rpc("get_match_voter_participation", {
+        _match_id: matchId,
+      });
+      if (error) throw error;
+      return (data ?? []) as unknown as ParticipationRow[];
+    },
+  });
+
   if (!current || !teamId) return null;
 
   if (matchLoading) {
