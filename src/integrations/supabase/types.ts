@@ -684,6 +684,15 @@ export type Database = {
           votes: number
         }[]
       }
+      get_match_voter_participation: {
+        Args: { _match_id: string }
+        Returns: {
+          display_name: string
+          has_voted: boolean
+          nickname: string
+          user_id: string
+        }[]
+      }
       get_pending_members: {
         Args: { _team_id: string }
         Returns: {
