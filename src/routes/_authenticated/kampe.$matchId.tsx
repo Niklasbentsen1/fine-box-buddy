@@ -438,6 +438,44 @@ function MatchDetailPage() {
         )}
       </section>
 
+      {isAdmin && participation.length > 0 && (
+        <section className="rounded-2xl border bg-card p-5 shadow-card">
+          <div className="flex items-center gap-2">
+            <ClipboardList className="h-5 w-5 text-pitch" />
+            <h2 className="font-display text-xl font-semibold">Stemmedeltagelse</h2>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Kun synligt for administratorer. Viser hvem der har stemt — ikke hvad de har stemt.
+          </p>
+          <p className="mt-3 text-sm font-medium">
+            {participation.filter((p) => p.has_voted).length} af {participation.length} har stemt
+          </p>
+          <ul className="mt-3 space-y-2">
+            {participation.map((p) => {
+              const name = p.display_name?.trim() || "Ukendt";
+              return (
+                <li
+                  key={p.user_id}
+                  className="flex items-center justify-between gap-3 rounded-xl bg-secondary/60 px-3 py-2"
+                >
+                  <span className="min-w-0 truncate text-sm font-medium">
+                    {name}
+                    {p.nickname && (
+                      <span className="ml-1 text-xs font-normal text-muted-foreground">
+                        ({p.nickname})
+                      </span>
+                    )}
+                  </span>
+                  <Badge variant={p.has_voted ? "pitch" : "muted"}>
+                    {p.has_voted ? "Har stemt" : "Mangler at stemme"}
+                  </Badge>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent>
           <div className="space-y-1.5">
