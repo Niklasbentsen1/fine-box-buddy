@@ -55,6 +55,12 @@ type PlayerRow = {
 
 type MyVoteRow = { voted_for_id: string };
 type CountRow = { user_id: string; display_name: string | null; votes: number };
+type ParticipationRow = {
+  user_id: string;
+  display_name: string | null;
+  nickname: string | null;
+  has_voted: boolean;
+};
 
 function MatchDetailPage() {
   const { matchId } = Route.useParams();
