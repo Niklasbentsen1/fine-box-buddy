@@ -22,6 +22,7 @@ import { Route as AuthenticatedKampeRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedKlubberRouteImport } from './routes/_authenticated/klubber'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
+import { Route as AuthenticatedStatistikRouteImport } from './routes/_authenticated/statistik'
 import { Route as AuthenticatedKampeMatchIdRouteImport } from './routes/_authenticated/kampe.$matchId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -89,6 +90,11 @@ const AuthenticatedProfilRoute = AuthenticatedProfilRouteImport.update({
   path: '/profil',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedStatistikRoute = AuthenticatedStatistikRouteImport.update({
+  id: '/statistik',
+  path: '/statistik',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedKampeMatchIdRoute =
   AuthenticatedKampeMatchIdRouteImport.update({
     id: '/$matchId',
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/klubber': typeof AuthenticatedKlubberRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/profil': typeof AuthenticatedProfilRoute
+  '/statistik': typeof AuthenticatedStatistikRoute
   '/kampe/$matchId': typeof AuthenticatedKampeMatchIdRoute
 }
 export interface FileRoutesByTo {
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/klubber': typeof AuthenticatedKlubberRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/profil': typeof AuthenticatedProfilRoute
+  '/statistik': typeof AuthenticatedStatistikRoute
   '/kampe/$matchId': typeof AuthenticatedKampeMatchIdRoute
 }
 export interface FileRoutesById {
@@ -141,6 +149,7 @@ export interface FileRoutesById {
   '/_authenticated/klubber': typeof AuthenticatedKlubberRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
+  '/_authenticated/statistik': typeof AuthenticatedStatistikRoute
   '/_authenticated/kampe/$matchId': typeof AuthenticatedKampeMatchIdRoute
 }
 export interface FileRouteTypes {
@@ -158,6 +167,7 @@ export interface FileRouteTypes {
     | '/klubber'
     | '/onboarding'
     | '/profil'
+    | '/statistik'
     | '/kampe/$matchId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -173,6 +183,7 @@ export interface FileRouteTypes {
     | '/klubber'
     | '/onboarding'
     | '/profil'
+    | '/statistik'
     | '/kampe/$matchId'
   id:
     | '__root__'
@@ -189,6 +200,7 @@ export interface FileRouteTypes {
     | '/_authenticated/klubber'
     | '/_authenticated/onboarding'
     | '/_authenticated/profil'
+    | '/_authenticated/statistik'
     | '/_authenticated/kampe/$matchId'
   fileRoutesById: FileRoutesById
 }
@@ -292,6 +304,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfilRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/statistik': {
+      id: '/_authenticated/statistik'
+      path: '/statistik'
+      fullPath: '/statistik'
+      preLoaderRoute: typeof AuthenticatedStatistikRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/kampe/$matchId': {
       id: '/_authenticated/kampe/$matchId'
       path: '/$matchId'
@@ -323,6 +342,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedKlubberRoute: typeof AuthenticatedKlubberRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
+  AuthenticatedStatistikRoute: typeof AuthenticatedStatistikRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -335,6 +355,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedKlubberRoute: AuthenticatedKlubberRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,
+  AuthenticatedStatistikRoute: AuthenticatedStatistikRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
