@@ -447,11 +447,18 @@ function HoldPage() {
           <h1 className="font-display text-4xl font-semibold">{current.teamName}</h1>
           <p className="mt-1 text-muted-foreground">{current.clubName}</p>
         </div>
-        {isAdmin && (
-          <Button variant="outline" onClick={() => setWithdrawOpen(true)}>
-            <Wallet className="mr-2 h-4 w-4" /> Træk penge ud
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" asChild>
+            <Link to="/statistik">
+              <BarChart3 className="mr-2 h-4 w-4" /> Statistik
+            </Link>
           </Button>
-        )}
+          {isAdmin && (
+            <Button variant="outline" onClick={() => setWithdrawOpen(true)}>
+              <Wallet className="mr-2 h-4 w-4" /> Træk penge ud
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

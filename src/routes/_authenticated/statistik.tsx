@@ -243,7 +243,7 @@ function StatistikPage() {
                     <tr key={m.userId}>
                       <td className="py-2.5 pr-3">
                         <div className="flex items-center gap-2.5">
-                          <Avatar name={m.name} url={m.avatarUrl} className="h-8 w-8" />
+                          <Avatar name={m.name} url={m.avatarUrl} size="sm" />
                           <span className="font-medium">{m.name}</span>
                         </div>
                       </td>
