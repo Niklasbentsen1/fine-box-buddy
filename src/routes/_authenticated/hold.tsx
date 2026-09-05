@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -76,6 +76,7 @@ type PendingRow = {
 function HoldPage() {
   const { user, current, isAdmin } = useTeam();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const teamId = current?.teamId;
 
   const [withdrawOpen, setWithdrawOpen] = useState(false);

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, BarChart3, BellRing, Crown, Ticket } from "lucide-react";
 import {
@@ -34,6 +34,7 @@ type PaymentRow = { user_id: string; amount: number; status: string };
 
 function StatistikPage() {
   const { current } = useTeam();
+  const navigate = useNavigate();
   const teamId = current?.teamId;
 
   const { data: members = [] } = useQuery({
