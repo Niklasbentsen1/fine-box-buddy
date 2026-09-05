@@ -271,7 +271,7 @@ function BoederPage() {
               <li
                 key={type.id}
                 onClick={() => {
-                  setAssignMember("");
+                  setAssignMembers([]);
                   setAssignAmount(String(Number(type.amount)));
                   setAssignCount("1");
                   setOpenType(type);
@@ -402,19 +402,49 @@ function BoederPage() {
           {isAdmin ? (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Tildel til spiller</Label>
-                <Select value={assignMember} onValueChange={setAssignMember}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Vælg spiller" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {members.map((m) => (
-                      <SelectItem key={m.userId} value={m.userId}>
-                        {m.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center justify-between gap-2">
+                  <Label>Tildel til spillere</Label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setAssignMembers(members.map((m) => m.userId))}
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
+                      Vælg alle
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAssignMembers([])}
+                      className="text-xs font-medium text-muted-foreground hover:underline"
+                    >
+                      Fravælg alle
+                    </button>
+                  </div>
+                </div>
+                <ul className="max-h-48 space-y-1 overflow-y-auto rounded-xl border p-2">
+                  {members.map((m) => {
+                    const checked = assignMembers.includes(m.userId);
+                    return (
+                      <li key={m.userId}>
+                        <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted/40">
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={() => toggleAssignMember(m.userId)}
+                            aria-label={`Vælg ${m.name}`}
+                          />
+                          <span className="text-sm">{m.name}</span>
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="text-xs text-muted-foreground">
+                  {assignMembers.length === 0
+                    ? "Ingen spillere valgt"
+                    : assignMembers.length === 1
+                      ? "1 spiller valgt"
+                      : `${assignMembers.length} spillere valgt`}
+                </p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
