@@ -124,10 +124,8 @@ function StatistikPage() {
             {current.teamName} · {current.clubName}
           </p>
         </div>
-        <Button variant="outline" asChild>
-          <Link to="/hold">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Tilbage til holdet
-          </Link>
+        <Button variant="outline" onClick={() => navigate({ to: "/hold" })}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Tilbage til holdet
         </Button>
       </div>
 

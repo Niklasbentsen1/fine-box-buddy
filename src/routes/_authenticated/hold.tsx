@@ -449,10 +449,8 @@ function HoldPage() {
           <p className="mt-1 text-muted-foreground">{current.clubName}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" asChild>
-            <Link to="/statistik">
-              <BarChart3 className="mr-2 h-4 w-4" /> Statistik
-            </Link>
+          <Button variant="outline" onClick={() => navigate({ to: "/statistik" })}>
+            <BarChart3 className="mr-2 h-4 w-4" /> Statistik
           </Button>
           {isAdmin && (
             <Button variant="outline" onClick={() => setWithdrawOpen(true)}>
