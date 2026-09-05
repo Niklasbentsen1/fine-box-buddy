@@ -61,7 +61,7 @@ function BoederPage() {
   const [busy, setBusy] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [openType, setOpenType] = useState<FineTypeRow | null>(null);
-  const [assignMember, setAssignMember] = useState("");
+  const [assignMembers, setAssignMembers] = useState<string[]>([]);
   const [assignAmount, setAssignAmount] = useState("");
   const [assignCount, setAssignCount] = useState("1");
   const { confirm, confirmDialog } = useConfirm();
