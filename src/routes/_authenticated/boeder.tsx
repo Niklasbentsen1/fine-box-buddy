@@ -11,6 +11,7 @@ import { useConfirm } from "@/components/confirm-dialog";
 import { formatDate, formatKr } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -61,7 +62,7 @@ function BoederPage() {
   const [busy, setBusy] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [openType, setOpenType] = useState<FineTypeRow | null>(null);
-  const [assignMember, setAssignMember] = useState("");
+  const [assignMembers, setAssignMembers] = useState<string[]>([]);
   const [assignAmount, setAssignAmount] = useState("");
   const [assignCount, setAssignCount] = useState("1");
   const { confirm, confirmDialog } = useConfirm();
@@ -178,9 +179,15 @@ function BoederPage() {
     await refresh();
   };
 
+  const toggleAssignMember = (userId: string) => {
+    setAssignMembers((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId],
+    );
+  };
+
   const handleAssign = async () => {
-    if (!openType || !assignMember) {
-      toast.error("Vælg en spiller");
+    if (!openType || assignMembers.length === 0) {
+      toast.error("Vælg mindst én spiller");
       return;
     }
     const value = Number(assignAmount.replace(",", "."));
@@ -193,29 +200,44 @@ function BoederPage() {
       toast.error("Antal skal være et helt tal mellem 1 og 50");
       return;
     }
+    const playerText =
+      assignMembers.length === 1 ? "1 spiller" : `${assignMembers.length} spillere`;
+    const ok = await confirm({
+      title: "Tildel bøde?",
+      description: `Du er ved at tildele ${count} × ${openType.label} (${formatKr(
+        value,
+      )}) til ${playerText} — i alt ${formatKr(value * count * assignMembers.length)}.`,
+      confirmLabel: "Tildel bøde",
+      cancelLabel: "Fortryd",
+      destructive: false,
+    });
+    if (!ok) return;
     setBusy(true);
-    const rows = Array.from({ length: count }, () => ({
-      team_id: teamId,
-      user_id: assignMember,
-      fine_type_id: openType.id,
-      label: openType.label,
-      amount: value,
-      created_by: user.id,
-    }));
+    // Én samlet indsættelse: enten oprettes alle bøder, eller ingen.
+    const rows = assignMembers.flatMap((userId) =>
+      Array.from({ length: count }, () => ({
+        team_id: teamId,
+        user_id: userId,
+        fine_type_id: openType.id,
+        label: openType.label,
+        amount: value,
+        created_by: user.id,
+      })),
+    );
     const { error } = await supabase.from("fines").insert(rows);
     setBusy(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    const member = members.find((m) => m.userId === assignMember);
+    const perPlayer = count > 1 ? `${count} bøder á ${formatKr(value)}` : "Bøde";
     toast.success(
-      count > 1
-        ? `${count} bøder á ${formatKr(value)} tildelt til ${member?.name ?? "spilleren"}`
-        : `Bøde tildelt til ${member?.name ?? "spilleren"}`,
+      assignMembers.length === 1
+        ? `${perPlayer} tildelt til ${members.find((m) => m.userId === assignMembers[0])?.name ?? "spilleren"}`
+        : `${perPlayer} tildelt til ${playerText}`,
     );
     setOpenType(null);
-    setAssignMember("");
+    setAssignMembers([]);
     await refresh();
   };
 
@@ -250,7 +272,7 @@ function BoederPage() {
               <li
                 key={type.id}
                 onClick={() => {
-                  setAssignMember("");
+                  setAssignMembers([]);
                   setAssignAmount(String(Number(type.amount)));
                   setAssignCount("1");
                   setOpenType(type);
@@ -381,19 +403,49 @@ function BoederPage() {
           {isAdmin ? (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Tildel til spiller</Label>
-                <Select value={assignMember} onValueChange={setAssignMember}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Vælg spiller" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {members.map((m) => (
-                      <SelectItem key={m.userId} value={m.userId}>
-                        {m.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center justify-between gap-2">
+                  <Label>Tildel til spillere</Label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setAssignMembers(members.map((m) => m.userId))}
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
+                      Vælg alle
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAssignMembers([])}
+                      className="text-xs font-medium text-muted-foreground hover:underline"
+                    >
+                      Fravælg alle
+                    </button>
+                  </div>
+                </div>
+                <ul className="max-h-48 space-y-1 overflow-y-auto rounded-xl border p-2">
+                  {members.map((m) => {
+                    const checked = assignMembers.includes(m.userId);
+                    return (
+                      <li key={m.userId}>
+                        <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted/40">
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={() => toggleAssignMember(m.userId)}
+                            aria-label={`Vælg ${m.name}`}
+                          />
+                          <span className="text-sm">{m.name}</span>
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="text-xs text-muted-foreground">
+                  {assignMembers.length === 0
+                    ? "Ingen spillere valgt"
+                    : assignMembers.length === 1
+                      ? "1 spiller valgt"
+                      : `${assignMembers.length} spillere valgt`}
+                </p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
@@ -419,7 +471,8 @@ function BoederPage() {
                 I alt:{" "}
                 {formatKr(
                   Math.max(0, Number(assignAmount.replace(",", ".")) || 0) *
-                    Math.max(0, Number(assignCount) || 0),
+                    Math.max(0, Number(assignCount) || 0) *
+                    assignMembers.length,
                 )}
               </p>
             </div>
@@ -434,7 +487,7 @@ function BoederPage() {
               Luk
             </Button>
             {isAdmin && (
-              <Button onClick={handleAssign} disabled={busy || !assignMember}>
+              <Button onClick={handleAssign} disabled={busy || assignMembers.length === 0}>
                 <UserPlus className="mr-2 h-4 w-4" /> Tildel bøde
               </Button>
             )}
