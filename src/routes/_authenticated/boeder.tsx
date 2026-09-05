@@ -11,6 +11,7 @@ import { useConfirm } from "@/components/confirm-dialog";
 import { formatDate, formatKr } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -470,7 +471,8 @@ function BoederPage() {
                 I alt:{" "}
                 {formatKr(
                   Math.max(0, Number(assignAmount.replace(",", ".")) || 0) *
-                    Math.max(0, Number(assignCount) || 0),
+                    Math.max(0, Number(assignCount) || 0) *
+                    assignMembers.length,
                 )}
               </p>
             </div>
@@ -485,7 +487,7 @@ function BoederPage() {
               Luk
             </Button>
             {isAdmin && (
-              <Button onClick={handleAssign} disabled={busy || !assignMember}>
+              <Button onClick={handleAssign} disabled={busy || assignMembers.length === 0}>
                 <UserPlus className="mr-2 h-4 w-4" /> Tildel bøde
               </Button>
             )}
