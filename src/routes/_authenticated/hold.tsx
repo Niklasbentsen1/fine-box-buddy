@@ -1,7 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  BarChart3,
   BellRing,
   HandCoins,
   LogOut,
@@ -75,6 +76,7 @@ type PendingRow = {
 function HoldPage() {
   const { user, current, isAdmin } = useTeam();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const teamId = current?.teamId;
 
   const [withdrawOpen, setWithdrawOpen] = useState(false);
@@ -447,11 +449,16 @@ function HoldPage() {
           <h1 className="font-display text-4xl font-semibold">{current.teamName}</h1>
           <p className="mt-1 text-muted-foreground">{current.clubName}</p>
         </div>
-        {isAdmin && (
-          <Button variant="outline" onClick={() => setWithdrawOpen(true)}>
-            <Wallet className="mr-2 h-4 w-4" /> Træk penge ud
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => navigate({ to: "/statistik" })}>
+            <BarChart3 className="mr-2 h-4 w-4" /> Statistik
           </Button>
-        )}
+          {isAdmin && (
+            <Button variant="outline" onClick={() => setWithdrawOpen(true)}>
+              <Wallet className="mr-2 h-4 w-4" /> Træk penge ud
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
