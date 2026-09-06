@@ -74,7 +74,7 @@ type PendingRow = {
 };
 
 function HoldPage() {
-  const { user, current, isAdmin } = useTeam();
+  const { user, current, isAdmin, refreshMemberships } = useTeam();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const teamId = current?.teamId;
