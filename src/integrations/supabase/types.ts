@@ -164,6 +164,35 @@ export type Database = {
           },
         ]
       }
+      match_groups: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          team_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          team_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_groups_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       match_players: {
         Row: {
           id: string
@@ -201,6 +230,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          group_id: string | null
           id: string
           opponent: string
           played_at: string
@@ -211,6 +241,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by: string
+          group_id?: string | null
           id?: string
           opponent: string
           played_at: string
@@ -221,6 +252,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string
+          group_id?: string | null
           id?: string
           opponent?: string
           played_at?: string
@@ -229,6 +261,13 @@ export type Database = {
           voting_closes_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "matches_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "match_groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "matches_team_id_fkey"
             columns: ["team_id"]
@@ -665,6 +704,14 @@ export type Database = {
           member_count: number
           team_id: string
           team_name: string
+        }[]
+      }
+      get_group_motm_leaderboard: {
+        Args: { _group_id: string }
+        Returns: {
+          display_name: string
+          user_id: string
+          votes: number
         }[]
       }
       get_leaving_members: {
