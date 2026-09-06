@@ -725,6 +725,10 @@ export type Database = {
       }
       join_club_by_code: { Args: { _code: string }; Returns: string }
       join_team: { Args: { _team_id: string }; Returns: undefined }
+      leave_team_as_last_admin: {
+        Args: { _new_admin_id?: string; _team_id: string }
+        Returns: string
+      }
       reject_leave_team: {
         Args: { _team_id: string; _user_id: string }
         Returns: undefined

@@ -74,7 +74,7 @@ type PendingRow = {
 };
 
 function HoldPage() {
-  const { user, current, isAdmin } = useTeam();
+  const { user, current, isAdmin, refreshMemberships } = useTeam();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const teamId = current?.teamId;
@@ -91,6 +91,9 @@ function HoldPage() {
   const [fineAmountEdit, setFineAmountEdit] = useState("");
   const [fineCount, setFineCount] = useState("1");
   const [givingFine, setGivingFine] = useState(false);
+  const [leaveAdminOpen, setLeaveAdminOpen] = useState(false);
+  const [successorId, setSuccessorId] = useState("");
+  const [leaveBusy, setLeaveBusy] = useState(false);
   const { confirm, confirmDialog } = useConfirm();
 
   const { data: members = [] } = useQuery({
@@ -353,7 +356,61 @@ function HoldPage() {
     await refresh();
   };
 
+  const otherMembers = members.filter((m) => m.userId !== user.id);
+  const isOnlyAdmin =
+    isAdmin && members.filter((m) => m.role === "admin" && m.userId !== user.id).length === 0;
+
+  const handleTransferAndLeave = async () => {
+    if (!successorId) return;
+    setLeaveBusy(true);
+    const { error } = await supabase.rpc("leave_team_as_last_admin", {
+      _team_id: teamId,
+      _new_admin_id: successorId,
+    });
+    setLeaveBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setLeaveAdminOpen(false);
+    setSuccessorId("");
+    toast.success("Administratorrollen er overdraget, og du har forladt holdet");
+    await refresh();
+    await refreshMemberships();
+    navigate({ to: "/hjem" });
+  };
+
+  const handleLeaveAndDeleteTeam = async () => {
+    const ok = await confirm({
+      title: `Slet ${current.teamName}?`,
+      description:
+        "Du er holdets eneste medlem og administrator. Forlader du holdet, bliver holdet og dets data slettet permanent.",
+      confirmLabel: "Forlad og slet holdet",
+    });
+    if (!ok) return;
+    setLeaveBusy(true);
+    const { error } = await supabase.rpc("leave_team_as_last_admin", {
+      _team_id: teamId,
+      _new_admin_id: undefined,
+    });
+    setLeaveBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setLeaveAdminOpen(false);
+    toast.success("Holdet er slettet, og du har forladt det");
+    await refresh();
+    await refreshMemberships();
+    navigate({ to: "/hjem" });
+  };
+
   const handleRequestLeave = async () => {
+    if (isOnlyAdmin) {
+      setSuccessorId("");
+      setLeaveAdminOpen(true);
+      return;
+    }
     const ok = await confirm({
       title: `Forlad ${current.teamName}?`,
       description:
@@ -696,6 +753,54 @@ function HoldPage() {
           </>
         )}
       </section>
+
+      <Dialog open={leaveAdminOpen} onOpenChange={setLeaveAdminOpen}>
+        <DialogContent>
+          <div className="space-y-1.5">
+            <DialogTitle>Du er den eneste administrator</DialogTitle>
+            <DialogDescription>
+              {otherMembers.length > 0
+                ? "Vælg hvem der skal overtage administratorrollen, før du kan forlade holdet."
+                : `Du er holdets eneste medlem. Forlader du ${current.teamName}, bliver holdet og dets data slettet permanent.`}
+            </DialogDescription>
+          </div>
+          {otherMembers.length > 0 && (
+            <div className="space-y-2">
+              <Label>Ny administrator</Label>
+              <Select value={successorId} onValueChange={setSuccessorId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Vælg spiller" />
+                </SelectTrigger>
+                <SelectContent>
+                  {otherMembers.map((m) => (
+                    <SelectItem key={m.userId} value={m.userId}>
+                      {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLeaveAdminOpen(false)}>
+              Annuller
+            </Button>
+            {otherMembers.length > 0 ? (
+              <Button
+                variant="destructive"
+                disabled={!successorId || leaveBusy}
+                onClick={handleTransferAndLeave}
+              >
+                Overdrag og forlad holdet
+              </Button>
+            ) : (
+              <Button variant="destructive" disabled={leaveBusy} onClick={handleLeaveAndDeleteTeam}>
+                Forlad og slet holdet
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
         <DialogContent>
