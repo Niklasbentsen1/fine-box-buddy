@@ -518,31 +518,45 @@ function HoldPage() {
         </div>
       </div>
 
-      <div className="space-y-3">
-        <StatCard
-          label="Kassens saldo"
-          value={formatKr(cashBalance)}
-          icon={PiggyBank}
-          tone="pitch"
-          hint={
-            [
-              carryover !== 0 ? `${formatKr(carryover)} overført fra sidste sæson` : null,
-              withdrawnTotal > 0 ? `${formatKr(withdrawnTotal)} udbetalt` : null,
-            ]
-              .filter(Boolean)
-              .join(" · ") || undefined
-          }
-        />
-        <div className="grid grid-cols-2 gap-3">
-          <StatCard label="Givne bøder" value={formatKr(finesTotal)} icon={Ticket} tone="gold" />
-          <StatCard
-            label="Manglende indbetalinger"
-            value={formatKr(outstandingTotal)}
-            icon={BellRing}
-            tone={outstandingTotal > 0 ? "red" : "navy"}
-          />
-        </div>
-      </div>
+      {(() => {
+        const paidPct =
+          finesTotal > 0 ? Math.min(100, Math.round((paidTotal / finesTotal) * 100)) : 0;
+        return (
+          <section className="rounded-2xl border bg-card p-5 shadow-card">
+            <div className="flex items-center gap-2">
+              <PiggyBank className="h-4 w-4 text-pitch" />
+              <span className="text-[13px] text-muted-foreground">Kassens saldo</span>
+            </div>
+            <p className="mt-1 font-display text-[34px] font-medium leading-tight text-foreground">
+              {formatKr(cashBalance)}
+            </p>
+            <p className="mt-1 text-[13px] text-muted-foreground">
+              {members.length} spillere · {paidPct} % indbetalt
+            </p>
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-pitch transition-[width] duration-300"
+                style={{ width: `${paidPct}%` }}
+              />
+            </div>
+            <div className="my-4 h-px w-full bg-border" />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-[13px] text-muted-foreground">Givne bøder</p>
+                <p className="font-display text-[19px] font-medium text-foreground">
+                  {formatKr(finesTotal)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[13px] text-muted-foreground">Mangler indbetaling</p>
+                <p className="font-display text-[19px] font-medium text-destructive">
+                  {formatKr(outstandingTotal)}
+                </p>
+              </div>
+            </div>
+          </section>
+        );
+      })()}
 
       <section className="rounded-2xl border bg-card p-5 shadow-card">
         <div className="flex flex-wrap items-center justify-between gap-3">
