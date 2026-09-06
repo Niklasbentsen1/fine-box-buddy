@@ -391,7 +391,7 @@ function HoldPage() {
     setLeaveBusy(true);
     const { error } = await supabase.rpc("leave_team_as_last_admin", {
       _team_id: teamId,
-      _new_admin_id: null,
+      _new_admin_id: undefined,
     });
     setLeaveBusy(false);
     if (error) {
