@@ -592,9 +592,6 @@ function HoldPage() {
                 >
                   {m.credit > 0 ? `+${formatKr(m.credit)}` : formatKr(m.owed)}
                 </Badge>
-                {m.credit > 0 && (
-                  <p className="mt-0.5 text-[11px] font-medium text-muted-foreground">Til gode</p>
-                )}
               </div>
               {isAdmin && m.userId !== user.id && (
                 <DropdownMenu>
