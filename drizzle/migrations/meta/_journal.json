@@ -8,6 +8,13 @@
       "when": 1788175635644,
       "tag": "0000_match_voter_participation",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788692998734,
+      "tag": "0001_leave_team_last_admin",
+      "breakpoints": true
     }
   ]
 }
