@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarPlus, Medal, Trophy } from "lucide-react";
+import { CalendarPlus, Layers, Medal, Pencil, Plus, Trash2, Trophy } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,13 @@ import {
   DialogFooter,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -45,6 +52,12 @@ type MatchRow = {
   played_at: string;
   voting_closes_at: string;
   status: "open" | "closed";
+  group_id: string | null;
+};
+
+type GroupRow = {
+  id: string;
+  name: string;
 };
 
 type LeaderboardRow = {
@@ -72,13 +85,35 @@ function KampePage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
 
+  const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
+  const [createGroupId, setCreateGroupId] = useState<string>("");
+  const [groupsOpen, setGroupsOpen] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [renameId, setRenameId] = useState<string | null>(null);
+  const [renamevalue, setRenameValue] = useState("");
+  const [groupBusy, setGroupBusy] = useState(false);
+
+  const { data: groups = [] } = useQuery({
+    queryKey: ["team", teamId, "match-groups"],
+    enabled: !!teamId,
+    queryFn: async (): Promise<GroupRow[]> => {
+      const { data, error } = await supabase
+        .from("match_groups")
+        .select("id, name")
+        .eq("team_id", teamId!)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as GroupRow[];
+    },
+  });
+
   const { data: matches = [] } = useQuery({
     queryKey: ["team", teamId, "matches"],
     enabled: !!teamId,
     queryFn: async (): Promise<MatchRow[]> => {
       const { data, error } = await supabase
         .from("matches")
-        .select("id, opponent, played_at, voting_closes_at, status")
+        .select("id, opponent, played_at, voting_closes_at, status, group_id")
         .eq("team_id", teamId!)
         .order("played_at", { ascending: false });
       if (error) throw error;
@@ -86,12 +121,28 @@ function KampePage() {
     },
   });
 
+  const multiGroup = groups.length >= 2;
+  const selectedGroupId = multiGroup ? (activeGroupId ?? groups[0]?.id ?? null) : null;
+
+  useEffect(() => {
+    if (multiGroup && !groups.some((g) => g.id === activeGroupId)) {
+      setActiveGroupId(groups[0]?.id ?? null);
+    }
+  }, [multiGroup, groups, activeGroupId]);
+
   // Anonym sæsonstilling: kun samlede stemmetal pr. spiller, aldrig hvem der stemte.
   const { data: leaderboardRows = [] } = useQuery({
-    queryKey: ["team", teamId, "motm-agg"],
+    queryKey: ["team", teamId, "motm-agg", selectedGroupId],
     enabled: !!teamId,
     refetchInterval: 30000,
     queryFn: async (): Promise<LeaderboardRow[]> => {
+      if (selectedGroupId) {
+        const { data, error } = await supabase.rpc("get_group_motm_leaderboard", {
+          _group_id: selectedGroupId,
+        });
+        if (error) throw error;
+        return (data ?? []) as unknown as LeaderboardRow[];
+      }
       const { data, error } = await supabase.rpc("get_team_motm_leaderboard", {
         _team_id: teamId!,
       });
@@ -115,8 +166,13 @@ function KampePage() {
 
   const maxVotes = leaderboard[0]?.votes ?? 0;
 
+  const visibleMatches = selectedGroupId
+    ? matches.filter((m) => m.group_id === selectedGroupId)
+    : matches;
+
   const openCreate = () => {
     setSelected(new Set(members.map((m) => m.userId)));
+    setCreateGroupId(selectedGroupId ?? groups[0]?.id ?? "");
     setCreateOpen(true);
   };
 
@@ -129,12 +185,71 @@ function KampePage() {
     });
   };
 
+  const handleCreateGroup = async () => {
+    const name = newGroupName.trim();
+    if (!name) return;
+    setGroupBusy(true);
+    const { error } = await supabase.from("match_groups").insert({ team_id: teamId, name });
+    setGroupBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setNewGroupName("");
+    toast.success("Gruppen er oprettet");
+    await queryClient.invalidateQueries({ queryKey: ["team", teamId, "match-groups"] });
+  };
+
+  const handleRenameGroup = async (id: string) => {
+    const name = renamevalue.trim();
+    if (!name) return;
+    setGroupBusy(true);
+    const { error } = await supabase.from("match_groups").update({ name }).eq("id", id);
+    setGroupBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setRenameId(null);
+    setRenameValue("");
+    await queryClient.invalidateQueries({ queryKey: ["team", teamId, "match-groups"] });
+  };
+
+  const handleDeleteGroup = async (id: string) => {
+    setGroupBusy(true);
+    const { error } = await supabase.from("match_groups").delete().eq("id", id);
+    setGroupBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Gruppen er slettet — kampene ligger stadig på holdet");
+    await queryClient.invalidateQueries({ queryKey: ["team", teamId] });
+  };
+
   const handleCreate = async () => {
     if (!opponent.trim()) {
       toast.error("Skriv modstanderens navn");
       return;
     }
     setBusy(true);
+
+    // Hold uden grupper får automatisk en standardgruppe, så kampe altid hører til én gruppe.
+    let groupId = groups.length > 1 ? createGroupId : (groups[0]?.id ?? "");
+    if (!groupId) {
+      const { data: createdGroup, error: groupError } = await supabase
+        .from("match_groups")
+        .insert({ team_id: teamId, name: "Standard" })
+        .select("id")
+        .single();
+      if (groupError || !createdGroup) {
+        setBusy(false);
+        toast.error(groupError?.message ?? "Kunne ikke oprette gruppen");
+        return;
+      }
+      groupId = createdGroup.id;
+    }
+
     const { data: created, error } = await supabase
       .from("matches")
       .insert({
@@ -143,6 +258,7 @@ function KampePage() {
         played_at: new Date(playedAt).toISOString(),
         voting_closes_at: new Date(closesAt).toISOString(),
         created_by: user.id,
+        group_id: groupId,
       })
       .select("id")
       .single();
@@ -185,11 +301,35 @@ function KampePage() {
           </p>
         </div>
         {isAdmin && (
-          <Button onClick={openCreate}>
-            <CalendarPlus className="mr-2 h-4 w-4" /> Opret kamp
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setGroupsOpen(true)}>
+              <Layers className="mr-2 h-4 w-4" /> Grupper
+            </Button>
+            <Button onClick={openCreate}>
+              <CalendarPlus className="mr-2 h-4 w-4" /> Opret kamp
+            </Button>
+          </div>
         )}
       </div>
+
+      {multiGroup && (
+        <div className="flex flex-wrap gap-2">
+          {groups.map((group) => (
+            <button
+              key={group.id}
+              type="button"
+              onClick={() => setActiveGroupId(group.id)}
+              className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
+                group.id === selectedGroupId
+                  ? "border-transparent bg-pitch text-pitch-foreground"
+                  : "bg-card text-muted-foreground hover:bg-secondary"
+              }`}
+            >
+              {group.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {leaderboard.length > 0 && (
         <section className="rounded-2xl border bg-card p-5 shadow-card">
@@ -198,7 +338,9 @@ function KampePage() {
             <h2 className="font-display text-xl font-semibold">Kampens spiller — samlet stilling</h2>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            Samlede stemmer fra alle holdets kampe — alle stemmer er anonyme.
+            {multiGroup
+              ? "Samlede stemmer fra gruppens kampe — alle stemmer er anonyme."
+              : "Samlede stemmer fra alle holdets kampe — alle stemmer er anonyme."}
           </p>
           <ul className="mt-4 space-y-3">
             {leaderboard.slice(0, 10).map((entry, index) => (
@@ -238,7 +380,7 @@ function KampePage() {
 
       <section className="space-y-3">
         <h2 className="font-display text-xl font-semibold">Alle kampe</h2>
-        {matches.length === 0 ? (
+        {visibleMatches.length === 0 ? (
           <div className="rounded-2xl border bg-card p-10 text-center shadow-card">
             <p className="text-sm text-muted-foreground">
               {isAdmin
@@ -248,7 +390,7 @@ function KampePage() {
           </div>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
-            {matches.map((match) => {
+            {visibleMatches.map((match) => {
               const votingOpen =
                 match.status === "open" && new Date(match.voting_closes_at) > new Date();
               return (
@@ -280,6 +422,91 @@ function KampePage() {
         )}
       </section>
 
+      <Dialog open={groupsOpen} onOpenChange={setGroupsOpen}>
+        <DialogContent>
+          <div className="space-y-1.5">
+            <DialogTitle>Grupper</DialogTitle>
+            <DialogDescription>
+              Opret grupper, hvis holdet skal have separate afstemninger for forskellige trupper.
+              Alle holdets spillere kan stadig vælges og stemme i alle grupper.
+            </DialogDescription>
+          </div>
+          <div className="space-y-3">
+            {groups.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Ingen grupper oprettet endnu.</p>
+            ) : (
+              <ul className="space-y-2">
+                {groups.map((group) => (
+                  <li
+                    key={group.id}
+                    className="flex items-center gap-2 rounded-xl border px-3 py-2"
+                  >
+                    {renameId === group.id ? (
+                      <>
+                        <Input
+                          value={renamevalue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          className="h-8"
+                        />
+                        <Button
+                          size="sm"
+                          disabled={groupBusy || !renamevalue.trim()}
+                          onClick={() => handleRenameGroup(group.id)}
+                        >
+                          Gem
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setRenameId(null)}>
+                          Annuller
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="flex-1 truncate text-sm font-medium">{group.name}</span>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          aria-label="Omdøb gruppe"
+                          onClick={() => {
+                            setRenameId(group.id);
+                            setRenameValue(group.name);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          aria-label="Slet gruppe"
+                          disabled={groupBusy}
+                          onClick={() => handleDeleteGroup(group.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex items-center gap-2">
+              <Input
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                placeholder="Fx Serie 1"
+              />
+              <Button disabled={groupBusy || !newGroupName.trim()} onClick={handleCreateGroup}>
+                <Plus className="mr-1 h-4 w-4" /> Opret gruppe
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGroupsOpen(false)}>
+              Luk
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <div className="space-y-1.5">
@@ -290,6 +517,23 @@ function KampePage() {
             </DialogDescription>
           </div>
           <div className="space-y-4">
+            {groups.length > 1 && (
+              <div className="space-y-2">
+                <Label>Gruppe</Label>
+                <Select value={createGroupId} onValueChange={setCreateGroupId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Vælg gruppe" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {groups.map((group) => (
+                      <SelectItem key={group.id} value={group.id}>
+                        {group.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="opponent">Modstander</Label>
               <Input
@@ -363,7 +607,10 @@ function KampePage() {
             <Button variant="outline" onClick={() => setCreateOpen(false)}>
               Annuller
             </Button>
-            <Button onClick={handleCreate} disabled={busy || !opponent.trim()}>
+            <Button
+              onClick={handleCreate}
+              disabled={busy || !opponent.trim() || (groups.length > 1 && !createGroupId)}
+            >
               Opret kamp
             </Button>
           </DialogFooter>

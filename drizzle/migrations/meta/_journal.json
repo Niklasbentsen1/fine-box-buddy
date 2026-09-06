@@ -15,6 +15,13 @@
       "when": 1788692998734,
       "tag": "0001_leave_team_last_admin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788694859408,
+      "tag": "0002_match_groups",
+      "breakpoints": true
     }
   ]
 }
