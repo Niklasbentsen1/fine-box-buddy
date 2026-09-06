@@ -23,7 +23,7 @@ import { useTeam, useTeamInviteCode } from "@/lib/team";
 import { APP_DOWNLOAD_URL } from "@/lib/app-links";
 import { fetchTeamMembers } from "@/lib/api";
 import { firstName, formatDate, formatKr, sumAmounts } from "@/lib/format";
-import { StatCard } from "@/components/stat-card";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
