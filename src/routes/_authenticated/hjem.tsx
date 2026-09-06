@@ -333,22 +333,73 @@ function HjemPage() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard
-          label={credit > 0 ? "Til gode" : "Du skylder"}
-          value={credit > 0 ? `+${formatKr(credit)}` : formatKr(owed)}
-          icon={credit > 0 ? HandCoins : CircleAlert}
-          tone={credit > 0 ? "pitch" : owed > 0 ? "red" : "pitch"}
-        />
-        <StatCard label="Modtagne bøder" value={formatKr(finesTotal)} icon={Ticket} tone="gold" />
-        <StatCard label="Indbetalt" value={formatKr(approvedTotal)} icon={PiggyBank} tone="pitch" />
-        <StatCard
-          label="Afventer"
-          value={formatKr(pendingTotal)}
-          icon={Clock}
-          tone="navy"
-          hint="Afventer admin-godkendelse"
-        />
+      <div className="rounded-2xl border bg-card p-4 shadow-card">
+        <div className="grid grid-cols-2 gap-y-1">
+          {/* Du skylder / Til gode */}
+          <div className="flex items-center gap-3 border-b border-border/60 p-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-pitch-soft text-pitch">
+              {credit > 0 ? <HandCoins className="h-5 w-5" /> : <CircleAlert className="h-5 w-5" />}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {credit > 0 ? "Til gode" : "Du skylder"}
+              </p>
+              <p
+                className={`font-display text-2xl font-semibold leading-tight ${
+                  credit > 0 || owed === 0 ? "text-pitch" : "text-destructive"
+                }`}
+              >
+                {credit > 0 ? `+${formatKr(credit)}` : formatKr(owed)}
+              </p>
+            </div>
+          </div>
+
+          {/* Modtagne bøder */}
+          <div className="flex items-center gap-3 border-b border-border/60 border-l border-l-border/60 p-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold-soft text-gold-foreground">
+              <Ticket className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Modtagne bøder
+              </p>
+              <p className="font-display text-2xl font-semibold leading-tight">
+                {formatKr(finesTotal)}
+              </p>
+            </div>
+          </div>
+
+          {/* Indbetalt */}
+          <div className="flex items-center gap-3 p-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-pitch-soft text-pitch">
+              <PiggyBank className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Indbetalt
+              </p>
+              <p className="font-display text-2xl font-semibold leading-tight">
+                {formatKr(approvedTotal)}
+              </p>
+            </div>
+          </div>
+
+          {/* Afventer */}
+          <div className="flex items-center gap-3 border-l border-l-border/60 p-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Clock className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Afventer
+              </p>
+              <p className="font-display text-2xl font-semibold leading-tight">
+                {formatKr(pendingTotal)}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">Afventer admin-godkendelse</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {isAdmin && pendingPayments.length > 0 && (
