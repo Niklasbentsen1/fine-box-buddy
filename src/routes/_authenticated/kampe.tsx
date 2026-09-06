@@ -201,7 +201,7 @@ function KampePage() {
   };
 
   const handleRenameGroup = async (id: string) => {
-    const name = renamevalueTrim();
+    const name = renamevalue.trim();
     if (!name) return;
     setGroupBusy(true);
     const { error } = await supabase.from("match_groups").update({ name }).eq("id", id);
@@ -214,10 +214,6 @@ function KampePage() {
     setRenameValue("");
     await queryClient.invalidateQueries({ queryKey: ["team", teamId, "match-groups"] });
   };
-
-  function renamevalueTrim() {
-    return renamevalue.trim();
-  }
 
   const handleDeleteGroup = async (id: string) => {
     setGroupBusy(true);
