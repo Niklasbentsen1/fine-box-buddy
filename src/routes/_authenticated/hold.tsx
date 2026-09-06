@@ -91,6 +91,9 @@ function HoldPage() {
   const [fineAmountEdit, setFineAmountEdit] = useState("");
   const [fineCount, setFineCount] = useState("1");
   const [givingFine, setGivingFine] = useState(false);
+  const [leaveAdminOpen, setLeaveAdminOpen] = useState(false);
+  const [successorId, setSuccessorId] = useState("");
+  const [leaveBusy, setLeaveBusy] = useState(false);
   const { confirm, confirmDialog } = useConfirm();
 
   const { data: members = [] } = useQuery({
