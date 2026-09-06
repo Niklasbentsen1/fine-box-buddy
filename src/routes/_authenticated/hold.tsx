@@ -518,7 +518,7 @@ function HoldPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="space-y-3">
         <StatCard
           label="Kassens saldo"
           value={formatKr(cashBalance)}
@@ -533,14 +533,15 @@ function HoldPage() {
               .join(" · ") || undefined
           }
         />
-        <StatCard label="Givne bøder" value={formatKr(finesTotal)} icon={Ticket} tone="gold" />
-        <StatCard
-          label="Manglende indbetalinger"
-          value={formatKr(outstandingTotal)}
-          icon={BellRing}
-          tone={outstandingTotal > 0 ? "red" : "navy"}
-        />
-        <StatCard label="Indbetalt" value={formatKr(paidTotal)} icon={HandCoins} tone="navy" />
+        <div className="grid grid-cols-2 gap-3">
+          <StatCard label="Givne bøder" value={formatKr(finesTotal)} icon={Ticket} tone="gold" />
+          <StatCard
+            label="Manglende indbetalinger"
+            value={formatKr(outstandingTotal)}
+            icon={BellRing}
+            tone={outstandingTotal > 0 ? "red" : "navy"}
+          />
+        </div>
       </div>
 
       <section className="rounded-2xl border bg-card p-5 shadow-card">
@@ -591,9 +592,6 @@ function HoldPage() {
                 >
                   {m.credit > 0 ? `+${formatKr(m.credit)}` : formatKr(m.owed)}
                 </Badge>
-                {m.credit > 0 && (
-                  <p className="mt-0.5 text-[11px] font-medium text-muted-foreground">Til gode</p>
-                )}
               </div>
               {isAdmin && m.userId !== user.id && (
                 <DropdownMenu>

@@ -184,6 +184,8 @@ function HjemPage() {
   const approvedTotal = sumAmounts(myPayments.filter((p) => p.status === "approved"));
   const pendingTotal = sumAmounts(myPayments.filter((p) => p.status === "pending"));
   const owed = Math.max(0, finesTotal - approvedTotal);
+  // Tilgodehavende: indbetalt mere end skyldigt (positiv saldo)
+  const credit = Math.max(0, approvedTotal - finesTotal);
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["team", teamId] });
 
@@ -333,10 +335,10 @@ function HjemPage() {
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
-          label="Du skylder"
-          value={formatKr(owed)}
-          icon={CircleAlert}
-          tone={owed > 0 ? "red" : "pitch"}
+          label={credit > 0 ? "Til gode" : "Du skylder"}
+          value={credit > 0 ? `+${formatKr(credit)}` : formatKr(owed)}
+          icon={credit > 0 ? HandCoins : CircleAlert}
+          tone={credit > 0 ? "pitch" : owed > 0 ? "red" : "pitch"}
         />
         <StatCard label="Modtagne bøder" value={formatKr(finesTotal)} icon={Ticket} tone="gold" />
         <StatCard label="Indbetalt" value={formatKr(approvedTotal)} icon={PiggyBank} tone="pitch" />
