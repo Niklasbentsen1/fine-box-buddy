@@ -754,6 +754,54 @@ function HoldPage() {
         )}
       </section>
 
+      <Dialog open={leaveAdminOpen} onOpenChange={setLeaveAdminOpen}>
+        <DialogContent>
+          <div className="space-y-1.5">
+            <DialogTitle>Du er den eneste administrator</DialogTitle>
+            <DialogDescription>
+              {otherMembers.length > 0
+                ? "Vælg hvem der skal overtage administratorrollen, før du kan forlade holdet."
+                : `Du er holdets eneste medlem. Forlader du ${current.teamName}, bliver holdet og dets data slettet permanent.`}
+            </DialogDescription>
+          </div>
+          {otherMembers.length > 0 && (
+            <div className="space-y-2">
+              <Label>Ny administrator</Label>
+              <Select value={successorId} onValueChange={setSuccessorId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Vælg spiller" />
+                </SelectTrigger>
+                <SelectContent>
+                  {otherMembers.map((m) => (
+                    <SelectItem key={m.userId} value={m.userId}>
+                      {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLeaveAdminOpen(false)}>
+              Annuller
+            </Button>
+            {otherMembers.length > 0 ? (
+              <Button
+                variant="destructive"
+                disabled={!successorId || leaveBusy}
+                onClick={handleTransferAndLeave}
+              >
+                Overdrag og forlad holdet
+              </Button>
+            ) : (
+              <Button variant="destructive" disabled={leaveBusy} onClick={handleLeaveAndDeleteTeam}>
+                Forlad og slet holdet
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
         <DialogContent>
           <div className="space-y-1.5">
