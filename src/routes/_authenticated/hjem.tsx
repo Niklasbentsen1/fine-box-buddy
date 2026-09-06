@@ -184,6 +184,8 @@ function HjemPage() {
   const approvedTotal = sumAmounts(myPayments.filter((p) => p.status === "approved"));
   const pendingTotal = sumAmounts(myPayments.filter((p) => p.status === "pending"));
   const owed = Math.max(0, finesTotal - approvedTotal);
+  // Tilgodehavende: indbetalt mere end skyldigt (positiv saldo)
+  const credit = Math.max(0, approvedTotal - finesTotal);
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["team", teamId] });
 
