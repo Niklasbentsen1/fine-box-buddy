@@ -353,7 +353,61 @@ function HoldPage() {
     await refresh();
   };
 
+  const otherMembers = members.filter((m) => m.userId !== user.id);
+  const isOnlyAdmin =
+    isAdmin && members.filter((m) => m.role === "admin" && m.userId !== user.id).length === 0;
+
+  const handleTransferAndLeave = async () => {
+    if (!successorId) return;
+    setLeaveBusy(true);
+    const { error } = await supabase.rpc("leave_team_as_last_admin", {
+      _team_id: teamId,
+      _new_admin_id: successorId,
+    });
+    setLeaveBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setLeaveAdminOpen(false);
+    setSuccessorId("");
+    toast.success("Administratorrollen er overdraget, og du har forladt holdet");
+    await refresh();
+    await refreshMemberships();
+    navigate({ to: "/hjem" });
+  };
+
+  const handleLeaveAndDeleteTeam = async () => {
+    const ok = await confirm({
+      title: `Slet ${current.teamName}?`,
+      description:
+        "Du er holdets eneste medlem og administrator. Forlader du holdet, bliver holdet og dets data slettet permanent.",
+      confirmLabel: "Forlad og slet holdet",
+    });
+    if (!ok) return;
+    setLeaveBusy(true);
+    const { error } = await supabase.rpc("leave_team_as_last_admin", {
+      _team_id: teamId,
+      _new_admin_id: null,
+    });
+    setLeaveBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setLeaveAdminOpen(false);
+    toast.success("Holdet er slettet, og du har forladt det");
+    await refresh();
+    await refreshMemberships();
+    navigate({ to: "/hjem" });
+  };
+
   const handleRequestLeave = async () => {
+    if (isOnlyAdmin) {
+      setSuccessorId("");
+      setLeaveAdminOpen(true);
+      return;
+    }
     const ok = await confirm({
       title: `Forlad ${current.teamName}?`,
       description:
