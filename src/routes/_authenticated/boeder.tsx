@@ -117,6 +117,14 @@ function BoederPage() {
         return list.sort((a, b) => a.label.localeCompare(b.label, "da"));
       case "label-desc":
         return list.sort((a, b) => b.label.localeCompare(a.label, "da"));
+      case "name-asc":
+        return list.sort((a, b) =>
+          (a.profiles?.display_name ?? "").localeCompare(b.profiles?.display_name ?? "", "da"),
+        );
+      case "name-desc":
+        return list.sort((a, b) =>
+          (b.profiles?.display_name ?? "").localeCompare(a.profiles?.display_name ?? "", "da"),
+        );
       case "newest":
       default:
         return list.sort(
@@ -183,67 +191,8 @@ function BoederPage() {
     await refresh();
   };
 
-  const toggleAssignMember = (userId: string) => {
-    setAssignMembers((prev) =>
-      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId],
-    );
-  };
 
-  const handleAssign = async () => {
-    if (!openType || assignMembers.length === 0) {
-      toast.error("Vælg mindst én spiller");
-      return;
-    }
-    const value = Number(assignAmount.replace(",", "."));
-    if (!Number.isFinite(value) || value <= 0) {
-      toast.error("Beløbet skal være større end 0 kr.");
-      return;
-    }
-    const count = Number(assignCount);
-    if (!Number.isInteger(count) || count < 1 || count > 50) {
-      toast.error("Antal skal være et helt tal mellem 1 og 50");
-      return;
-    }
-    const playerText =
-      assignMembers.length === 1 ? "1 spiller" : `${assignMembers.length} spillere`;
-    const ok = await confirm({
-      title: "Tildel bøde?",
-      description: `Du er ved at tildele ${count} × ${openType.label} (${formatKr(
-        value,
-      )}) til ${playerText} — i alt ${formatKr(value * count * assignMembers.length)}.`,
-      confirmLabel: "Tildel bøde",
-      cancelLabel: "Fortryd",
-      destructive: false,
-    });
-    if (!ok) return;
-    setBusy(true);
-    // Én samlet indsættelse: enten oprettes alle bøder, eller ingen.
-    const rows = assignMembers.flatMap((userId) =>
-      Array.from({ length: count }, () => ({
-        team_id: teamId,
-        user_id: userId,
-        fine_type_id: openType.id,
-        label: openType.label,
-        amount: value,
-        created_by: user.id,
-      })),
-    );
-    const { error } = await supabase.from("fines").insert(rows);
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    const perPlayer = count > 1 ? `${count} bøder á ${formatKr(value)}` : "Bøde";
-    toast.success(
-      assignMembers.length === 1
-        ? `${perPlayer} tildelt til ${members.find((m) => m.userId === assignMembers[0])?.name ?? "spilleren"}`
-        : `${perPlayer} tildelt til ${playerText}`,
-    );
-    setOpenType(null);
-    setAssignMembers([]);
-    await refresh();
-  };
+
 
 
   return (
