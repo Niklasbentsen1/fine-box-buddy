@@ -273,7 +273,7 @@ function HjemPage() {
           <HandCoins className="mr-2 h-4 w-4" /> Indbetal
         </Button>
         {isAdmin && (
-          <Button variant="gold" className="w-full" onClick={() => setFineOpen(true)}>
+          <Button variant="gold" className="w-full" onClick={() => setFinePickerOpen(true)}>
             <Ticket className="mr-2 h-4 w-4" /> Uddel bøde
           </Button>
         )}
@@ -564,97 +564,53 @@ function HjemPage() {
       </Dialog>
 
 
-      <Dialog open={fineOpen} onOpenChange={setFineOpen}>
+      <Dialog open={finePickerOpen} onOpenChange={setFinePickerOpen}>
         <DialogContent>
           <div className="space-y-1.5">
             <DialogTitle>Uddel bøde</DialogTitle>
             <DialogDescription>
-              Giv en bøde til et medlem af {current.teamName}.
+              Vælg en bødesats — derefter vælger du spillerne, beløb og antal.
             </DialogDescription>
           </div>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Medlem</Label>
-              <Select value={fineMember} onValueChange={setFineMember}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Vælg medlem" />
-                </SelectTrigger>
-                <SelectContent>
-                  {members.map((m) => (
-                    <SelectItem key={m.userId} value={m.userId}>
-                      {m.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Bøde</Label>
-              <Select
-                value={fineTypeId}
-                onValueChange={(v) => {
-                  setFineTypeId(v);
-                  const preset = fineTypes.find((t) => t.id === v);
-                  setFineAmount(preset ? String(Number(preset.amount)) : "");
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Vælg bøde" />
-                </SelectTrigger>
-                <SelectContent>
-                  {fineTypes.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.label} · {formatKr(Number(t.amount))}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="custom">Anden bøde…</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {fineTypeId === "custom" && (
-              <div className="space-y-2">
-                <Label htmlFor="fine-label">Beskrivelse</Label>
-                <Input
-                  id="fine-label"
-                  value={fineLabel}
-                  onChange={(e) => setFineLabel(e.target.value)}
-                  placeholder="Fx Glemt støvler"
-                />
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="fine-amount">Beløb (kr.)</Label>
-                <Input
-                  id="fine-amount"
-                  inputMode="decimal"
-                  value={fineAmount}
-                  onChange={(e) => setFineAmount(e.target.value)}
-                  placeholder="Fx 20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="fine-count">Antal</Label>
-                <Input
-                  id="fine-count"
-                  inputMode="numeric"
-                  value={fineCount}
-                  onChange={(e) => setFineCount(e.target.value.replace(/[^0-9]/g, ""))}
-                />
-              </div>
-            </div>
-
-          </div>
+          {fineTypes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Holdet har ikke oprettet bødesatser endnu. Opret dem under Bøder.
+            </p>
+          ) : (
+            <ul className="grid gap-2">
+              {fineTypes.map((type) => (
+                <li
+                  key={type.id}
+                  onClick={() => {
+                    setFinePickerOpen(false);
+                    setAssignType(type);
+                  }}
+                  className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border bg-background px-4 py-3 transition-colors hover:bg-muted/40"
+                >
+                  <p className="truncate text-sm font-medium">{type.label}</p>
+                  <Badge variant="gold">{formatKr(Number(type.amount))}</Badge>
+                </li>
+              ))}
+            </ul>
+          )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFineOpen(false)}>
+            <Button variant="outline" onClick={() => setFinePickerOpen(false)}>
               Annuller
-            </Button>
-            <Button variant="gold" onClick={handleGiveFine} disabled={busy}>
-              Giv bøde
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AssignFineDialog
+        open={!!assignType}
+        onOpenChange={(open) => !open && setAssignType(null)}
+        fineType={assignType}
+        members={members}
+        teamId={teamId}
+        teamName={current.teamName}
+        userId={user.id}
+        onAssigned={refresh}
+      />
 
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent>
