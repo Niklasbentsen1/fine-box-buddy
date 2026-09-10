@@ -572,19 +572,21 @@ function HjemPage() {
             </p>
           ) : (
             <ul className="grid gap-2">
-              {fineTypes.map((type) => (
-                <li
-                  key={type.id}
-                  onClick={() => {
-                    setFinePickerOpen(false);
-                    setAssignType(type);
-                  }}
-                  className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border bg-background px-4 py-3 transition-colors hover:bg-muted/40"
-                >
-                  <p className="truncate text-sm font-medium">{type.label}</p>
-                  <Badge variant="gold">{formatKr(Number(type.amount))}</Badge>
-                </li>
-              ))}
+              {[...fineTypes]
+                .sort((a, b) => a.label.localeCompare(b.label, "da"))
+                .map((type) => (
+                  <li
+                    key={type.id}
+                    onClick={() => {
+                      setFinePickerOpen(false);
+                      setAssignType(type);
+                    }}
+                    className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border bg-background px-4 py-3 transition-colors hover:bg-muted/40"
+                  >
+                    <p className="truncate text-sm font-medium">{type.label}</p>
+                    <Badge variant="gold">{formatKr(Number(type.amount))}</Badge>
+                  </li>
+                ))}
             </ul>
           )}
           <DialogFooter>

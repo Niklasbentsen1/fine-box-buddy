@@ -58,6 +58,8 @@ type SortOption =
   | "name-asc"
   | "name-desc";
 
+type TypeSortOption = "price-asc" | "price-desc" | "label-asc" | "label-desc";
+
 function BoederPage() {
   const { user, current, isAdmin } = useTeam();
   const queryClient = useQueryClient();
@@ -68,6 +70,7 @@ function BoederPage() {
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [typeSortBy, setTypeSortBy] = useState<TypeSortOption>("price-asc");
   const [openType, setOpenType] = useState<FineTypeRow | null>(null);
   const { confirm, confirmDialog } = useConfirm();
 
@@ -105,6 +108,21 @@ function BoederPage() {
       return (data ?? []) as unknown as FineRow[];
     },
   });
+
+  const sortedFineTypes = useMemo(() => {
+    const list = [...fineTypes];
+    switch (typeSortBy) {
+      case "label-asc":
+        return list.sort((a, b) => a.label.localeCompare(b.label, "da"));
+      case "label-desc":
+        return list.sort((a, b) => b.label.localeCompare(a.label, "da"));
+      case "price-desc":
+        return list.sort((a, b) => b.amount - a.amount);
+      case "price-asc":
+      default:
+        return list.sort((a, b) => a.amount - b.amount);
+    }
+  }, [fineTypes, typeSortBy]);
 
   const sortedFines = useMemo(() => {
     const list = [...fines];
@@ -212,7 +230,23 @@ function BoederPage() {
       </div>
 
       <section className="rounded-2xl border bg-card p-5 shadow-card">
-        <h2 className="font-display text-xl font-semibold">Bødesatser</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-xl font-semibold">Bødesatser</h2>
+          {fineTypes.length > 0 && (
+            <Select value={typeSortBy} onValueChange={(v) => setTypeSortBy(v as TypeSortOption)}>
+              <SelectTrigger className="w-auto min-w-[10rem] gap-2" aria-label="Sortér bødesatser">
+                <ArrowUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <SelectValue placeholder="Sortér" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="label-asc">Alfabetisk A-Å</SelectItem>
+                <SelectItem value="label-desc">Alfabetisk Å-A</SelectItem>
+                <SelectItem value="price-desc">Værdi: høj til lav</SelectItem>
+                <SelectItem value="price-asc">Værdi: lav til høj</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        </div>
         {fineTypes.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">
             {isAdmin
@@ -221,7 +255,7 @@ function BoederPage() {
           </p>
         ) : (
           <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-            {fineTypes.map((type) => (
+            {sortedFineTypes.map((type) => (
               <li
                 key={type.id}
                 onClick={() => {
