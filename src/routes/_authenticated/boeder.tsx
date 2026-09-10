@@ -1,17 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpDown, Plus, Ticket, Trash2, UserPlus } from "lucide-react";
+import { ArrowUpDown, Plus, Ticket, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useTeam } from "@/lib/team";
 import { fetchTeamMembers } from "@/lib/api";
+import { AssignFineDialog } from "@/components/assign-fine-dialog";
 import { useConfirm } from "@/components/confirm-dialog";
 import { formatDate, formatKr } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -49,7 +49,14 @@ type FineRow = {
   profiles: { display_name: string } | null;
 };
 
-type SortOption = "newest" | "price-asc" | "price-desc" | "label-asc" | "label-desc";
+type SortOption =
+  | "newest"
+  | "price-asc"
+  | "price-desc"
+  | "label-asc"
+  | "label-desc"
+  | "name-asc"
+  | "name-desc";
 
 function BoederPage() {
   const { user, current, isAdmin } = useTeam();
@@ -62,9 +69,6 @@ function BoederPage() {
   const [busy, setBusy] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [openType, setOpenType] = useState<FineTypeRow | null>(null);
-  const [assignMembers, setAssignMembers] = useState<string[]>([]);
-  const [assignAmount, setAssignAmount] = useState("");
-  const [assignCount, setAssignCount] = useState("1");
   const { confirm, confirmDialog } = useConfirm();
 
   const { data: fineTypes = [] } = useQuery({
@@ -113,6 +117,14 @@ function BoederPage() {
         return list.sort((a, b) => a.label.localeCompare(b.label, "da"));
       case "label-desc":
         return list.sort((a, b) => b.label.localeCompare(a.label, "da"));
+      case "name-asc":
+        return list.sort((a, b) =>
+          (a.profiles?.display_name ?? "").localeCompare(b.profiles?.display_name ?? "", "da"),
+        );
+      case "name-desc":
+        return list.sort((a, b) =>
+          (b.profiles?.display_name ?? "").localeCompare(a.profiles?.display_name ?? "", "da"),
+        );
       case "newest":
       default:
         return list.sort(
@@ -179,67 +191,8 @@ function BoederPage() {
     await refresh();
   };
 
-  const toggleAssignMember = (userId: string) => {
-    setAssignMembers((prev) =>
-      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId],
-    );
-  };
 
-  const handleAssign = async () => {
-    if (!openType || assignMembers.length === 0) {
-      toast.error("Vælg mindst én spiller");
-      return;
-    }
-    const value = Number(assignAmount.replace(",", "."));
-    if (!Number.isFinite(value) || value <= 0) {
-      toast.error("Beløbet skal være større end 0 kr.");
-      return;
-    }
-    const count = Number(assignCount);
-    if (!Number.isInteger(count) || count < 1 || count > 50) {
-      toast.error("Antal skal være et helt tal mellem 1 og 50");
-      return;
-    }
-    const playerText =
-      assignMembers.length === 1 ? "1 spiller" : `${assignMembers.length} spillere`;
-    const ok = await confirm({
-      title: "Tildel bøde?",
-      description: `Du er ved at tildele ${count} × ${openType.label} (${formatKr(
-        value,
-      )}) til ${playerText} — i alt ${formatKr(value * count * assignMembers.length)}.`,
-      confirmLabel: "Tildel bøde",
-      cancelLabel: "Fortryd",
-      destructive: false,
-    });
-    if (!ok) return;
-    setBusy(true);
-    // Én samlet indsættelse: enten oprettes alle bøder, eller ingen.
-    const rows = assignMembers.flatMap((userId) =>
-      Array.from({ length: count }, () => ({
-        team_id: teamId,
-        user_id: userId,
-        fine_type_id: openType.id,
-        label: openType.label,
-        amount: value,
-        created_by: user.id,
-      })),
-    );
-    const { error } = await supabase.from("fines").insert(rows);
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    const perPlayer = count > 1 ? `${count} bøder á ${formatKr(value)}` : "Bøde";
-    toast.success(
-      assignMembers.length === 1
-        ? `${perPlayer} tildelt til ${members.find((m) => m.userId === assignMembers[0])?.name ?? "spilleren"}`
-        : `${perPlayer} tildelt til ${playerText}`,
-    );
-    setOpenType(null);
-    setAssignMembers([]);
-    await refresh();
-  };
+
 
 
   return (
@@ -272,9 +225,6 @@ function BoederPage() {
               <li
                 key={type.id}
                 onClick={() => {
-                  setAssignMembers([]);
-                  setAssignAmount(String(Number(type.amount)));
-                  setAssignCount("1");
                   setOpenType(type);
                 }}
                 className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border bg-background px-4 py-3 transition-colors hover:bg-muted/40"
@@ -316,6 +266,8 @@ function BoederPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="newest">Nyeste først</SelectItem>
+              <SelectItem value="name-asc">Navn A-Å</SelectItem>
+              <SelectItem value="name-desc">Navn Å-A</SelectItem>
               <SelectItem value="price-asc">Pris: lav til høj</SelectItem>
               <SelectItem value="price-desc">Pris: høj til lav</SelectItem>
               <SelectItem value="label-asc">Alfabetisk A-Å</SelectItem>
@@ -391,109 +343,16 @@ function BoederPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!openType} onOpenChange={(open) => !open && setOpenType(null)}>
-        <DialogContent>
-          <div className="space-y-1.5">
-            <DialogTitle>{openType?.label}</DialogTitle>
-            <DialogDescription>
-              Bødesats på {openType ? formatKr(Number(openType.amount)) : ""} for{" "}
-              {current.teamName}.
-            </DialogDescription>
-          </div>
-          {isAdmin ? (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <Label>Tildel til spillere</Label>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setAssignMembers(members.map((m) => m.userId))}
-                      className="text-xs font-medium text-primary hover:underline"
-                    >
-                      Vælg alle
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAssignMembers([])}
-                      className="text-xs font-medium text-muted-foreground hover:underline"
-                    >
-                      Fravælg alle
-                    </button>
-                  </div>
-                </div>
-                <ul className="max-h-48 space-y-1 overflow-y-auto rounded-xl border p-2">
-                  {members.map((m) => {
-                    const checked = assignMembers.includes(m.userId);
-                    return (
-                      <li key={m.userId}>
-                        <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted/40">
-                          <Checkbox
-                            checked={checked}
-                            onCheckedChange={() => toggleAssignMember(m.userId)}
-                            aria-label={`Vælg ${m.name}`}
-                          />
-                          <span className="text-sm">{m.name}</span>
-                        </label>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <p className="text-xs text-muted-foreground">
-                  {assignMembers.length === 0
-                    ? "Ingen spillere valgt"
-                    : assignMembers.length === 1
-                      ? "1 spiller valgt"
-                      : `${assignMembers.length} spillere valgt`}
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="assign-amount">Beløb (kr.)</Label>
-                  <Input
-                    id="assign-amount"
-                    inputMode="decimal"
-                    value={assignAmount}
-                    onChange={(e) => setAssignAmount(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="assign-count">Antal</Label>
-                  <Input
-                    id="assign-count"
-                    inputMode="numeric"
-                    value={assignCount}
-                    onChange={(e) => setAssignCount(e.target.value.replace(/[^0-9]/g, ""))}
-                  />
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                I alt:{" "}
-                {formatKr(
-                  Math.max(0, Number(assignAmount.replace(",", ".")) || 0) *
-                    Math.max(0, Number(assignCount) || 0) *
-                    assignMembers.length,
-                )}
-              </p>
-            </div>
-          ) : (
-
-            <p className="text-sm text-muted-foreground">
-              Kun administratorer kan tildele bøder.
-            </p>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenType(null)}>
-              Luk
-            </Button>
-            {isAdmin && (
-              <Button onClick={handleAssign} disabled={busy || assignMembers.length === 0}>
-                <UserPlus className="mr-2 h-4 w-4" /> Tildel bøde
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AssignFineDialog
+        open={!!openType}
+        onOpenChange={(open) => !open && setOpenType(null)}
+        fineType={openType}
+        members={members}
+        teamId={teamId}
+        teamName={current.teamName}
+        userId={user.id}
+        onAssigned={refresh}
+      />
 
       {confirmDialog}
     </div>
