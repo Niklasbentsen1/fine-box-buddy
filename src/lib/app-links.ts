@@ -5,8 +5,8 @@
  * ikke ved om modtageren har iPhone eller Android.
  */
 
-/** Erstat med den endelige App Store URL, når appen er godkendt. */
-export const APP_STORE_URL = "https://apps.apple.com/dk/app/finebuddy/id0000000000";
+/** App Store URL for appen. */
+export const APP_STORE_URL = "https://apps.apple.com/dk/app/finebuddy/id6798158347";
 
 /** Google Play URL for Android-versionen. */
 export const GOOGLE_PLAY_URL = "https://play.google.com/store/apps/details?id=app.boedekassen";
