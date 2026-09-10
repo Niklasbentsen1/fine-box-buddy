@@ -104,12 +104,8 @@ function HjemPage() {
   const [payAmount, setPayAmount] = useState("");
   const [payNote, setPayNote] = useState("");
 
-  const [fineOpen, setFineOpen] = useState(false);
-  const [fineMember, setFineMember] = useState("");
-  const [fineTypeId, setFineTypeId] = useState("custom");
-  const [fineLabel, setFineLabel] = useState("");
-  const [fineAmount, setFineAmount] = useState("");
-  const [fineCount, setFineCount] = useState("1");
+  const [finePickerOpen, setFinePickerOpen] = useState(false);
+  const [assignType, setAssignType] = useState<FineTypeRow | null>(null);
   const [busy, setBusy] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
 
@@ -237,56 +233,6 @@ function HjemPage() {
   };
 
 
-  const handleGiveFine = async () => {
-    if (!fineMember) {
-      toast.error("Vælg et medlem");
-      return;
-    }
-    let label = fineLabel.trim();
-    const amount = parseAmount(fineAmount);
-    if (fineTypeId !== "custom") {
-      const preset = fineTypes.find((t) => t.id === fineTypeId);
-      if (preset) label = preset.label;
-    }
-    if (!label || !amount || amount <= 0) {
-      toast.error("Udfyld bøde og beløb");
-      return;
-    }
-    const count = Number(fineCount);
-    if (!Number.isInteger(count) || count < 1 || count > 50) {
-      toast.error("Antal skal være et helt tal mellem 1 og 50");
-      return;
-    }
-    setBusy(true);
-    const rows = Array.from({ length: count }, () => ({
-      team_id: teamId,
-      user_id: fineMember,
-      fine_type_id: fineTypeId !== "custom" ? fineTypeId : null,
-      label,
-      amount,
-      created_by: user.id,
-    }));
-    const { error } = await supabase.from("fines").insert(rows);
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    const member = members.find((m) => m.userId === fineMember);
-    toast.success(
-      count > 1
-        ? `${count} bøder á ${formatKr(amount)} givet til ${member ? firstName(member.name) : "medlemmet"}`
-        : `Bøde givet til ${member ? firstName(member.name) : "medlemmet"}`,
-    );
-    setFineOpen(false);
-    setFineMember("");
-    setFineTypeId("custom");
-    setFineLabel("");
-    setFineAmount("");
-    setFineCount("1");
-    await refresh();
-
-  };
 
   const handleReview = async (paymentId: string, status: "approved" | "rejected") => {
     const { error } = await supabase
