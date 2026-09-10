@@ -225,9 +225,6 @@ function BoederPage() {
               <li
                 key={type.id}
                 onClick={() => {
-                  setAssignMembers([]);
-                  setAssignAmount(String(Number(type.amount)));
-                  setAssignCount("1");
                   setOpenType(type);
                 }}
                 className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border bg-background px-4 py-3 transition-colors hover:bg-muted/40"
@@ -269,6 +266,8 @@ function BoederPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="newest">Nyeste først</SelectItem>
+              <SelectItem value="name-asc">Navn A-Å</SelectItem>
+              <SelectItem value="name-desc">Navn Å-A</SelectItem>
               <SelectItem value="price-asc">Pris: lav til høj</SelectItem>
               <SelectItem value="price-desc">Pris: høj til lav</SelectItem>
               <SelectItem value="label-asc">Alfabetisk A-Å</SelectItem>
