@@ -1,17 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpDown, Plus, Ticket, Trash2, UserPlus } from "lucide-react";
+import { ArrowUpDown, Plus, Ticket, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useTeam } from "@/lib/team";
 import { fetchTeamMembers } from "@/lib/api";
+import { AssignFineDialog } from "@/components/assign-fine-dialog";
 import { useConfirm } from "@/components/confirm-dialog";
 import { formatDate, formatKr } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -49,7 +49,14 @@ type FineRow = {
   profiles: { display_name: string } | null;
 };
 
-type SortOption = "newest" | "price-asc" | "price-desc" | "label-asc" | "label-desc";
+type SortOption =
+  | "newest"
+  | "price-asc"
+  | "price-desc"
+  | "label-asc"
+  | "label-desc"
+  | "name-asc"
+  | "name-desc";
 
 function BoederPage() {
   const { user, current, isAdmin } = useTeam();
@@ -62,9 +69,6 @@ function BoederPage() {
   const [busy, setBusy] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [openType, setOpenType] = useState<FineTypeRow | null>(null);
-  const [assignMembers, setAssignMembers] = useState<string[]>([]);
-  const [assignAmount, setAssignAmount] = useState("");
-  const [assignCount, setAssignCount] = useState("1");
   const { confirm, confirmDialog } = useConfirm();
 
   const { data: fineTypes = [] } = useQuery({
