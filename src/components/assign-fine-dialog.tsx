@@ -73,6 +73,10 @@ export function AssignFineDialog({
   const close = () => onOpenChange(false);
 
   const handleAssign = async () => {
+    if (!isAdmin) {
+      toast.error("Kun administratorer kan uddele bøder");
+      return;
+    }
     if (!fineType || assignMembers.length === 0) {
       toast.error("Vælg mindst én spiller");
       return;
