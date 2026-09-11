@@ -558,7 +558,7 @@ function HjemPage() {
       </Dialog>
 
 
-      <Dialog open={finePickerOpen} onOpenChange={setFinePickerOpen}>
+      <Dialog open={finePickerOpen && isAdmin} onOpenChange={setFinePickerOpen}>
         <DialogContent>
           <div className="space-y-1.5">
             <DialogTitle>Uddel bøde</DialogTitle>
@@ -598,7 +598,7 @@ function HjemPage() {
       </Dialog>
 
       <AssignFineDialog
-        open={!!assignType}
+        open={!!assignType && isAdmin}
         onOpenChange={(open) => !open && setAssignType(null)}
         fineType={assignType}
         members={members}

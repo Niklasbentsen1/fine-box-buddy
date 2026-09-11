@@ -171,6 +171,7 @@ function KampePage() {
     : matches;
 
   const openCreate = () => {
+    if (!isAdmin) return;
     setSelected(new Set(members.map((m) => m.userId)));
     setCreateGroupId(selectedGroupId ?? groups[0]?.id ?? "");
     setCreateOpen(true);
@@ -186,6 +187,7 @@ function KampePage() {
   };
 
   const handleCreateGroup = async () => {
+    if (!isAdmin) return;
     const name = newGroupName.trim();
     if (!name) return;
     setGroupBusy(true);
@@ -201,6 +203,7 @@ function KampePage() {
   };
 
   const handleRenameGroup = async (id: string) => {
+    if (!isAdmin) return;
     const name = renamevalue.trim();
     if (!name) return;
     setGroupBusy(true);
@@ -216,6 +219,7 @@ function KampePage() {
   };
 
   const handleDeleteGroup = async (id: string) => {
+    if (!isAdmin) return;
     setGroupBusy(true);
     const { error } = await supabase.from("match_groups").delete().eq("id", id);
     setGroupBusy(false);
@@ -228,6 +232,7 @@ function KampePage() {
   };
 
   const handleCreate = async () => {
+    if (!isAdmin) return;
     if (!opponent.trim()) {
       toast.error("Skriv modstanderens navn");
       return;
