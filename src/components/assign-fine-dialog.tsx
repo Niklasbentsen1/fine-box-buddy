@@ -3,6 +3,7 @@ import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
+import { useTeam } from "@/lib/team";
 import { useConfirm } from "@/components/confirm-dialog";
 import { formatKr } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,8 @@ export function AssignFineDialog({
   const [assignCount, setAssignCount] = useState("1");
   const [busy, setBusy] = useState(false);
   const { confirm, confirmDialog } = useConfirm();
+  // Kun administratorer må uddele bøder — dialogen må aldrig kunne åbnes af et menigt medlem.
+  const { isAdmin } = useTeam();
 
   // Nulstil felterne, hver gang dialogen åbnes med en (ny) bødesats.
   useEffect(() => {
