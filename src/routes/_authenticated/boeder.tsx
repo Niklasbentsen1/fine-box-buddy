@@ -156,6 +156,7 @@ function BoederPage() {
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["team", teamId] });
 
   const handleAddType = async () => {
+    if (!isAdmin) return;
     const value = Number(amount.replace(",", "."));
     if (!label.trim() || !value || value <= 0) {
       toast.error("Udfyld både bøde og beløb");
@@ -178,6 +179,7 @@ function BoederPage() {
   };
 
   const handleDeleteType = async (id: string, typeLabel: string) => {
+    if (!isAdmin) return;
     const ok = await confirm({
       title: `Slet bødesatsen "${typeLabel}"?`,
       description: "Bødesatsen fjernes fra holdet. Allerede uddelte bøder påvirkes ikke.",
@@ -194,6 +196,7 @@ function BoederPage() {
   };
 
   const handleDeleteFine = async (id: string, fineLabel: string) => {
+    if (!isAdmin) return;
     const ok = await confirm({
       title: `Slet bøden "${fineLabel}"?`,
       description: "Bøden fjernes permanent fra holdets regnskab.",
@@ -259,9 +262,11 @@ function BoederPage() {
               <li
                 key={type.id}
                 onClick={() => {
+                  // Kun administratorer kan åbne tildelingsdialogen.
+                  if (!isAdmin) return;
                   setOpenType(type);
                 }}
-                className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border bg-background px-4 py-3 transition-colors hover:bg-muted/40"
+                className={`flex items-center justify-between gap-3 rounded-xl border bg-background px-4 py-3 transition-colors ${isAdmin ? "cursor-pointer hover:bg-muted/40" : ""}`}
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{type.label}</p>
@@ -378,7 +383,7 @@ function BoederPage() {
       </Dialog>
 
       <AssignFineDialog
-        open={!!openType}
+        open={!!openType && isAdmin}
         onOpenChange={(open) => !open && setOpenType(null)}
         fineType={openType}
         members={members}

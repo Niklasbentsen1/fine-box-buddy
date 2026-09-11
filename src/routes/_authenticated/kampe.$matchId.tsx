@@ -230,6 +230,7 @@ function MatchDetailPage() {
   };
 
   const handleAddPlayers = async () => {
+    if (!isAdmin) return;
     if (selected.size === 0) return;
     setBusy(true);
     const rows = Array.from(selected).map((userId) => ({ match_id: matchId, user_id: userId }));
@@ -246,6 +247,7 @@ function MatchDetailPage() {
   };
 
   const handleRemovePlayer = async (playerId: string, name: string) => {
+    if (!isAdmin) return;
     const ok = await confirm({
       title: `Fjern ${name} fra kampen?`,
       description: "Spilleren fjernes fra kampen og kan ikke længere stemme eller modtage stemmer.",
@@ -262,6 +264,7 @@ function MatchDetailPage() {
   };
 
   const handleCloseVoting = async () => {
+    if (!isAdmin) return;
     const { error } = await supabase
       .from("matches")
       .update({ status: "closed" })
@@ -275,6 +278,7 @@ function MatchDetailPage() {
   };
 
   const handleDeleteMatch = async () => {
+    if (!isAdmin) return;
     const { error } = await supabase.from("matches").delete().eq("id", matchId);
     if (error) {
       toast.error(error.message);

@@ -3,6 +3,7 @@ import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
+import { useTeam } from "@/lib/team";
 import { useConfirm } from "@/components/confirm-dialog";
 import { formatKr } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,8 @@ export function AssignFineDialog({
   const [assignCount, setAssignCount] = useState("1");
   const [busy, setBusy] = useState(false);
   const { confirm, confirmDialog } = useConfirm();
+  // Kun administratorer må uddele bøder — dialogen må aldrig kunne åbnes af et menigt medlem.
+  const { isAdmin } = useTeam();
 
   // Nulstil felterne, hver gang dialogen åbnes med en (ny) bødesats.
   useEffect(() => {
@@ -70,6 +73,10 @@ export function AssignFineDialog({
   const close = () => onOpenChange(false);
 
   const handleAssign = async () => {
+    if (!isAdmin) {
+      toast.error("Kun administratorer kan uddele bøder");
+      return;
+    }
     if (!fineType || assignMembers.length === 0) {
       toast.error("Vælg mindst én spiller");
       return;
@@ -126,7 +133,7 @@ export function AssignFineDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={open && isAdmin} onOpenChange={onOpenChange}>
         <DialogContent>
           <div className="space-y-1.5">
             <DialogTitle>{fineType?.label}</DialogTitle>
@@ -213,7 +220,10 @@ export function AssignFineDialog({
             <Button variant="outline" onClick={close}>
               Luk
             </Button>
-            <Button onClick={handleAssign} disabled={busy || assignMembers.length === 0}>
+            <Button
+              onClick={handleAssign}
+              disabled={busy || !isAdmin || assignMembers.length === 0}
+            >
               <UserPlus className="mr-2 h-4 w-4" /> Tildel bøde
             </Button>
           </DialogFooter>
