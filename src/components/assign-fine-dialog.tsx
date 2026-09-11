@@ -133,7 +133,7 @@ export function AssignFineDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={open && isAdmin} onOpenChange={onOpenChange}>
         <DialogContent>
           <div className="space-y-1.5">
             <DialogTitle>{fineType?.label}</DialogTitle>
@@ -220,7 +220,10 @@ export function AssignFineDialog({
             <Button variant="outline" onClick={close}>
               Luk
             </Button>
-            <Button onClick={handleAssign} disabled={busy || assignMembers.length === 0}>
+            <Button
+              onClick={handleAssign}
+              disabled={busy || !isAdmin || assignMembers.length === 0}
+            >
               <UserPlus className="mr-2 h-4 w-4" /> Tildel bøde
             </Button>
           </DialogFooter>
