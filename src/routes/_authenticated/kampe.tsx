@@ -159,6 +159,11 @@ function KampePage() {
 
   if (!current || !teamId) return null;
 
+  // Spillerlisten ved kampoprettelse vises altid alfabetisk (A-Å).
+  const sortedMembers = [...members].sort((a, b) =>
+    a.name.localeCompare(b.name, "da", { sensitivity: "base" }),
+  );
+
   const leaderboard = leaderboardRows.map((row) => ({
     name: row.display_name ?? "Ukendt",
     votes: Number(row.votes),
@@ -172,7 +177,7 @@ function KampePage() {
 
   const openCreate = () => {
     if (!isAdmin) return;
-    setSelected(new Set(members.map((m) => m.userId)));
+    setSelected(new Set());
     setCreateGroupId(selectedGroupId ?? groups[0]?.id ?? "");
     setCreateOpen(true);
   };
@@ -569,27 +574,27 @@ function KampePage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Spillere til kampen</Label>
-                {members.length > 0 && (
+                {sortedMembers.length > 0 && (
                   <button
                     type="button"
                     className="text-xs font-medium text-pitch hover:underline"
                     onClick={() =>
                       setSelected((prev) =>
-                        prev.size === members.length
+                        prev.size === sortedMembers.length
                           ? new Set()
-                          : new Set(members.map((m) => m.userId)),
+                          : new Set(sortedMembers.map((m) => m.userId)),
                       )
                     }
                   >
-                    {selected.size === members.length ? "Fravælg alle" : "Vælg alle"}
+                    {selected.size === sortedMembers.length ? "Fravælg alle" : "Vælg alle"}
                   </button>
                 )}
               </div>
-              {members.length === 0 ? (
+              {sortedMembers.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Henter spillere…</p>
               ) : (
                 <ul className="max-h-48 space-y-1 overflow-y-auto rounded-xl border p-1">
-                  {members.map((m) => (
+                  {sortedMembers.map((m) => (
                     <li key={m.userId}>
                       <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-secondary">
                         <Checkbox
