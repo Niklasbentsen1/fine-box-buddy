@@ -70,7 +70,7 @@ function BoederPage() {
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
-  const [typeSortBy, setTypeSortBy] = useState<TypeSortOption>("price-asc");
+  const [typeSortBy, setTypeSortBy] = useState<TypeSortOption>("label-asc");
   const [openType, setOpenType] = useState<FineTypeRow | null>(null);
   const { confirm, confirmDialog } = useConfirm();
 

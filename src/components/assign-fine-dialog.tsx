@@ -163,7 +163,7 @@ export function AssignFineDialog({
                 </div>
               </div>
               <ul className="max-h-48 space-y-1 overflow-y-auto rounded-xl border p-2">
-                {members.map((m) => {
+                {[...members].sort((a, b) => a.name.localeCompare(b.name, "da")).map((m) => {
                   const checked = assignMembers.includes(m.userId);
                   return (
                     <li key={m.userId}>
