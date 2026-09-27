@@ -172,7 +172,7 @@ function KampePage() {
 
   const openCreate = () => {
     if (!isAdmin) return;
-    setSelected(new Set(members.map((m) => m.userId)));
+    setSelected(new Set());
     setCreateGroupId(selectedGroupId ?? groups[0]?.id ?? "");
     setCreateOpen(true);
   };
