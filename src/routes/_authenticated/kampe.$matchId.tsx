@@ -180,7 +180,8 @@ function MatchDetailPage() {
 
   const voteCounts = new Map<string, number>();
   let totalVotes = 0;
-  for (const c of counts) {
+  // Løbende resultat vises aldrig, mens afstemningen er åben (håndhævet i databasen).
+  for (const c of votingOpen ? [] : counts) {
     const n = Number(c.votes);
     voteCounts.set(c.user_id, n);
     totalVotes += n;
@@ -406,8 +407,13 @@ function MatchDetailPage() {
                       {player.removed && (
                         <span className="text-xs font-normal text-muted-foreground">(fjernet)</span>
                       )}
-                      {isLeader && totalVotes > 0 && <Crown className="h-4 w-4 text-gold" />}
+                      {!votingOpen && isLeader && totalVotes > 0 && <Crown className="h-4 w-4 text-gold" />}
                     </p>
+                    {votingOpen ? (
+                      myVote?.voted_for_id === player.user_id && (
+                        <p className="mt-1 text-xs font-medium text-pitch">Din stemme</p>
+                      )
+                    ) : (
                     <div className="mt-1 flex items-center gap-2">
                       <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary">
                         <div
@@ -421,6 +427,7 @@ function MatchDetailPage() {
                         {count} {count === 1 ? "stemme" : "stemmer"}
                       </span>
                     </div>
+                    )}
                   </div>
                   {canVote && !isSelf && !player.removed && (
                     <Button size="sm" variant="pitch" onClick={() => handleVote(player.user_id, name)}>
