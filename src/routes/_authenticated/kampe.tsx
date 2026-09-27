@@ -159,6 +159,11 @@ function KampePage() {
 
   if (!current || !teamId) return null;
 
+  // Spillerlisten ved kampoprettelse vises altid alfabetisk (A-Å).
+  const sortedMembers = [...members].sort((a, b) =>
+    a.name.localeCompare(b.name, "da", { sensitivity: "base" }),
+  );
+
   const leaderboard = leaderboardRows.map((row) => ({
     name: row.display_name ?? "Ukendt",
     votes: Number(row.votes),
